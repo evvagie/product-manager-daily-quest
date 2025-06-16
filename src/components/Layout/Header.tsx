@@ -17,7 +17,7 @@ const Header = () => {
   }
 
   return (
-    <header className="bg-black/95 backdrop-blur-sm border-b border-gray-800 sticky top-0 z-50">
+    <header className="bg-white/95 backdrop-blur-sm border-b border-gray-300 sticky top-0 z-50 shadow-sm">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <div 
           className="flex items-center space-x-2 cursor-pointer"
@@ -43,11 +43,11 @@ const Header = () => {
         
         {user && (
           <div className="flex items-center space-x-4">
-            <span className="text-gray-300">Welcome back!</span>
+            <span className="text-gray-600">Welcome back!</span>
             <Button 
               variant="outline" 
               onClick={handleSignOut}
-              className="bg-black border-white text-white hover:bg-white hover:text-black font-normal hover:font-bold transition-all duration-200"
+              className="bg-white border-black text-black hover:bg-black hover:text-white font-normal hover:font-bold transition-all duration-200"
             >
               Sign Out
             </Button>
