@@ -108,7 +108,7 @@ const Dashboard = () => {
           <Card className="bg-gradient-to-br from-blue-900/30 to-purple-900/30 border-blue-800 bg-violet-300">
             <CardHeader>
               <CardTitle className="text-xl text-white">Today's Challenge Session</CardTitle>
-              <CardDescription className="text-gray-300">
+              <CardDescription className="text-slate-50">
                 4 interactive challenges await you. Test your PM skills!
               </CardDescription>
             </CardHeader>
