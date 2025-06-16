@@ -23,10 +23,22 @@ const Header = () => {
           className="flex items-center space-x-2 cursor-pointer"
           onClick={() => navigate(user ? '/dashboard' : '/')}
         >
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-lg">Y</span>
+          <div className="flex items-center">
+            <span className="text-[#0400ff] font-bold text-2xl">Yuno</span>
+            <svg 
+              width="40" 
+              height="20" 
+              viewBox="0 0 40 20" 
+              className="ml-2"
+            >
+              <path 
+                d="M2 10 L8 10 L10 5 L12 15 L14 8 L16 12 L18 10 L38 10" 
+                stroke="#0400ff" 
+                strokeWidth="2" 
+                fill="none"
+              />
+            </svg>
           </div>
-          <span className="text-white font-bold text-xl">Yuno</span>
         </div>
         
         {user && (
@@ -35,7 +47,7 @@ const Header = () => {
             <Button 
               variant="outline" 
               onClick={handleSignOut}
-              className="border-gray-600 text-white hover:bg-gray-800"
+              className="bg-black border-white text-white hover:bg-gray-900"
             >
               Sign Out
             </Button>

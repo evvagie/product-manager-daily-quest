@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -100,4 +101,37 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Custom blue color override */
+.bg-blue-600 {
+  background-color: #0400ff !important;
+}
+
+.hover\:bg-blue-700:hover {
+  background-color: #0300cc !important;
+}
+
+.text-blue-600 {
+  color: #0400ff !important;
+}
+
+.text-blue-400 {
+  color: #0400ff !important;
+}
+
+.border-blue-600 {
+  border-color: #0400ff !important;
+}
+
+.bg-blue-600\/20 {
+  background-color: rgba(4, 0, 255, 0.2) !important;
+}
+
+.border-blue-600\/30 {
+  border-color: rgba(4, 0, 255, 0.3) !important;
+}
+
+.from-blue-600 {
+  --tw-gradient-from: #0400ff var(--tw-gradient-from-position) !important;
 }
