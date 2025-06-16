@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { useLocation, useNavigate } from "react-router-dom"
 import { useAuth } from "@/contexts/AuthContext"
 import { useEffect, useState } from "react"
-import { supabase } from "@/lib/supabase"
+import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 
 const SessionFeedback = () => {
