@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { User } from '@supabase/supabase-js'
 import { supabase } from '@/integrations/supabase/client'
@@ -43,28 +44,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [])
 
   const signUp = async (email: string, password: string, username: string) => {
-    const { error } = await supabase.auth.signUp({
+    const redirectUrl = `${window.location.origin}/`
+    
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        emailRedirectTo: redirectUrl,
+        data: {
+          username
+        }
+      }
     })
+    
     if (error) throw error
 
-    // Create user profile
-    const { error: profileError } = await supabase
-      .from('users')
-      .insert([
-        {
-          id: user?.id,
-          email,
-          username,
-          xp: 0,
-          level: 1,
-          streak: 0,
-          progression_jour: 0,
-          date_inscription: new Date().toISOString(),
-        },
-      ])
-    if (profileError) throw profileError
+    // The user profile will be created automatically by the database trigger
+    // No need to manually insert into the users table here
   }
 
   const signIn = async (email: string, password: string) => {

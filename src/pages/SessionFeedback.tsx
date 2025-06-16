@@ -24,7 +24,7 @@ const SessionFeedback = () => {
   const { answers, category, difficulty, challenges } = sessionData
   
   // Calculate performance metrics
-  const completedChallenges = answers.filter(a => a !== undefined).length
+  const completedChallenges = answers.filter((a: any) => a !== undefined).length
   const completionRate = (completedChallenges / challenges) * 100
   const baseXP = difficulty === 'beginner' ? 50 : difficulty === 'intermediate' ? 100 : 200
   const earnedXP = Math.round(baseXP * (completionRate / 100))
@@ -62,6 +62,7 @@ const SessionFeedback = () => {
           .single()
 
         if (userError) throw userError
+        if (!userData) throw new Error('User data not found')
 
         const newXP = userData.xp + earnedXP
         const newLevel = Math.floor(newXP / 1000) + 1

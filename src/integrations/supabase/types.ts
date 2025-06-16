@@ -9,7 +9,75 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      sessions: {
+        Row: {
+          classement_jour: number
+          created_at: string
+          date: string
+          duree_totale: number
+          id: string
+          session_complete: boolean
+          user_id: string
+          xp_gagne: number
+        }
+        Insert: {
+          classement_jour?: number
+          created_at?: string
+          date?: string
+          duree_totale?: number
+          id?: string
+          session_complete?: boolean
+          user_id: string
+          xp_gagne?: number
+        }
+        Update: {
+          classement_jour?: number
+          created_at?: string
+          date?: string
+          duree_totale?: number
+          id?: string
+          session_complete?: boolean
+          user_id?: string
+          xp_gagne?: number
+        }
+        Relationships: []
+      }
+      users: {
+        Row: {
+          date_inscription: string
+          email: string
+          id: string
+          last_active_at: string | null
+          level: number
+          progression_jour: number
+          streak: number
+          username: string
+          xp: number
+        }
+        Insert: {
+          date_inscription?: string
+          email: string
+          id: string
+          last_active_at?: string | null
+          level?: number
+          progression_jour?: number
+          streak?: number
+          username: string
+          xp?: number
+        }
+        Update: {
+          date_inscription?: string
+          email?: string
+          id?: string
+          last_active_at?: string | null
+          level?: number
+          progression_jour?: number
+          streak?: number
+          username?: string
+          xp?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
