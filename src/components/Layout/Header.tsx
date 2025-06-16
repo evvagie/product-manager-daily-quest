@@ -47,7 +47,7 @@ const Header = () => {
             <Button 
               variant="outline" 
               onClick={handleSignOut}
-              className="bg-black border-white text-white hover:bg-gray-900"
+              className="bg-black border-white text-white hover:bg-white hover:text-black font-normal hover:font-bold transition-all duration-200"
             >
               Sign Out
             </Button>

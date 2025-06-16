@@ -135,3 +135,18 @@
 .from-blue-600 {
   --tw-gradient-from: #0400ff var(--tw-gradient-from-position) !important;
 }
+
+/* Fix hover states for black buttons with white borders */
+.bg-black.border-white.text-white:hover {
+  background-color: white !important;
+  color: black !important;
+  font-weight: bold !important;
+}
+
+/* Fix outline button hover states that become unreadable */
+button[class*="border-white"]:hover,
+.border-white:hover {
+  background-color: white !important;
+  color: black !important;
+  font-weight: bold !important;
+}
