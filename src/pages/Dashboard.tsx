@@ -1,67 +1,56 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Progress } from "@/components/ui/progress"
-import { Badge } from "@/components/ui/badge"
-import { useNavigate } from "react-router-dom"
-import { useAuth } from "@/contexts/AuthContext"
-import { useEffect, useState } from "react"
-import { supabase } from "@/integrations/supabase/client"
-
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 interface UserStats {
-  xp: number
-  level: number
-  streak: number
-  progression_jour: number
+  xp: number;
+  level: number;
+  streak: number;
+  progression_jour: number;
 }
-
 const Dashboard = () => {
-  const navigate = useNavigate()
-  const { user } = useAuth()
+  const navigate = useNavigate();
+  const {
+    user
+  } = useAuth();
   const [stats, setStats] = useState<UserStats>({
     xp: 0,
     level: 1,
     streak: 0,
     progression_jour: 0
-  })
-  const [loading, setLoading] = useState(true)
-
+  });
+  const [loading, setLoading] = useState(true);
   useEffect(() => {
     const fetchUserStats = async () => {
-      if (!user) return
-
+      if (!user) return;
       try {
-        const { data, error } = await supabase
-          .from('users')
-          .select('xp, level, streak, progression_jour')
-          .eq('id', user.id)
-          .single()
-
+        const {
+          data,
+          error
+        } = await supabase.from('users').select('xp, level, streak, progression_jour').eq('id', user.id).single();
         if (data && !error) {
-          setStats(data)
+          setStats(data);
         }
       } catch (error) {
-        console.error('Error fetching user stats:', error)
+        console.error('Error fetching user stats:', error);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
-
-    fetchUserStats()
-  }, [user])
-
-  const currentLevelXP = stats.level * 1000
-  const progressToNextLevel = (stats.xp % 1000) / 10
-
+    };
+    fetchUserStats();
+  }, [user]);
+  const currentLevelXP = stats.level * 1000;
+  const progressToNextLevel = stats.xp % 1000 / 10;
   if (loading) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+    return <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-white">Loading your dashboard...</div>
-      </div>
-    )
+      </div>;
   }
-
-  return (
-    <div className="min-h-screen bg-black text-white">
+  return <div className="min-h-screen bg-black text-white">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -116,7 +105,7 @@ const Dashboard = () => {
         {/* Main Actions */}
         <div className="grid lg:grid-cols-2 gap-8 mb-8">
           {/* Daily Challenge */}
-          <Card className="bg-gradient-to-br from-blue-900/30 to-purple-900/30 border-blue-800">
+          <Card className="bg-gradient-to-br from-blue-900/30 to-purple-900/30 border-blue-800 bg-violet-300">
             <CardHeader>
               <CardTitle className="text-xl text-white">Today's Challenge Session</CardTitle>
               <CardDescription className="text-gray-300">
@@ -131,10 +120,7 @@ const Dashboard = () => {
                 </div>
                 <span className="text-2xl">🎯</span>
               </div>
-              <Button 
-                className="w-full bg-blue-600 hover:bg-blue-700"
-                onClick={() => navigate('/challenge-selection')}
-              >
+              <Button className="w-full bg-blue-600 hover:bg-blue-700" onClick={() => navigate('/challenge-selection')}>
                 Start Today's Session →
               </Button>
             </CardContent>
@@ -209,8 +195,6 @@ const Dashboard = () => {
           </CardContent>
         </Card>
       </div>
-    </div>
-  )
-}
-
-export default Dashboard
+    </div>;
+};
+export default Dashboard;
