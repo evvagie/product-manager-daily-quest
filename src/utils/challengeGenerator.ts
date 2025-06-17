@@ -1,4 +1,5 @@
 
+
 interface ChallengeFormat {
   id: string;
   name: string;
@@ -224,7 +225,7 @@ const generateTimeBombChallenge = (areaContent: any, modifier: any, context: str
         id: '1',
         sender: 'Engineering Lead',
         avatar: 'EL',
-        message: `This is critical - we need a decision NOW!`,
+        message: 'This is critical - we need a decision NOW!',
         timestamp: 'just now',
         type: 'alert'
       }
@@ -346,7 +347,7 @@ const generateTradeOffChallenge = (areaContent: any, modifier: any, context: str
       { name: kpis[0], value: 50, max: 100 },
       { name: kpis[1], value: 50, max: 100 }
     ],
-    constraints: `You have 100 points total to distribute`,
+    constraints: 'You have 100 points total to distribute',
     options: [
       {
         id: 'balanced',
@@ -467,7 +468,7 @@ const generateDialogueTreeChallenge = (areaContent: any, modifier: any, context:
           },
           {
             id: 'defensive',
-            text: 'We've already considered all the risks.',
+            text: 'We\'ve already considered all the risks.',
             tone: 'defensive',
             nextSpeaker: areaContent.stakeholders[1]
           },
@@ -516,3 +517,4 @@ const generateRetrospectiveChallenge = (areaContent: any, modifier: any, context
     }))
   };
 };
+
