@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
@@ -7,12 +8,14 @@ import { useAuth } from "@/contexts/AuthContext"
 import { useEffect, useState } from "react"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
+import { generatePersonalizedFeedback } from "@/utils/feedbackGenerator"
 
 const SessionFeedback = () => {
   const location = useLocation()
   const navigate = useNavigate()
   const { user } = useAuth()
   const [loading, setLoading] = useState(false)
+  const [personalizedFeedback, setPersonalizedFeedback] = useState<any>(null)
   
   const sessionData = location.state
   if (!sessionData) {
@@ -32,8 +35,50 @@ const SessionFeedback = () => {
   const [newBadges, setNewBadges] = useState<string[]>([])
 
   useEffect(() => {
+    const generateFeedback = async () => {
+      try {
+        // Get previous session score for comparison
+        let previousScore = null;
+        if (user) {
+          const { data: recentSessions } = await supabase
+            .from('sessions')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(2);
+          
+          if (recentSessions && recentSessions.length > 1) {
+            // Calculate previous score based on XP and completion
+            const prevSession = recentSessions[1];
+            previousScore = Math.round((prevSession.xp_gagne / baseXP) * 100);
+          }
+        }
+        
+        const feedback = generatePersonalizedFeedback(
+          { answers, category, difficulty, challenges },
+          previousScore
+        );
+        
+        setPersonalizedFeedback(feedback);
+      } catch (error) {
+        console.error('Error generating feedback:', error);
+        // Fallback to basic feedback if generation fails
+        setPersonalizedFeedback({
+          score: Math.round(completionRate * 0.8),
+          strengths: ["You completed the challenges successfully"],
+          improvements: ["Keep practicing to improve your PM skills"],
+          progress_statement: "You're making progress in your PM journey",
+          recommendation: "Try another session to continue improving your skills"
+        });
+      }
+    };
+
+    generateFeedback();
+  }, [answers, category, difficulty, challenges, user, baseXP, completionRate]);
+
+  useEffect(() => {
     const saveSessionData = async () => {
-      if (!user || loading) return
+      if (!user || loading || !personalizedFeedback) return
       
       setLoading(true)
       try {
@@ -73,7 +118,7 @@ const SessionFeedback = () => {
             xp: newXP,
             level: newLevel,
             streak: newStreak,
-            progression_jour: completionRate,
+            progression_jour: personalizedFeedback.score,
             last_active_at: new Date().toISOString()
           })
           .eq('id', user.id)
@@ -87,6 +132,7 @@ const SessionFeedback = () => {
         if (completedChallenges === challenges) badges.push('Session Complete')
         if (newStreak >= 7) badges.push('Week Warrior')
         if (newLevel > userData.level) badges.push('Level Up!')
+        if (personalizedFeedback.score >= 85) badges.push('High Performer')
         
         setNewBadges(badges)
         
@@ -101,13 +147,16 @@ const SessionFeedback = () => {
     }
 
     saveSessionData()
-  }, [user, earnedXP, completionRate, completedChallenges, challenges])
+  }, [user, earnedXP, completionRate, completedChallenges, challenges, personalizedFeedback])
 
   const getPerformanceMessage = () => {
-    if (completionRate === 100) return "Outstanding performance! 🏆"
-    if (completionRate >= 75) return "Great job! Keep it up! 💪"
-    if (completionRate >= 50) return "Good effort! Room for improvement 📈"
-    return "Keep practicing! You'll get there 🎯"
+    if (!personalizedFeedback) return "Analyzing your performance..."
+    
+    const score = personalizedFeedback.score
+    if (score >= 85) return "Outstanding performance! 🏆"
+    if (score >= 75) return "Great job! Keep it up! 💪"
+    if (score >= 60) return "Good effort! You're improving 📈"
+    return "Keep practicing! You're learning 🎯"
   }
 
   const getResourceRecommendations = () => {
@@ -120,7 +169,7 @@ const SessionFeedback = () => {
       },
       {
         title: "Data-Driven Product Decisions",
-        type: "Article",
+        type: "Article", 
         description: "Learn how to use analytics for better PM decisions",
         url: "#"
       },
@@ -132,7 +181,18 @@ const SessionFeedback = () => {
       }
     ]
     
-    return recommendations.slice(0, 2) // Show 2 recommendations
+    return recommendations.slice(0, 2)
+  }
+
+  if (!personalizedFeedback) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-400">Analyzing your performance...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -152,8 +212,8 @@ const SessionFeedback = () => {
           <div className="grid md:grid-cols-3 gap-6 mb-8">
             <Card className="bg-gray-900 border-gray-800 text-center">
               <CardHeader>
-                <CardTitle className="text-2xl text-blue-400">{earnedXP}</CardTitle>
-                <CardDescription>XP Earned</CardDescription>
+                <CardTitle className="text-2xl text-blue-400">{personalizedFeedback.score}%</CardTitle>
+                <CardDescription>Performance Score</CardDescription>
               </CardHeader>
             </Card>
 
@@ -172,42 +232,56 @@ const SessionFeedback = () => {
             </Card>
           </div>
 
-          {/* Detailed Results */}
+          {/* Personalized Feedback */}
           <Card className="bg-gray-900 border-gray-800 mb-8">
             <CardHeader>
-              <CardTitle className="text-xl text-white">Session Results</CardTitle>
+              <CardTitle className="text-xl text-white">Your Performance Analysis</CardTitle>
               <CardDescription className="text-gray-400">
-                {category} • {difficulty} • {Math.round(completionRate)}% completion rate
+                {category} • {difficulty} • {personalizedFeedback.progress_statement}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div>
                   <div className="flex justify-between mb-2">
                     <span className="text-gray-300">Overall Performance</span>
-                    <span className="text-white">{Math.round(completionRate)}%</span>
+                    <span className="text-white">{personalizedFeedback.score}%</span>
                   </div>
-                  <Progress value={completionRate} className="h-3" />
+                  <Progress value={personalizedFeedback.score} className="h-3" />
                 </div>
                 
-                <div className="grid md:grid-cols-2 gap-4 mt-6">
+                <div className="grid md:grid-cols-2 gap-4">
                   <div className="p-4 bg-gray-800/50 rounded-lg">
-                    <h4 className="text-white font-medium mb-2">Strengths</h4>
-                    <ul className="text-green-400 text-sm space-y-1">
-                      <li>• Completed challenges efficiently</li>
-                      <li>• Good strategic thinking</li>
-                      <li>• Consistent decision-making</li>
+                    <h4 className="text-white font-medium mb-3 flex items-center">
+                      <span className="text-green-400 mr-2">✓</span>
+                      What You Did Well
+                    </h4>
+                    <ul className="text-green-400 text-sm space-y-2">
+                      {personalizedFeedback.strengths.map((strength: string, index: number) => (
+                        <li key={index}>• {strength}</li>
+                      ))}
                     </ul>
                   </div>
                   
                   <div className="p-4 bg-gray-800/50 rounded-lg">
-                    <h4 className="text-white font-medium mb-2">Areas for Growth</h4>
-                    <ul className="text-yellow-400 text-sm space-y-1">
-                      <li>• Consider stakeholder impact more</li>
-                      <li>• Focus on data-driven decisions</li>
-                      <li>• Practice prioritization frameworks</li>
+                    <h4 className="text-white font-medium mb-3 flex items-center">
+                      <span className="text-yellow-400 mr-2">📈</span>
+                      Areas to Improve
+                    </h4>
+                    <ul className="text-yellow-400 text-sm space-y-2">
+                      {personalizedFeedback.improvements.map((improvement: string, index: number) => (
+                        <li key={index}>• {improvement}</li>
+                      ))}
                     </ul>
                   </div>
+                </div>
+
+                <div className="p-4 bg-blue-900/20 rounded-lg border border-blue-800/30">
+                  <h4 className="text-blue-400 font-medium mb-2 flex items-center">
+                    <span className="mr-2">💡</span>
+                    Recommendation for You
+                  </h4>
+                  <p className="text-gray-300 text-sm">{personalizedFeedback.recommendation}</p>
                 </div>
               </div>
             </CardContent>
