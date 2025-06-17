@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,6 +23,18 @@ export const DynamicChallengeRenderer = ({
   const [sliderValues, setSliderValues] = useState<{ [key: string]: number }>({});
   const [resourceAllocation, setResourceAllocation] = useState<{ [key: string]: number }>({});
   const [conversationState, setConversationState] = useState(0);
+
+  const getQualityBadge = (quality: string) => {
+    const qualityConfig = {
+      excellent: { color: 'bg-green-100 text-green-700', label: '✓ Excellent' },
+      good: { color: 'bg-blue-100 text-blue-700', label: '✓ Good' },
+      average: { color: 'bg-yellow-100 text-yellow-700', label: '~ Average' },
+      poor: { color: 'bg-red-100 text-red-700', label: '✗ Poor' }
+    };
+    
+    const config = qualityConfig[quality as keyof typeof qualityConfig] || qualityConfig.average;
+    return <Badge className={config.color}>{config.label}</Badge>;
+  };
 
   const renderChallengeContent = () => {
     switch (challenge.type) {
@@ -53,19 +64,30 @@ export const DynamicChallengeRenderer = ({
           <button
             key={option.id}
             onClick={() => onAnswer(option.id)}
-            disabled={showConsequences}
             className={`w-full p-4 text-left rounded-lg border transition-colors ${
               currentAnswer === option.id 
                 ? 'bg-blue-50 border-blue-600' 
-                : showConsequences
-                ? 'bg-gray-100 border-gray-200 cursor-not-allowed'
                 : 'bg-gray-50 border-gray-300 hover:border-gray-400'
             }`}
           >
-            <div className="text-black font-medium mb-1">{option.text}</div>
-            {option.description && (
-              <div className="text-gray-600 text-sm">{option.description}</div>
-            )}
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <div className="text-black font-medium mb-1">{option.text}</div>
+                {option.description && (
+                  <div className="text-gray-600 text-sm">{option.description}</div>
+                )}
+                {currentAnswer === option.id && option.explanation && (
+                  <div className="mt-2 p-2 bg-blue-50 rounded text-sm text-blue-800">
+                    <strong>Feedback:</strong> {option.explanation}
+                  </div>
+                )}
+              </div>
+              {currentAnswer === option.id && option.quality && (
+                <div className="ml-3">
+                  {getQualityBadge(option.quality)}
+                </div>
+              )}
+            </div>
           </button>
         ))}
       </div>
@@ -159,7 +181,7 @@ export const DynamicChallengeRenderer = ({
                   size="sm"
                   variant="outline"
                   onClick={() => {
-                    const current = resourceAllocation[priority.id] || 0;
+                    const current = resourceAllocation[priority.id] || 1;
                     if (current > 1) {
                       const newAllocation = { ...resourceAllocation, [priority.id]: current - 1 };
                       setResourceAllocation(newAllocation);
@@ -228,13 +250,30 @@ export const DynamicChallengeRenderer = ({
                 onAnswer(response);
                 setConversationState(conversationState + 1);
               }}
-              disabled={showConsequences}
-              className="w-full p-3 text-left rounded-lg border border-gray-300 hover:border-gray-400 bg-white transition-colors"
+              className={`w-full p-3 text-left rounded-lg border transition-colors ${
+                currentAnswer?.id === response.id 
+                  ? 'bg-blue-50 border-blue-600' 
+                  : 'bg-white border-gray-300 hover:border-gray-400'
+              }`}
             >
-              <div className="text-black">{response.text}</div>
-              <Badge variant="secondary" className="mt-1 bg-gray-100 text-gray-700">
-                {response.tone}
-              </Badge>
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="text-black">{response.text}</div>
+                  <Badge variant="secondary" className="mt-1 bg-gray-100 text-gray-700">
+                    {response.tone}
+                  </Badge>
+                  {currentAnswer?.id === response.id && response.explanation && (
+                    <div className="mt-2 p-2 bg-blue-50 rounded text-sm text-blue-800">
+                      <strong>Feedback:</strong> {response.explanation}
+                    </div>
+                  )}
+                </div>
+                {currentAnswer?.id === response.id && response.quality && (
+                  <div className="ml-3">
+                    {getQualityBadge(response.quality)}
+                  </div>
+                )}
+              </div>
             </button>
           ))}
         </div>
@@ -278,7 +317,6 @@ export const DynamicChallengeRenderer = ({
               <button
                 key={option.id}
                 onClick={() => onAnswer(option.id)}
-                disabled={showConsequences}
                 className={`w-full p-3 text-left rounded-lg border transition-colors ${
                   currentAnswer === option.id 
                     ? 'bg-blue-50 border-blue-600' 
@@ -286,10 +324,20 @@ export const DynamicChallengeRenderer = ({
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-black">{option.text}</span>
-                  <Badge variant="secondary" className="bg-gray-100 text-gray-700">
-                    Priority: {option.priority}/3
-                  </Badge>
+                  <div className="flex-1">
+                    <span className="text-black">{option.text}</span>
+                    {currentAnswer === option.id && option.explanation && (
+                      <div className="mt-2 p-2 bg-blue-50 rounded text-sm text-blue-800">
+                        <strong>Feedback:</strong> {option.explanation}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Badge variant="secondary" className="bg-gray-100 text-gray-700">
+                      Priority: {option.priority}/3
+                    </Badge>
+                    {currentAnswer === option.id && option.quality && getQualityBadge(option.quality)}
+                  </div>
                 </div>
               </button>
             ))}

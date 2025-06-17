@@ -33,6 +33,7 @@ const Challenge = () => {
   const [showConsequences, setShowConsequences] = useState(false);
   const [currentKPIs, setCurrentKPIs] = useState<any>(null);
   const [generatedChallenges, setGeneratedChallenges] = useState<any[]>([]);
+  const [proceedAllowed, setProceedAllowed] = useState(false);
 
   // Generate dynamic challenges when session starts
   const generateSessionChallenges = () => {
@@ -76,10 +77,13 @@ const Challenge = () => {
     const newAnswers = [...answers];
     newAnswers[currentChallenge] = answer;
     setAnswers(newAnswers);
+    setProceedAllowed(true);
     
-    // Show consequences immediately for most challenge types
-    if (currentChallengeData?.type !== 'slider' && currentChallengeData?.type !== 'drag-drop') {
-      const selectedOption = currentChallengeData.content.options?.find((opt: any) => opt.id === answer);
+    // Show consequences for multiple choice and dialogue challenges
+    if (currentChallengeData?.type === 'multiple-choice' || currentChallengeData?.type === 'dialogue') {
+      const selectedOption = currentChallengeData.content.options?.find((opt: any) => 
+        opt.id === answer || opt.id === answer?.id
+      );
       if (selectedOption) {
         setShowConsequences(true);
         if (selectedOption.kpiImpact) {
@@ -94,6 +98,7 @@ const Challenge = () => {
       setCurrentChallenge(currentChallenge + 1);
       setTimeLeft(generatedChallenges[currentChallenge + 1].timeLimit || 300);
       setShowConsequences(false);
+      setProceedAllowed(false);
     } else {
       // Session completed
       navigate('/session-feedback', {
@@ -108,9 +113,10 @@ const Challenge = () => {
   };
 
   const handleTimeUp = () => {
-    if (!showConsequences && currentChallengeData.type !== 'slider' && currentChallengeData.type !== 'drag-drop') {
+    if (!showConsequences && (currentChallengeData.type === 'multiple-choice' || currentChallengeData.type === 'dialogue')) {
       // Auto-advance if time runs out and no answer selected
       setShowConsequences(true);
+      setProceedAllowed(true);
     }
   };
 
@@ -250,7 +256,7 @@ const Challenge = () => {
             <Button 
               className="bg-blue-600 hover:bg-blue-700 text-white" 
               onClick={handleNext} 
-              disabled={!answers[currentChallenge] && !showConsequences}
+              disabled={!proceedAllowed}
             >
               {currentChallenge === generatedChallenges.length - 1 ? 'Complete Session' : 'Next Challenge'} →
             </Button>

@@ -1,5 +1,3 @@
-
-
 interface ChallengeFormat {
   id: string;
   name: string;
@@ -235,6 +233,9 @@ const generateTimeBombChallenge = (areaContent: any, modifier: any, context: str
         id: 'immediate',
         text: 'Take immediate action',
         description: 'Act fast with current information',
+        isCorrect: false,
+        quality: 'poor',
+        explanation: 'Acting too hastily without proper information can lead to bigger problems.',
         consequences: [
           {
             type: 'negative',
@@ -254,6 +255,9 @@ const generateTimeBombChallenge = (areaContent: any, modifier: any, context: str
         id: 'gather-info',
         text: 'Gather more information first',
         description: 'Take time to understand the situation',
+        isCorrect: false,
+        quality: 'average',
+        explanation: 'While gathering info is good, time pressure may make this too slow.',
         consequences: [
           {
             type: 'neutral',
@@ -273,6 +277,9 @@ const generateTimeBombChallenge = (areaContent: any, modifier: any, context: str
         id: 'delegate',
         text: 'Delegate to subject matter expert',
         description: 'Let the most qualified person decide',
+        isCorrect: true,
+        quality: 'excellent',
+        explanation: 'Leveraging team expertise is the best approach under pressure.',
         consequences: [
           {
             type: 'positive',
@@ -316,6 +323,9 @@ const generateStakeholderTensionChallenge = (areaContent: any, modifier: any, co
         id: 'compromise',
         text: 'Find a compromise solution',
         description: 'Balance all stakeholder needs',
+        isCorrect: false,
+        quality: 'average',
+        explanation: 'Compromise often leads to sub-optimal outcomes for everyone.',
         consequences: [{
           type: 'neutral',
           title: 'Balanced Approach',
@@ -327,11 +337,28 @@ const generateStakeholderTensionChallenge = (areaContent: any, modifier: any, co
         id: 'prioritize-business',
         text: 'Prioritize business impact',
         description: 'Focus on revenue and growth metrics',
+        isCorrect: true,
+        quality: 'good',
+        explanation: 'Business impact should guide decisions, but consider stakeholder buy-in.',
         consequences: [{
           type: 'positive',
           title: 'Business Success',
           description: 'Strong business outcomes achieved',
           impact: 'May create technical debt or team burnout'
+        }]
+      },
+      {
+        id: 'data-driven',
+        text: 'Use data to make the decision',
+        description: 'Let metrics and user feedback guide the choice',
+        isCorrect: true,
+        quality: 'excellent',
+        explanation: 'Data-driven decisions reduce bias and increase stakeholder confidence.',
+        consequences: [{
+          type: 'positive',
+          title: 'Evidence-Based Decision',
+          description: 'Objective approach builds consensus',
+          impact: 'Higher stakeholder confidence and better outcomes'
         }]
       }
     ]
@@ -464,18 +491,27 @@ const generateDialogueTreeChallenge = (areaContent: any, modifier: any, context:
             id: 'empathetic',
             text: 'I understand your concerns. Can you tell me more?',
             tone: 'empathetic',
+            isCorrect: true,
+            quality: 'excellent',
+            explanation: 'Empathetic listening builds trust and opens dialogue.',
             nextSpeaker: areaContent.stakeholders[1]
           },
           {
             id: 'defensive',
             text: 'We\'ve already considered all the risks.',
             tone: 'defensive',
+            isCorrect: false,
+            quality: 'poor',
+            explanation: 'Defensive responses shut down communication and damage relationships.',
             nextSpeaker: areaContent.stakeholders[1]
           },
           {
             id: 'data-driven',
             text: 'Let me show you the data behind our decision.',
             tone: 'analytical',
+            isCorrect: false,
+            quality: 'average',
+            explanation: 'While data is important, addressing concerns first shows better leadership.',
             nextSpeaker: areaContent.stakeholders[1]
           }
         ]
@@ -513,8 +549,11 @@ const generateRetrospectiveChallenge = (areaContent: any, modifier: any, context
       id: `improvement-${index}`,
       text: improvement,
       description: `Focus on implementing ${improvement.toLowerCase()}`,
-      priority: Math.floor(Math.random() * 3) + 1
+      priority: Math.floor(Math.random() * 3) + 1,
+      isCorrect: index === 0, // First option is usually the best
+      quality: index === 0 ? 'excellent' : index === 1 ? 'good' : 'average',
+      explanation: index === 0 ? 'Communication improvements have the highest impact on team success.' : 
+                  index === 1 ? 'Good choice for process improvement.' : 'Useful but lower priority improvement.'
     }))
   };
 };
-
