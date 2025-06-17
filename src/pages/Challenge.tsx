@@ -1,19 +1,22 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { getChallengesForSession } from "@/data/challengeData";
+import { getEnhancedChallengesForSession } from "@/data/enhancedChallengeData";
+import { KPIDisplay } from "@/components/challenges/KPIDisplay";
+import { TeamChat } from "@/components/challenges/TeamChat";
+import { TimePressureIndicator } from "@/components/challenges/TimePressureIndicator";
+import { ConsequenceDisplay } from "@/components/challenges/ConsequenceDisplay";
 
-interface ChallengeData {
+interface EnhancedChallengeData {
   id: string;
   title: string;
   description: string;
-  type: 'drag-drop' | 'multiple-choice' | 'ranking' | 'scenario';
+  type: 'time-pressure' | 'kpi-impact' | 'team-chat' | 'crisis-management' | 'multi-step' | 'drag-drop' | 'multiple-choice' | 'ranking' | 'scenario';
+  timeLimit: number;
   content: any;
-  timeLimit?: number;
 }
 
 const Challenge = () => {
@@ -25,18 +28,26 @@ const Challenge = () => {
   const [answers, setAnswers] = useState<any[]>([]);
   const [timeLeft, setTimeLeft] = useState(300);
   const [sessionStarted, setSessionStarted] = useState(false);
+  const [showConsequences, setShowConsequences] = useState(false);
+  const [currentKPIs, setCurrentKPIs] = useState<any>(null);
 
-  // Get challenges based on selected category and difficulty
-  const challenges = getChallengesForSession(category, difficulty);
+  // Get enhanced challenges based on selected category and difficulty
+  const challenges = getEnhancedChallengesForSession(category, difficulty);
   const currentChallengeData = challenges[currentChallenge];
   const progress = (currentChallenge + 1) / challenges.length * 100;
 
   useEffect(() => {
-    if (sessionStarted && timeLeft > 0) {
+    if (sessionStarted && timeLeft > 0 && !showConsequences) {
       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
       return () => clearTimeout(timer);
     }
-  }, [sessionStarted, timeLeft]);
+  }, [sessionStarted, timeLeft, showConsequences]);
+
+  useEffect(() => {
+    if (currentChallengeData?.content?.currentKPIs) {
+      setCurrentKPIs(currentChallengeData.content.currentKPIs);
+    }
+  }, [currentChallengeData]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -53,12 +64,24 @@ const Challenge = () => {
     const newAnswers = [...answers];
     newAnswers[currentChallenge] = answer;
     setAnswers(newAnswers);
+    
+    // Show consequences immediately for enhanced challenges
+    if (currentChallengeData.type !== 'drag-drop' && currentChallengeData.type !== 'ranking') {
+      const selectedOption = currentChallengeData.content.options.find((opt: any) => opt.id === answer);
+      if (selectedOption) {
+        setShowConsequences(true);
+        if (selectedOption.kpiImpact) {
+          setCurrentKPIs(selectedOption.kpiImpact);
+        }
+      }
+    }
   };
 
   const handleNext = () => {
     if (currentChallenge < challenges.length - 1) {
       setCurrentChallenge(currentChallenge + 1);
       setTimeLeft(challenges[currentChallenge + 1].timeLimit || 300);
+      setShowConsequences(false);
     } else {
       // Session completed
       navigate('/session-feedback', {
@@ -69,6 +92,13 @@ const Challenge = () => {
           challenges: challenges.length
         }
       });
+    }
+  };
+
+  const handleTimeUp = () => {
+    if (!showConsequences && currentChallengeData.type !== 'drag-drop' && currentChallengeData.type !== 'ranking') {
+      // Auto-advance if time runs out and no answer selected
+      setShowConsequences(true);
     }
   };
 
@@ -88,29 +118,29 @@ const Challenge = () => {
                 </div>
                 <CardTitle className="text-2xl text-black">Ready to Begin?</CardTitle>
                 <CardDescription className="text-gray-600">
-                  {category} • {difficulty} • 4 Challenges
+                  {category} • {difficulty} • {challenges.length} Interactive Challenges
                 </CardDescription>
               </CardHeader>
               <CardContent className="text-center">
                 <div className="mb-6">
                   <p className="text-gray-700 mb-4">
-                    You're about to start an interactive PM challenge session. Each challenge will test different aspects of product management.
+                    You're about to start an immersive PM challenge session with real-time KPI tracking, team communications, and dynamic scenarios.
                   </p>
                   
                   <div className="grid grid-cols-2 gap-4 mb-6">
                     <div className="p-4 rounded-lg bg-blue-50">
-                      <p className="text-blue-600 font-semibold">15 minutes</p>
-                      <p className="text-sm text-gray-700">Total estimated time</p>
+                      <p className="text-blue-600 font-semibold">{Math.round(challenges.reduce((sum, c) => sum + c.timeLimit, 0) / 60)} minutes</p>
+                      <p className="text-sm text-gray-700">Estimated time</p>
                     </div>
                     <div className="p-4 bg-gray-100 rounded-lg">
-                      <p className="text-green-600 font-semibold">50-200 XP</p>
-                      <p className="text-gray-700 text-sm">Potential rewards</p>
+                      <p className="text-green-600 font-semibold">Interactive</p>
+                      <p className="text-gray-700 text-sm">KPIs, team chat, consequences</p>
                     </div>
                   </div>
                 </div>
 
                 <Button size="lg" className="w-full bg-blue-600 hover:bg-blue-700 text-white" onClick={handleStartSession}>
-                  Start Challenge Session →
+                  Start Interactive Session →
                 </Button>
               </CardContent>
             </Card>
@@ -123,7 +153,7 @@ const Challenge = () => {
   return (
     <div className="min-h-screen bg-white text-black">
       <div className="container mx-auto px-4 py-8">
-        {/* Header with Progress */}
+        {/* Header with Progress and Time */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -132,9 +162,19 @@ const Challenge = () => {
               </Badge>
               <h1 className="text-2xl font-bold text-black">{currentChallengeData.title}</h1>
             </div>
-            <div className="text-right">
-              <div className="text-2xl font-mono text-blue-600">{formatTime(timeLeft)}</div>
-              <div className="text-sm text-gray-600">Time remaining</div>
+            <div className="w-64">
+              {(currentChallengeData.type === 'time-pressure' || currentChallengeData.type === 'crisis-management') ? (
+                <TimePressureIndicator 
+                  timeLeft={timeLeft} 
+                  totalTime={currentChallengeData.timeLimit} 
+                  onTimeUp={handleTimeUp}
+                />
+              ) : (
+                <div className="text-right">
+                  <div className="text-2xl font-mono text-blue-600">{formatTime(timeLeft)}</div>
+                  <div className="text-sm text-gray-600">Time remaining</div>
+                </div>
+              )}
             </div>
           </div>
           
@@ -142,26 +182,45 @@ const Challenge = () => {
           <p className="text-gray-600 text-sm">{Math.round(progress)}% complete</p>
         </div>
 
+        {/* KPI Display for kpi-impact challenges */}
+        {(currentChallengeData.type === 'kpi-impact' || showConsequences) && currentKPIs && (
+          <KPIDisplay metrics={currentKPIs} />
+        )}
+
         {/* Challenge Content */}
         <div className="max-w-4xl mx-auto">
+          {/* Team Chat for team-chat challenges */}
+          {(currentChallengeData.type === 'team-chat' || currentChallengeData.type === 'crisis-management') && 
+           currentChallengeData.content.teamMessages && (
+            <TeamChat messages={currentChallengeData.content.teamMessages} />
+          )}
+
           <Card className="bg-white border-gray-200 mb-6">
             <CardHeader>
               <CardDescription className="text-gray-700 text-lg">
-                {currentChallengeData.description}
+                {currentChallengeData.content.context || currentChallengeData.description}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {/* Render different challenge types */}
-              {currentChallengeData.type === 'drag-drop' && (
-                <DragDropChallenge 
+              {/* Enhanced Challenge Types */}
+              {(currentChallengeData.type === 'multiple-choice' || 
+                currentChallengeData.type === 'scenario' ||
+                currentChallengeData.type === 'time-pressure' ||
+                currentChallengeData.type === 'kpi-impact' ||
+                currentChallengeData.type === 'team-chat' ||
+                currentChallengeData.type === 'crisis-management' ||
+                currentChallengeData.type === 'multi-step') && (
+                <EnhancedMultipleChoice 
                   content={currentChallengeData.content} 
                   onAnswer={handleAnswer} 
-                  currentAnswer={answers[currentChallenge]} 
+                  currentAnswer={answers[currentChallenge]}
+                  showConsequences={showConsequences}
                 />
               )}
-              
-              {currentChallengeData.type === 'multiple-choice' && (
-                <MultipleChoiceChallenge 
+
+              {/* Keep existing challenge types for compatibility */}
+              {currentChallengeData.type === 'drag-drop' && (
+                <DragDropChallenge 
                   content={currentChallengeData.content} 
                   onAnswer={handleAnswer} 
                   currentAnswer={answers[currentChallenge]} 
@@ -175,16 +234,17 @@ const Challenge = () => {
                   currentAnswer={answers[currentChallenge]} 
                 />
               )}
-
-              {currentChallengeData.type === 'scenario' && (
-                <ScenarioChallenge 
-                  content={currentChallengeData.content} 
-                  onAnswer={handleAnswer} 
-                  currentAnswer={answers[currentChallenge]} 
-                />
-              )}
             </CardContent>
           </Card>
+
+          {/* Show consequences after answer selection */}
+          {showConsequences && answers[currentChallenge] && (
+            <ConsequenceDisplay 
+              consequences={
+                currentChallengeData.content.options.find((opt: any) => opt.id === answers[currentChallenge])?.consequences || []
+              }
+            />
+          )}
 
           {/* Navigation */}
           <div className="flex justify-between">
@@ -192,11 +252,44 @@ const Challenge = () => {
               Exit Session
             </Button>
             
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={handleNext} disabled={!answers[currentChallenge]}>
+            <Button 
+              className="bg-blue-600 hover:bg-blue-700 text-white" 
+              onClick={handleNext} 
+              disabled={!answers[currentChallenge] && !showConsequences}
+            >
               {currentChallenge === challenges.length - 1 ? 'Complete Session' : 'Next Challenge'} →
             </Button>
           </div>
         </div>
+      </div>
+    </div>
+  );
+};
+
+// Enhanced Multiple Choice Component for new challenge types
+const EnhancedMultipleChoice = ({ content, onAnswer, currentAnswer, showConsequences }: any) => {
+  return (
+    <div className="space-y-4">
+      <div className="space-y-3">
+        {content.options.map((option: any) => (
+          <button
+            key={option.id}
+            onClick={() => onAnswer(option.id)}
+            disabled={showConsequences}
+            className={`w-full p-4 text-left rounded-lg border transition-colors ${
+              currentAnswer === option.id 
+                ? 'bg-blue-50 border-blue-600' 
+                : showConsequences
+                ? 'bg-gray-100 border-gray-200 cursor-not-allowed'
+                : 'bg-gray-50 border-gray-300 hover:border-gray-400'
+            }`}
+          >
+            <div className="text-black font-medium mb-1">{option.text}</div>
+            {option.description && (
+              <div className="text-gray-600 text-sm">{option.description}</div>
+            )}
+          </button>
+        ))}
       </div>
     </div>
   );
@@ -269,33 +362,6 @@ const DragDropChallenge = ({ content, onAnswer, currentAnswer }: any) => {
   );
 };
 
-const MultipleChoiceChallenge = ({ content, onAnswer, currentAnswer }: any) => {
-  return (
-    <div className="space-y-4">
-      <div className="p-4 bg-gray-50 rounded-lg border border-gray-300 mb-6">
-        <p className="text-gray-700">{content.scenario}</p>
-      </div>
-      
-      <div className="space-y-3">
-        {content.options.map((option: any) => (
-          <button
-            key={option.id}
-            onClick={() => onAnswer(option.id)}
-            className={`w-full p-4 text-left rounded-lg border transition-colors ${
-              currentAnswer === option.id 
-                ? 'bg-blue-50 border-blue-600' 
-                : 'bg-gray-50 border-gray-300 hover:border-gray-400'
-            }`}
-          >
-            <div className="text-black font-medium mb-1">{option.text}</div>
-            <div className="text-gray-600 text-sm">{option.impact}</div>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-};
-
 const RankingChallenge = ({ content, onAnswer, currentAnswer }: any) => {
   const [rankedStakeholders, setRankedStakeholders] = useState(currentAnswer || content.stakeholders);
 
@@ -349,51 +415,6 @@ const RankingChallenge = ({ content, onAnswer, currentAnswer }: any) => {
               </div>
             </div>
           </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-const ScenarioChallenge = ({ content, onAnswer, currentAnswer }: any) => {
-  return (
-    <div className="space-y-4">
-      <div className="p-4 bg-gray-50 rounded-lg border border-gray-300 mb-6">
-        <p className="text-gray-700">{content.situation}</p>
-      </div>
-      
-      <div className="grid gap-4">
-        {content.options.map((option: any) => (
-          <button
-            key={option.id}
-            onClick={() => onAnswer(option.id)}
-            className={`p-4 text-left rounded-lg border transition-colors ${
-              currentAnswer === option.id 
-                ? 'bg-blue-50 border-blue-600' 
-                : 'bg-gray-50 border-gray-300 hover:border-gray-400'
-            }`}
-          >
-            <div className="text-black font-bold mb-2">{option.strategy}</div>
-            <div className="text-gray-700 mb-3">{option.description}</div>
-            <div className="flex space-x-4 text-sm">
-              <div>
-                <span className="text-green-600 font-medium">Pros:</span>
-                <ul className="text-gray-600 ml-2">
-                  {option.pros.map((pro: string, i: number) => (
-                    <li key={i}>• {pro}</li>
-                  ))}
-                </ul>
-              </div>
-              <div>
-                <span className="text-red-600 font-medium">Cons:</span>
-                <ul className="text-gray-600 ml-2">
-                  {option.cons.map((con: string, i: number) => (
-                    <li key={i}>• {con}</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </button>
         ))}
       </div>
     </div>
