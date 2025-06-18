@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,11 +16,7 @@ interface ChallengeHistory {
   score: number | null;
   time_taken: number | null;
   difficulty: string;
-}
-
-interface CategoryMetadata {
-  total_challenges: number;
-  challenge_types: string[];
+  challenge_id: string;
 }
 
 const ChallengeLibrary = () => {
@@ -27,7 +24,6 @@ const ChallengeLibrary = () => {
   const { category } = useParams<{ category: string }>();
   const { user } = useAuth();
   const [challengeHistory, setChallengeHistory] = useState<ChallengeHistory[]>([]);
-  const [metadata, setMetadata] = useState<CategoryMetadata | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -104,38 +100,6 @@ const ChallengeLibrary = () => {
           console.log('Fetched challenge history:', history);
           setChallengeHistory(history || []);
         }
-
-        // Fetch metadata for this category - use maybeSingle() instead of single()
-        const { data: meta, error: metaError } = await supabase
-          .from('challenge_metadata')
-          .select('total_challenges, challenge_types')
-          .eq('skill_area', category)
-          .maybeSingle();
-
-        if (metaError) {
-          console.error('Error fetching challenge metadata:', metaError);
-          // Don't set error state for metadata - we can use defaults
-          console.log('Using default metadata for category:', category);
-          setMetadata({
-            total_challenges: 300,
-            challenge_types: ["time-bomb", "stakeholder-tension", "trade-off-slider", "post-mortem", "resource-allocator", "dialogue-tree", "retrospective-fix"]
-          });
-        } else if (meta) {
-          console.log('Fetched challenge metadata:', meta);
-          // Type cast the challenge_types from Json to string[]
-          const typedMetadata: CategoryMetadata = {
-            total_challenges: meta.total_challenges,
-            challenge_types: Array.isArray(meta.challenge_types) ? meta.challenge_types as string[] : []
-          };
-          setMetadata(typedMetadata);
-        } else {
-          // No metadata found, use defaults
-          console.log('No metadata found, using defaults for category:', category);
-          setMetadata({
-            total_challenges: 300,
-            challenge_types: ["time-bomb", "stakeholder-tension", "trade-off-slider", "post-mortem", "resource-allocator", "dialogue-tree", "retrospective-fix"]
-          });
-        }
       } catch (error) {
         console.error('Error fetching challenge data:', error);
         setError('Failed to load challenge data');
@@ -160,6 +124,18 @@ const ChallengeLibrary = () => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
+  const handleRetryChallenge = (challenge: ChallengeHistory) => {
+    // Navigate to challenge selection with the specific category and difficulty
+    navigate('/challenge-selection', { 
+      state: { 
+        retryChallenge: true,
+        category: challenge.skill_area || category,
+        difficulty: challenge.difficulty,
+        originalChallengeTitle: challenge.challenge_title
+      }
+    });
   };
 
   // Don't render anything while redirecting
@@ -210,8 +186,9 @@ const ChallengeLibrary = () => {
   }
 
   const completedCount = challengeHistory.length;
-  const totalCount = metadata?.total_challenges || 300;
-  const progressPercentage = (completedCount / totalCount) * 100;
+  const averageScore = completedCount > 0 
+    ? Math.round(challengeHistory.reduce((sum, challenge) => sum + (challenge.score || 0), 0) / completedCount)
+    : 0;
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -240,15 +217,30 @@ const ChallengeLibrary = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-2xl font-bold text-white">{completedCount} of {totalCount}</span>
-                <Badge variant="secondary" className="bg-blue-600/20 text-blue-400">
-                  {Math.round(progressPercentage)}% Complete
-                </Badge>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center">
+                  <span className="text-3xl font-bold text-white">{completedCount}</span>
+                  <p className="text-sm text-gray-400">Challenges Completed</p>
+                </div>
+                <div className="text-center">
+                  <span className="text-3xl font-bold text-blue-400">{averageScore}%</span>
+                  <p className="text-sm text-gray-400">Average Score</p>
+                </div>
               </div>
-              <Progress value={progressPercentage} className="h-3" />
+              {completedCount > 0 && (
+                <div>
+                  <div className="flex justify-between mb-2">
+                    <span className="text-sm text-gray-400">Performance</span>
+                    <span className="text-sm text-white">{averageScore}%</span>
+                  </div>
+                  <Progress value={averageScore} className="h-2" />
+                </div>
+              )}
               <p className="text-sm text-gray-400">
-                You've completed {completedCount} challenges. Keep going to master {currentCategory.name}!
+                {completedCount === 0 
+                  ? `Start your first challenge in ${currentCategory.name}!`
+                  : `You've completed ${completedCount} challenge${completedCount === 1 ? '' : 's'}. Keep going to master ${currentCategory.name}!`
+                }
               </p>
             </div>
           </CardContent>
@@ -284,8 +276,17 @@ const ChallengeLibrary = () => {
                         <Badge variant="secondary" className="bg-gray-700 text-gray-300">
                           {challenge.difficulty}
                         </Badge>
-                        {challenge.score && (
-                          <Badge variant="secondary" className="bg-green-600/20 text-green-400">
+                        {challenge.score !== null && (
+                          <Badge 
+                            variant="secondary" 
+                            className={`${
+                              challenge.score >= 80 
+                                ? 'bg-green-600/20 text-green-400' 
+                                : challenge.score >= 60 
+                                ? 'bg-yellow-600/20 text-yellow-400'
+                                : 'bg-red-600/20 text-red-400'
+                            }`}
+                          >
                             {challenge.score}% Score
                           </Badge>
                         )}
@@ -300,8 +301,8 @@ const ChallengeLibrary = () => {
                       <Button 
                         variant="outline" 
                         size="sm"
-                        className="border-gray-600 text-gray-300 hover:bg-gray-700"
-                        onClick={() => navigate('/challenge-selection')}
+                        className="border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
+                        onClick={() => handleRetryChallenge(challenge)}
                       >
                         Retry Challenge
                       </Button>

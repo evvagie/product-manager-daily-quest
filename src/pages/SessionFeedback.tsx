@@ -88,7 +88,7 @@ const SessionFeedback = () => {
     }
   }, []); // Only run once on mount
 
-  // Save session data only when feedback is ready and not already saved
+  // Save session data and individual exercises
   useEffect(() => {
     const saveSessionData = async () => {
       if (!user || loading || !personalizedFeedback || sessionSaved) return
@@ -110,6 +110,38 @@ const SessionFeedback = () => {
           .single()
 
         if (sessionError) throw sessionError
+
+        // Save individual exercises to challenge_history
+        if (challengeSession && challengeSession.exercises) {
+          const challengeHistoryRecords = challengeSession.exercises.map((exercise: any, index: number) => {
+            const exerciseAnswer = exerciseAnswers ? exerciseAnswers[index] : null;
+            const isCorrect = exerciseAnswer && exercise.content?.options?.find((opt: any) => opt.id === exerciseAnswer?.selectedOptionId)?.isCorrect;
+            const exerciseScore = isCorrect ? 100 : 0;
+            
+            return {
+              user_id: user.id,
+              challenge_id: `${challengeSession.sessionId}-exercise-${index}`,
+              skill_area: category,
+              challenge_type: exercise.type || 'multiple-choice',
+              challenge_title: exercise.title,
+              completion_date: new Date().toISOString(),
+              score: exerciseScore,
+              time_taken: exercise.timeLimit || 60, // Default to 60 seconds
+              difficulty: difficulty
+            };
+          });
+
+          const { error: historyError } = await supabase
+            .from('challenge_history')
+            .insert(challengeHistoryRecords);
+
+          if (historyError) {
+            console.error('Error saving challenge history:', historyError);
+            // Don't throw error, just log it
+          } else {
+            console.log('Challenge history saved successfully');
+          }
+        }
 
         // Get current user data
         const { data: userData, error: userError } = await supabase
