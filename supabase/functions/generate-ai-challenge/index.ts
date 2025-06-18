@@ -15,48 +15,59 @@ serve(async (req) => {
 
   try {
     const { skillArea, difficulty } = await req.json();
-    const openAIApiKey = Deno.env.get('YUNO_KEY');
+    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
     if (!openAIApiKey) {
-      throw new Error('YUNO_KEY is not set');
+      throw new Error('OPENAI_API_KEY is not set');
     }
 
-    const prompt = `You are a challenge generator engine for a Product Manager simulator. For each request, invent a completely original challenge: scenario, interaction type, format, structure. The challenge type can be known (drag & drop, form, multiple-choice, slider) or invented on the fly (ex: recompose a timeline, make a budget arbitration, simulate a Slack exchange, stakeholder mapping, feature prioritization matrix...). 
+    const prompt = `Create a realistic Product Manager challenge for a simulation game.
 
-Return everything in structured JSON format with: title, type, instructions, content, options, correct answer, explanation, tags, level.
-
-Parameters:
+PARAMETERS:
 - Skill Area: ${skillArea}
-- Difficulty: ${difficulty}
+- Difficulty Level: ${difficulty}
 
-Create a realistic Product Manager challenge scenario. Be creative with the interaction type - you can invent new formats that make sense for PM work.
+REQUIREMENTS:
+- Create a completely original, realistic PM scenario
+- Choose an appropriate interaction type (multiple-choice, slider, drag-drop, dialogue, ranking, or invent a new one)
+- Make it challenging and engaging for a ${difficulty} level PM
+- Include realistic data, metrics, and context
+- Provide meaningful consequences for different choices
 
-Required JSON structure:
+CHALLENGE TYPES TO CHOOSE FROM:
+- multiple-choice: Decision-making scenarios with 3-4 options
+- slider: Trade-off decisions (resource allocation, priority balancing)
+- drag-drop: Prioritization matrices, resource allocation
+- dialogue: Stakeholder conversations, team interactions
+- ranking: Feature prioritization, retrospective analysis
+- Or create a custom interaction type that fits the scenario
+
+Return a JSON object with this exact structure:
 {
-  "id": "unique-id",
+  "id": "unique-challenge-id",
   "title": "Challenge Title",
-  "description": "Brief description",
-  "type": "interaction-type", 
-  "timeLimit": 120,
+  "description": "Brief description of what the user will do",
+  "type": "interaction-type",
+  "timeLimit": 180,
   "content": {
-    "context": "Detailed scenario context",
+    "context": "Detailed scenario background (2-3 sentences)",
     "scenario": "Specific situation description",
-    "instructions": "What the user needs to do",
-    "data": {}, // Any supporting data/metrics
+    "instructions": "Clear instructions on what to do",
+    "data": "Any supporting data, metrics, or background info",
     "options": [
       {
         "id": "option-1",
-        "text": "Option text",
-        "description": "Option description",
-        "isCorrect": true/false,
-        "quality": "excellent|good|average|poor",
-        "explanation": "Why this choice leads to this outcome",
+        "text": "Option description",
+        "description": "Additional context for this choice",
+        "isCorrect": true,
+        "quality": "excellent",
+        "explanation": "Why this is the best/worst choice and what happens",
         "consequences": [
           {
-            "type": "positive|negative|neutral",
-            "title": "Consequence title",
-            "description": "What happens",
-            "impact": "Long-term impact"
+            "type": "positive",
+            "title": "Immediate outcome",
+            "description": "What happens right away",
+            "impact": "Long-term implications"
           }
         ],
         "kpiImpact": {
@@ -69,19 +80,16 @@ Required JSON structure:
     ]
   },
   "format": {
-    "id": "custom-format",
+    "id": "format-id",
     "name": "Format Name",
-    "description": "Format description",
-    "type": "custom-interaction-type",
-    "timeLimit": 120,
-    "steps": 1,
-    "interactionType": "multiple-choice"
+    "type": "interaction-type",
+    "timeLimit": 180
   }
 }
 
-Make it challenging, realistic, and engaging. Focus on real PM scenarios like feature prioritization, stakeholder management, technical trade-offs, user research decisions, etc.`;
+Make it realistic, specific to ${skillArea}, and appropriate for ${difficulty} level. Focus on real PM scenarios like stakeholder management, feature prioritization, technical trade-offs, user research, go-to-market decisions, etc.`;
 
-    console.log('Calling OpenAI with prompt for:', { skillArea, difficulty });
+    console.log('Generating AI challenge for:', { skillArea, difficulty });
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -94,43 +102,54 @@ Make it challenging, realistic, and engaging. Focus on real PM scenarios like fe
         messages: [
           { 
             role: 'system', 
-            content: 'You are an expert Product Manager challenge generator. Always respond with valid JSON only, no additional text.' 
+            content: 'You are an expert Product Manager challenge generator. Create realistic, engaging challenges that test real PM skills. Always respond with valid JSON only, no additional text or markdown.' 
           },
           { 
             role: 'user', 
             content: prompt 
           }
         ],
-        temperature: 0.8,
-        max_tokens: 2000,
+        temperature: 0.9,
+        max_tokens: 2500,
       }),
     });
 
     if (!response.ok) {
+      console.error(`OpenAI API error: ${response.status} ${response.statusText}`);
+      const errorText = await response.text();
+      console.error('Error details:', errorText);
+      
+      if (response.status === 429) {
+        throw new Error('OpenAI API rate limit exceeded. Please try again in a few minutes.');
+      }
       throw new Error(`OpenAI API error: ${response.status}`);
     }
 
     const data = await response.json();
     const generatedContent = data.choices[0].message.content;
     
-    console.log('Raw OpenAI response:', generatedContent);
+    console.log('Raw OpenAI response length:', generatedContent.length);
 
     // Parse the JSON response from OpenAI
     let challengeData;
     try {
-      challengeData = JSON.parse(generatedContent);
+      // Clean the response in case there's any markdown formatting
+      const cleanContent = generatedContent.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      challengeData = JSON.parse(cleanContent);
     } catch (parseError) {
       console.error('JSON parse error:', parseError);
       console.error('Raw content:', generatedContent);
       throw new Error('Invalid JSON response from OpenAI');
     }
 
-    // Ensure required fields and add timestamp
+    // Ensure required fields and add metadata
     challengeData.id = challengeData.id || `ai-${skillArea}-${difficulty}-${Date.now()}`;
     challengeData.generatedAt = new Date().toISOString();
     challengeData.source = 'openai';
+    challengeData.skillArea = skillArea;
+    challengeData.difficulty = difficulty;
 
-    console.log('Generated challenge:', challengeData.title);
+    console.log('Successfully generated challenge:', challengeData.title);
 
     return new Response(JSON.stringify(challengeData), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
