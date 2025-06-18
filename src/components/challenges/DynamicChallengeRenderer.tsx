@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -25,17 +26,23 @@ export const DynamicChallengeRenderer = ({
   const [resourceAllocation, setResourceAllocation] = useState<{ [key: string]: number }>({});
   const [conversationState, setConversationState] = useState(0);
 
-  // Add debugging
-  console.log('Rendering challenge:', {
-    type: challenge.type,
-    formatType: challenge.format?.type,
-    source: challenge.source,
-    content: challenge.content
-  });
+  // Memoize the challenge analysis to prevent re-computation
+  const challengeInfo = useMemo(() => {
+    console.log('Analyzing challenge:', {
+      type: challenge.type,
+      formatType: challenge.format?.type,
+      source: challenge.source,
+      content: challenge.content
+    });
+
+    return {
+      type: challenge.type,
+      isAIGenerated: challenge.source === 'openai' || challenge.generatedAt
+    };
+  }, [challenge.type, challenge.format?.type, challenge.source, challenge.generatedAt]);
 
   // Check if this is an AI-generated challenge
-  if (challenge.source === 'openai' || challenge.generatedAt) {
-    console.log('Rendering AI-generated challenge');
+  if (challengeInfo.isAIGenerated) {
     return (
       <AIGeneratedChallenge
         challenge={challenge}
@@ -46,7 +53,7 @@ export const DynamicChallengeRenderer = ({
     );
   }
 
-  const getQualityBadge = (quality: string) => {
+  const getQualityBadge = useCallback((quality: string) => {
     const qualityConfig = {
       excellent: { color: 'bg-green-100 text-green-700', label: '✓ Excellent' },
       good: { color: 'bg-blue-100 text-blue-700', label: '✓ Good' },
@@ -56,13 +63,24 @@ export const DynamicChallengeRenderer = ({
     
     const config = qualityConfig[quality as keyof typeof qualityConfig] || qualityConfig.average;
     return <Badge className={config.color}>{config.label}</Badge>;
-  };
+  }, []);
+
+  const handleSliderChange = useCallback((tradeOffName: string, value: number[]) => {
+    const newValues = { ...sliderValues, [tradeOffName]: value[0] };
+    setSliderValues(newValues);
+    onAnswer(newValues);
+  }, [sliderValues, onAnswer]);
+
+  const handleResourceChange = useCallback((priorityId: string, delta: number) => {
+    const current = resourceAllocation[priorityId] || 1;
+    const newValue = current + delta;
+    const newAllocation = { ...resourceAllocation, [priorityId]: newValue };
+    setResourceAllocation(newAllocation);
+    onAnswer(newAllocation);
+  }, [resourceAllocation, onAnswer]);
 
   const renderChallengeContent = () => {
-    // Use challenge.type (which comes from format.interactionType) for switching
-    const challengeType = challenge.type;
-    
-    console.log('Rendering challenge type:', challengeType);
+    const challengeType = challengeInfo.type;
     
     switch (challengeType) {
       case 'multiple-choice':
@@ -76,13 +94,11 @@ export const DynamicChallengeRenderer = ({
       case 'ranking':
         return renderRetrospective();
       default:
-        console.warn('Unknown challenge type, falling back to multiple choice:', challengeType);
         return renderMultipleChoiceFallback();
     }
   };
 
   const renderMultipleChoiceFallback = () => {
-    // Fallback for unrecognized challenge types - always show options if they exist
     const options = challenge.content?.options || [];
     
     if (options.length === 0) {
@@ -163,11 +179,7 @@ export const DynamicChallengeRenderer = ({
             </div>
             <Slider
               value={[sliderValues[tradeOff.name] || tradeOff.value]}
-              onValueChange={(value) => {
-                const newValues = { ...sliderValues, [tradeOff.name]: value[0] };
-                setSliderValues(newValues);
-                onAnswer(newValues);
-              }}
+              onValueChange={(value) => handleSliderChange(tradeOff.name, value)}
               max={tradeOff.max}
               step={1}
               className="w-full"
@@ -232,14 +244,7 @@ export const DynamicChallengeRenderer = ({
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => {
-                    const current = resourceAllocation[priority.id] || 1;
-                    if (current > 1) {
-                      const newAllocation = { ...resourceAllocation, [priority.id]: current - 1 };
-                      setResourceAllocation(newAllocation);
-                      onAnswer(newAllocation);
-                    }
-                  }}
+                  onClick={() => handleResourceChange(priority.id, -1)}
                   disabled={!resourceAllocation[priority.id] || resourceAllocation[priority.id] <= 1}
                   className="border-gray-400"
                 >
@@ -253,14 +258,7 @@ export const DynamicChallengeRenderer = ({
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => {
-                    const current = resourceAllocation[priority.id] || 1;
-                    if (allocated < totalResources && current < 4) {
-                      const newAllocation = { ...resourceAllocation, [priority.id]: current + 1 };
-                      setResourceAllocation(newAllocation);
-                      onAnswer(newAllocation);
-                    }
-                  }}
+                  onClick={() => handleResourceChange(priority.id, 1)}
                   disabled={allocated >= totalResources || (resourceAllocation[priority.id] || 1) >= 4}
                   className="border-gray-400"
                 >
