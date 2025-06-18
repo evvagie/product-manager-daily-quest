@@ -22,7 +22,15 @@ const SessionFeedback = () => {
     return null
   }
 
-  const { answers, category, difficulty, challenges } = sessionData
+  const { challenge, answer, timeUsed } = sessionData
+  
+  // Extract category and difficulty from challenge or URL params
+  const category = challenge?.content?.category || 'general'
+  const difficulty = challenge?.content?.difficulty || 'beginner'
+  
+  // For single challenge format, we have 1 challenge and 1 answer
+  const answers = answer ? [answer] : []
+  const challenges = 1
   
   // Calculate performance metrics
   const completedChallenges = answers.filter((a: any) => a !== undefined).length
@@ -64,7 +72,7 @@ const SessionFeedback = () => {
         // Fallback to basic feedback if generation fails
         setPersonalizedFeedback({
           score: Math.round(completionRate * 0.8),
-          strengths: ["You completed the challenges successfully"],
+          strengths: ["You completed the challenge successfully"],
           improvements: ["Keep practicing to improve your PM skills"],
           progress_statement: "You're making progress in your PM journey",
           recommendation: "Try another session to continue improving your skills"
