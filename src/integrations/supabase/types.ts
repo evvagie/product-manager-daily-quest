@@ -48,6 +48,7 @@ export type Database = {
           email: string
           id: string
           last_active_at: string | null
+          last_streak_update: string | null
           level: number
           progression_jour: number
           streak: number
@@ -59,6 +60,7 @@ export type Database = {
           email: string
           id: string
           last_active_at?: string | null
+          last_streak_update?: string | null
           level?: number
           progression_jour?: number
           streak?: number
@@ -70,6 +72,7 @@ export type Database = {
           email?: string
           id?: string
           last_active_at?: string | null
+          last_streak_update?: string | null
           level?: number
           progression_jour?: number
           streak?: number
@@ -83,7 +86,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      calculate_realistic_streak: {
+        Args: { user_uuid: string }
+        Returns: number
+      }
+      update_user_streak: {
+        Args: { user_uuid: string }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never

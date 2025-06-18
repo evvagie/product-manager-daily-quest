@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
@@ -98,7 +97,7 @@ const SessionFeedback = () => {
 
         if (sessionError) throw sessionError
 
-        // Update user stats
+        // Get current user data
         const { data: userData, error: userError } = await supabase
           .from('users')
           .select('xp, level, streak')
@@ -110,14 +109,13 @@ const SessionFeedback = () => {
 
         const newXP = userData.xp + earnedXP
         const newLevel = Math.floor(newXP / 1000) + 1
-        const newStreak = userData.streak + 1
 
+        // Update user stats (XP, level, progression) but let the streak function handle streak calculation
         const { error: updateError } = await supabase
           .from('users')
           .update({
             xp: newXP,
             level: newLevel,
-            streak: newStreak,
             progression_jour: personalizedFeedback.score,
             last_active_at: new Date().toISOString()
           })
@@ -125,12 +123,21 @@ const SessionFeedback = () => {
 
         if (updateError) throw updateError
 
-        setStreak(newStreak)
+        // Update streak using the realistic calculation function
+        const { data: updatedStreak, error: streakError } = await supabase
+          .rpc('update_user_streak', { user_uuid: user.id });
+
+        if (streakError) {
+          console.error('Error updating streak:', streakError);
+          setStreak(userData.streak); // Fallback to current streak
+        } else {
+          setStreak(updatedStreak || 0);
+        }
         
         // Check for new badges
         const badges = []
         if (completedChallenges === challenges) badges.push('Session Complete')
-        if (newStreak >= 7) badges.push('Week Warrior')
+        if ((updatedStreak || 0) >= 7) badges.push('Week Warrior')
         if (newLevel > userData.level) badges.push('Level Up!')
         if (personalizedFeedback.score >= 85) badges.push('High Performer')
         
