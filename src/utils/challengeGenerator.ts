@@ -1,3 +1,4 @@
+import { supabase } from "@/integrations/supabase/client";
 
 interface ChallengeFormat {
   id: string;
@@ -153,7 +154,58 @@ const difficultyModifiers = {
   }
 };
 
-export const generateDynamicChallenge = (skillArea: string, difficulty: string): GeneratedChallenge => {
+export const generateDynamicChallenge = async (skillArea: string, difficulty: string): Promise<GeneratedChallenge> => {
+  // First try to generate with OpenAI
+  try {
+    console.log('Attempting to generate AI challenge for:', { skillArea, difficulty });
+    
+    const { data, error } = await supabase.functions.invoke('generate-ai-challenge', {
+      body: { skillArea, difficulty }
+    });
+
+    if (error) {
+      console.error('Supabase function error:', error);
+      throw new Error(error.message);
+    }
+
+    if (data && !data.error && !data.fallback) {
+      console.log('Successfully generated AI challenge:', data.title);
+      
+      // Ensure the AI-generated challenge has the right structure
+      const aiChallenge: GeneratedChallenge = {
+        id: data.id,
+        title: data.title,
+        description: data.description,
+        type: data.type,
+        timeLimit: data.timeLimit,
+        content: data.content,
+        format: data.format || {
+          id: 'ai-generated',
+          name: 'AI Generated Challenge',
+          description: data.description,
+          type: data.type,
+          timeLimit: data.timeLimit,
+          steps: 1,
+          interactionType: data.type
+        }
+      };
+
+      return aiChallenge;
+    } else {
+      console.warn('AI generation failed, falling back to static generation');
+      throw new Error('AI generation returned error or fallback flag');
+    }
+
+  } catch (error) {
+    console.error('AI challenge generation failed:', error);
+    console.log('Falling back to static challenge generation');
+    
+    // Fallback to existing static generation
+    return generateStaticChallenge(skillArea, difficulty);
+  }
+};
+
+const generateStaticChallenge = (skillArea: string, difficulty: string): GeneratedChallenge => {
   // Randomly select a challenge format
   const format = challengeFormats[Math.floor(Math.random() * challengeFormats.length)];
   const modifier = difficultyModifiers[difficulty as keyof typeof difficultyModifiers];
@@ -205,7 +257,7 @@ export const generateDynamicChallenge = (skillArea: string, difficulty: string):
   };
   
   // Add debugging
-  console.log('Generated challenge:', {
+  console.log('Generated static challenge:', {
     formatType: format.type,
     interactionType: format.interactionType,
     challengeType: challenge.type,

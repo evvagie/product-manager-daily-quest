@@ -6,6 +6,7 @@ import { Slider } from "@/components/ui/slider";
 import { KPIDisplay } from './KPIDisplay';
 import { TeamChat } from './TeamChat';
 import { ConsequenceDisplay } from './ConsequenceDisplay';
+import { AIGeneratedChallenge } from './AIGeneratedChallenge';
 
 interface DynamicChallengeRendererProps {
   challenge: any;
@@ -28,8 +29,22 @@ export const DynamicChallengeRenderer = ({
   console.log('Rendering challenge:', {
     type: challenge.type,
     formatType: challenge.format?.type,
+    source: challenge.source,
     content: challenge.content
   });
+
+  // Check if this is an AI-generated challenge
+  if (challenge.source === 'openai' || challenge.generatedAt) {
+    console.log('Rendering AI-generated challenge');
+    return (
+      <AIGeneratedChallenge
+        challenge={challenge}
+        onAnswer={onAnswer}
+        currentAnswer={currentAnswer}
+        showConsequences={showConsequences}
+      />
+    );
+  }
 
   const getQualityBadge = (quality: string) => {
     const qualityConfig = {

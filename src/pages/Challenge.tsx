@@ -1,272 +1,230 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { useState, useEffect } from "react";
-import { getEnhancedChallengesForSession } from "@/data/enhancedChallengeData";
-import { KPIDisplay } from "@/components/challenges/KPIDisplay";
-import { TeamChat } from "@/components/challenges/TeamChat";
-import { TimePressureIndicator } from "@/components/challenges/TimePressureIndicator";
-import { ConsequenceDisplay } from "@/components/challenges/ConsequenceDisplay";
-import { generateDynamicChallenge } from "@/utils/challengeGenerator";
-import { DynamicChallengeRenderer } from "@/components/challenges/DynamicChallengeRenderer";
 
-interface EnhancedChallengeData {
-  id: string;
-  title: string;
-  description: string;
-  type: 'time-pressure' | 'kpi-impact' | 'team-chat' | 'crisis-management' | 'multi-step' | 'drag-drop' | 'multiple-choice' | 'ranking' | 'scenario';
-  timeLimit: number;
-  content: any;
-}
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { TimePressureIndicator } from '@/components/challenges/TimePressureIndicator';
+import { DynamicChallengeRenderer } from '@/components/challenges/DynamicChallengeRenderer';
+import { ConsequenceDisplay } from '@/components/challenges/ConsequenceDisplay';
+import { KPIDisplay } from '@/components/challenges/KPIDisplay';
+import { generateDynamicChallenge } from '@/utils/challengeGenerator';
+import { useToast } from '@/components/ui/use-toast';
 
 const Challenge = () => {
+  const { skillArea, difficulty } = useParams();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const category = searchParams.get('category') || 'strategy';
-  const difficulty = searchParams.get('difficulty') || 'beginner';
-  const [currentChallenge, setCurrentChallenge] = useState(0);
-  const [answers, setAnswers] = useState<any[]>([]);
-  const [timeLeft, setTimeLeft] = useState(300);
-  const [sessionStarted, setSessionStarted] = useState(false);
+  const { toast } = useToast();
+  
+  const [challenge, setChallenge] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [timeLeft, setTimeLeft] = useState(0);
+  const [currentAnswer, setCurrentAnswer] = useState<any>(null);
   const [showConsequences, setShowConsequences] = useState(false);
-  const [currentKPIs, setCurrentKPIs] = useState<any>(null);
-  const [generatedChallenges, setGeneratedChallenges] = useState<any[]>([]);
-  const [proceedAllowed, setProceedAllowed] = useState(false);
-
-  // Generate dynamic challenges when session starts
-  const generateSessionChallenges = () => {
-    console.log('Generating challenges for:', { category, difficulty });
-    const challenges = [];
-    for (let i = 0; i < 4; i++) {
-      challenges.push(generateDynamicChallenge(category, difficulty));
-    }
-    console.log('Generated challenges:', challenges);
-    setGeneratedChallenges(challenges);
-    return challenges;
-  };
-
-  const currentChallengeData = generatedChallenges[currentChallenge];
-  const progress = generatedChallenges.length > 0 ? (currentChallenge + 1) / generatedChallenges.length * 100 : 0;
+  const [isComplete, setIsComplete] = useState(false);
 
   useEffect(() => {
-    if (sessionStarted && timeLeft > 0 && !showConsequences) {
+    const loadChallenge = async () => {
+      if (!skillArea || !difficulty) {
+        navigate('/challenge-selection');
+        return;
+      }
+
+      setLoading(true);
+      try {
+        console.log('Loading challenge for:', { skillArea, difficulty });
+        const newChallenge = await generateDynamicChallenge(skillArea, difficulty);
+        console.log('Challenge loaded:', newChallenge);
+        
+        setChallenge(newChallenge);
+        setTimeLeft(newChallenge.timeLimit);
+        
+        // Show success message based on source
+        if (newChallenge.source === 'openai') {
+          toast({
+            title: "🤖 AI Challenge Generated!",
+            description: "A unique challenge created just for you",
+          });
+        } else {
+          toast({
+            title: "Challenge Ready",
+            description: "Using fallback challenge system",
+          });
+        }
+      } catch (error) {
+        console.error('Error loading challenge:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load challenge. Please try again.",
+          variant: "destructive",
+        });
+        navigate('/challenge-selection');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadChallenge();
+  }, [skillArea, difficulty, navigate, toast]);
+
+  useEffect(() => {
+    if (timeLeft > 0 && !isComplete) {
       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
       return () => clearTimeout(timer);
     }
-  }, [sessionStarted, timeLeft, showConsequences]);
-
-  useEffect(() => {
-    if (currentChallengeData?.content?.currentKPIs) {
-      setCurrentKPIs(currentChallengeData.content.currentKPIs);
-    }
-  }, [currentChallengeData]);
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const handleStartSession = () => {
-    const challenges = generateSessionChallenges();
-    setSessionStarted(true);
-    setTimeLeft(challenges[0]?.timeLimit || 300);
-  };
+  }, [timeLeft, isComplete]);
 
   const handleAnswer = (answer: any) => {
-    console.log('Answer received:', answer, 'for challenge:', currentChallengeData?.title);
-    const newAnswers = [...answers];
-    newAnswers[currentChallenge] = answer;
-    setAnswers(newAnswers);
-    setProceedAllowed(true);
-    
-    // Show consequences for multiple choice and dialogue challenges
-    if (currentChallengeData?.type === 'multiple-choice' || currentChallengeData?.type === 'dialogue') {
-      const selectedOption = currentChallengeData.content.options?.find((opt: any) => 
-        opt.id === answer || opt.id === answer?.id
-      );
-      if (selectedOption) {
-        setShowConsequences(true);
-        if (selectedOption.kpiImpact) {
-          setCurrentKPIs(selectedOption.kpiImpact);
-        }
-      }
-    }
-  };
-
-  const handleNext = () => {
-    if (currentChallenge < generatedChallenges.length - 1) {
-      setCurrentChallenge(currentChallenge + 1);
-      setTimeLeft(generatedChallenges[currentChallenge + 1].timeLimit || 300);
-      setShowConsequences(false);
-      setProceedAllowed(false);
-    } else {
-      // Session completed
-      navigate('/session-feedback', {
-        state: {
-          answers,
-          category,
-          difficulty,
-          challenges: generatedChallenges.length
-        }
-      });
-    }
+    setCurrentAnswer(answer);
+    setShowConsequences(true);
   };
 
   const handleTimeUp = () => {
-    if (!showConsequences && (currentChallengeData.type === 'multiple-choice' || currentChallengeData.type === 'dialogue')) {
-      // Auto-advance if time runs out and no answer selected
-      setShowConsequences(true);
-      setProceedAllowed(true);
+    if (!isComplete) {
+      toast({
+        title: "Time's Up!",
+        description: "The challenge has ended.",
+        variant: "destructive",
+      });
+      setIsComplete(true);
     }
   };
 
-  if (!sessionStarted) {
+  const handleComplete = () => {
+    setIsComplete(true);
+    navigate('/session-feedback', {
+      state: {
+        challenge,
+        answer: currentAnswer,
+        timeUsed: challenge?.timeLimit - timeLeft
+      }
+    });
+  };
+
+  if (loading) {
     return (
-      <div className="min-h-screen bg-white text-black">
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-2xl mx-auto">
-            <Button variant="ghost" onClick={() => navigate('/challenge-selection')} className="mb-4 text-gray-600 hover:text-black">
-              ← Back to Selection
-            </Button>
-
-            <Card className="bg-white border-gray-200 mb-8">
-              <CardHeader className="text-center">
-                <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-2xl">🎯</span>
-                </div>
-                <CardTitle className="text-2xl text-black">Ready for Dynamic Challenges?</CardTitle>
-                <CardDescription className="text-gray-600">
-                  {category} • {difficulty} • 4 Unique Interactive Challenges
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="text-center">
-                <div className="mb-6">
-                  <p className="text-gray-700 mb-4">
-                    You're about to start a dynamic PM challenge session with randomly generated scenarios, varying formats, and real-time feedback.
-                  </p>
-                  
-                  <div className="grid grid-cols-2 gap-4 mb-6">
-                    <div className="p-4 rounded-lg bg-blue-50">
-                      <p className="text-blue-600 font-semibold">~12-15 min</p>
-                      <p className="text-sm text-gray-700">Estimated time</p>
-                    </div>
-                    <div className="p-4 bg-gray-100 rounded-lg">
-                      <p className="text-green-600 font-semibold">Dynamic</p>
-                      <p className="text-gray-700 text-sm">Unique every time</p>
-                    </div>
-                  </div>
-                  
-                  <div className="text-left bg-gray-50 p-4 rounded-lg mb-4">
-                    <h4 className="font-medium text-black mb-2">Challenge Formats You Might Encounter:</h4>
-                    <ul className="text-sm text-gray-700 space-y-1">
-                      <li>• ⏰ Time-bomb decisions under pressure</li>
-                      <li>• 🎯 Stakeholder tension mapping</li>
-                      <li>• ⚖️ Trade-off balance sliders</li>
-                      <li>• 🔍 Post-mortem investigations</li>
-                      <li>• 📊 Resource allocation challenges</li>
-                      <li>• 💬 Dialogue tree conversations</li>
-                      <li>• 🔄 Retrospective analysis</li>
-                    </ul>
-                  </div>
-                </div>
-
-                <Button size="lg" className="w-full bg-blue-600 hover:bg-blue-700 text-white" onClick={handleStartSession}>
-                  Generate & Start Dynamic Session →
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+        <div className="max-w-4xl mx-auto">
+          <Card className="bg-white border-gray-200">
+            <CardContent className="p-8 text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <h2 className="text-xl font-semibold text-gray-800 mb-2">
+                🤖 Generating Your Challenge...
+              </h2>
+              <p className="text-gray-600">
+                Our AI is creating a unique challenge just for you. This may take a few moments.
+              </p>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
   }
 
-  if (!currentChallengeData) {
+  if (!challenge) {
     return (
-      <div className="min-h-screen bg-white text-black flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Generating your unique challenges...</p>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+        <div className="max-w-4xl mx-auto">
+          <Card className="bg-white border-gray-200">
+            <CardContent className="p-8 text-center">
+              <h2 className="text-xl font-semibold text-red-600 mb-2">
+                Challenge Not Found
+              </h2>
+              <p className="text-gray-600 mb-4">
+                Unable to load the challenge. Please try again.
+              </p>
+              <Button onClick={() => navigate('/challenge-selection')}>
+                Back to Selection
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
   }
-
-  console.log('Rendering challenge page with:', currentChallengeData);
 
   return (
-    <div className="min-h-screen bg-white text-black">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header with Progress and Time */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <Badge variant="secondary" className="bg-blue-100 text-blue-600 mb-2">
-                Challenge {currentChallenge + 1} of {generatedChallenges.length} • {currentChallengeData.format.name}
-              </Badge>
-              <h1 className="text-2xl font-bold text-black">{currentChallengeData.title}</h1>
-            </div>
-            <div className="w-64">
-              {(currentChallengeData.format.type === 'time-bomb' || currentChallengeData.format.type === 'stakeholder-tension') ? (
-                <TimePressureIndicator 
-                  timeLeft={timeLeft} 
-                  totalTime={currentChallengeData.timeLimit} 
-                  onTimeUp={handleTimeUp}
-                />
-              ) : (
-                <div className="text-right">
-                  <div className="text-2xl font-mono text-blue-600">{formatTime(timeLeft)}</div>
-                  <div className="text-sm text-gray-600">Time remaining</div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+      <div className="max-w-4xl mx-auto space-y-6">
+        {/* Header */}
+        <Card className="bg-white border-gray-200">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-2xl text-black">
+                  {challenge.title}
+                </CardTitle>
+                <div className="flex items-center space-x-2 mt-2">
+                  <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                    {skillArea}
+                  </Badge>
+                  <Badge variant="secondary" className="bg-green-100 text-green-700">
+                    {difficulty}
+                  </Badge>
+                  {challenge.source === 'openai' && (
+                    <Badge className="bg-purple-100 text-purple-700">
+                      🤖 AI Generated
+                    </Badge>
+                  )}
                 </div>
-              )}
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => navigate('/challenge-selection')}
+                className="border-gray-400"
+              >
+                Exit Challenge
+              </Button>
             </div>
-          </div>
-          
-          <Progress value={progress} className="h-2 mb-2" />
-          <p className="text-gray-600 text-sm">{Math.round(progress)}% complete</p>
-        </div>
+          </CardHeader>
+        </Card>
 
-        {/* KPI Display for challenges with KPI impact */}
-        {currentKPIs && (
-          <KPIDisplay metrics={currentKPIs} />
+        {/* Timer */}
+        {!isComplete && (
+          <Card className="bg-white border-gray-200">
+            <CardContent className="p-4">
+              <TimePressureIndicator
+                timeLeft={timeLeft}
+                totalTime={challenge.timeLimit}
+                onTimeUp={handleTimeUp}
+              />
+            </CardContent>
+          </Card>
         )}
 
         {/* Challenge Content */}
-        <div className="max-w-4xl mx-auto">
-          <DynamicChallengeRenderer
-            challenge={currentChallengeData}
-            onAnswer={handleAnswer}
-            currentAnswer={answers[currentChallenge]}
-            showConsequences={showConsequences}
+        <DynamicChallengeRenderer
+          challenge={challenge}
+          onAnswer={handleAnswer}
+          currentAnswer={currentAnswer}
+          showConsequences={showConsequences}
+        />
+
+        {/* Consequences */}
+        {showConsequences && currentAnswer && (
+          <ConsequenceDisplay
+            consequences={challenge.content.options?.find((opt: any) => opt.id === currentAnswer)?.consequences || []}
           />
+        )}
 
-          {/* Show consequences after answer selection */}
-          {showConsequences && answers[currentChallenge] && currentChallengeData.content.options && (
-            <ConsequenceDisplay 
-              consequences={
-                currentChallengeData.content.options.find((opt: any) => opt.id === answers[currentChallenge])?.consequences || []
-              }
-            />
-          )}
+        {/* KPI Display */}
+        {showConsequences && currentAnswer && (
+          <KPIDisplay
+            kpis={challenge.content.options?.find((opt: any) => opt.id === currentAnswer)?.kpiImpact || {}}
+          />
+        )}
 
-          {/* Navigation */}
-          <div className="flex justify-between mt-6">
-            <Button variant="outline" className="border-gray-400 text-black hover:bg-gray-100" onClick={() => navigate('/challenge-selection')}>
-              Exit Session
-            </Button>
-            
-            <Button 
-              className="bg-blue-600 hover:bg-blue-700 text-white" 
-              onClick={handleNext} 
-              disabled={!proceedAllowed}
+        {/* Complete Button */}
+        {showConsequences && !isComplete && (
+          <div className="text-center">
+            <Button
+              onClick={handleComplete}
+              className="bg-green-600 hover:bg-green-700 text-white px-8 py-3"
             >
-              {currentChallenge === generatedChallenges.length - 1 ? 'Complete Session' : 'Next Challenge'} →
+              Complete Challenge
             </Button>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
