@@ -30,6 +30,7 @@ const ChallengeLibrary = () => {
   const [challengeHistory, setChallengeHistory] = useState<ChallengeHistory[]>([]);
   const [metadata, setMetadata] = useState<CategoryMetadata | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const categoryInfo = {
     strategy: {
@@ -66,7 +67,11 @@ const ChallengeLibrary = () => {
     const fetchChallengeData = async () => {
       if (!user || !category) return;
 
+      console.log('Fetching challenge data for category:', category, 'user:', user.id);
+
       try {
+        setError(null);
+        
         // Fetch challenge history for this category
         const { data: history, error: historyError } = await supabase
           .from('challenge_history')
@@ -77,29 +82,46 @@ const ChallengeLibrary = () => {
 
         if (historyError) {
           console.error('Error fetching challenge history:', historyError);
+          setError('Failed to load challenge history');
         } else {
+          console.log('Fetched challenge history:', history);
           setChallengeHistory(history || []);
         }
 
-        // Fetch metadata for this category
+        // Fetch metadata for this category - use maybeSingle() instead of single()
         const { data: meta, error: metaError } = await supabase
           .from('challenge_metadata')
           .select('total_challenges, challenge_types')
           .eq('skill_area', category)
-          .single();
+          .maybeSingle();
 
         if (metaError) {
           console.error('Error fetching challenge metadata:', metaError);
+          // Don't set error state for metadata - we can use defaults
+          console.log('Using default metadata for category:', category);
+          setMetadata({
+            total_challenges: 300,
+            challenge_types: ["time-bomb", "stakeholder-tension", "trade-off-slider", "post-mortem", "resource-allocator", "dialogue-tree", "retrospective-fix"]
+          });
         } else if (meta) {
+          console.log('Fetched challenge metadata:', meta);
           // Type cast the challenge_types from Json to string[]
           const typedMetadata: CategoryMetadata = {
             total_challenges: meta.total_challenges,
             challenge_types: Array.isArray(meta.challenge_types) ? meta.challenge_types as string[] : []
           };
           setMetadata(typedMetadata);
+        } else {
+          // No metadata found, use defaults
+          console.log('No metadata found, using defaults for category:', category);
+          setMetadata({
+            total_challenges: 300,
+            challenge_types: ["time-bomb", "stakeholder-tension", "trade-off-slider", "post-mortem", "resource-allocator", "dialogue-tree", "retrospective-fix"]
+          });
         }
       } catch (error) {
         console.error('Error fetching challenge data:', error);
+        setError('Failed to load challenge data');
       } finally {
         setLoading(false);
       }
@@ -128,6 +150,9 @@ const ChallengeLibrary = () => {
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Category Not Found</h1>
+          <p className="text-gray-400 mb-4">
+            The category "{category}" is not recognized. Available categories are: strategy, research, analytics, design
+          </p>
           <Button onClick={() => navigate('/dashboard')} variant="outline">
             Back to Dashboard
           </Button>
@@ -140,6 +165,20 @@ const ChallengeLibrary = () => {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div>Loading challenge library...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Error Loading Data</h1>
+          <p className="text-gray-400 mb-4">{error}</p>
+          <Button onClick={() => window.location.reload()} variant="outline">
+            Try Again
+          </Button>
+        </div>
       </div>
     );
   }
