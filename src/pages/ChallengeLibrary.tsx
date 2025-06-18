@@ -90,8 +90,13 @@ const ChallengeLibrary = () => {
 
         if (metaError) {
           console.error('Error fetching challenge metadata:', metaError);
-        } else {
-          setMetadata(meta);
+        } else if (meta) {
+          // Type cast the challenge_types from Json to string[]
+          const typedMetadata: CategoryMetadata = {
+            total_challenges: meta.total_challenges,
+            challenge_types: Array.isArray(meta.challenge_types) ? meta.challenge_types as string[] : []
+          };
+          setMetadata(typedMetadata);
         }
       } catch (error) {
         console.error('Error fetching challenge data:', error);
