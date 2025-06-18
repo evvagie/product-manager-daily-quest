@@ -123,7 +123,7 @@ export const AIGeneratedChallenge = ({
       {content.tradeOffs?.map((tradeOff: any, index: number) => (
         <div key={index} className="space-y-3">
           <div className="flex justify-between items-center">
-            <label className="text-sm font-medium text-black">{tr adeOff.name}</label>
+            <label className="text-sm font-medium text-black">{tradeOff.name}</label>
             <Badge variant="secondary" className="bg-blue-100 text-blue-600">
               {customState[tradeOff.name] || tradeOff.defaultValue || 50}%
             </Badge>
