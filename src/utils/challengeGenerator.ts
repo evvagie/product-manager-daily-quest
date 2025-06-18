@@ -49,7 +49,7 @@ Return a JSON object with this exact structure:
       "title": "Exercise Title",
       "description": "Exercise description",
       "type": "multiple-choice",
-      "timeLimit": 180,
+      "timeLimit": 60,
       "content": {
         "context": "Scenario description",
         "scenario": "Specific situation",
