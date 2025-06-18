@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -13,40 +14,74 @@ interface UserStats {
   streak: number;
   progression_jour: number;
 }
+
+interface ChallengeLibraryStats {
+  strategy: number;
+  research: number;
+  analytics: number;
+  design: number;
+}
+
 const Dashboard = () => {
   const navigate = useNavigate();
-  const {
-    user
-  } = useAuth();
+  const { user } = useAuth();
   const [stats, setStats] = useState<UserStats>({
     xp: 0,
     level: 1,
     streak: 0,
     progression_jour: 0
   });
+  const [challengeStats, setChallengeStats] = useState<ChallengeLibraryStats>({
+    strategy: 0,
+    research: 0,
+    analytics: 0,
+    design: 0
+  });
   const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     const fetchUserStats = async () => {
       if (!user) return;
+
       try {
         // First, update the user's streak using the new realistic calculation
-        const {
-          data: updatedStreak,
-          error: streakError
-        } = await supabase.rpc('update_user_streak', {
-          user_uuid: user.id
-        });
+        const { data: updatedStreak, error: streakError } = await supabase
+          .rpc('update_user_streak', { user_uuid: user.id });
+
         if (streakError) {
           console.error('Error updating streak:', streakError);
         }
 
         // Then fetch the updated user stats
-        const {
-          data,
-          error
-        } = await supabase.from('users').select('xp, level, streak, progression_jour').eq('id', user.id).single();
+        const { data, error } = await supabase
+          .from('users')
+          .select('xp, level, streak, progression_jour')
+          .eq('id', user.id)
+          .single();
+
         if (data && !error) {
           setStats(data);
+        }
+
+        // Fetch challenge completion counts for each category
+        const { data: challengeData, error: challengeError } = await supabase
+          .from('challenge_history')
+          .select('skill_area')
+          .eq('user_id', user.id);
+
+        if (challengeData && !challengeError) {
+          const counts = challengeData.reduce((acc, challenge) => {
+            acc[challenge.skill_area as keyof ChallengeLibraryStats] = 
+              (acc[challenge.skill_area as keyof ChallengeLibraryStats] || 0) + 1;
+            return acc;
+          }, {} as Partial<ChallengeLibraryStats>);
+
+          setChallengeStats({
+            strategy: counts.strategy || 0,
+            research: counts.research || 0,
+            analytics: counts.analytics || 0,
+            design: counts.design || 0
+          });
         }
       } catch (error) {
         console.error('Error fetching user stats:', error);
@@ -54,16 +89,54 @@ const Dashboard = () => {
         setLoading(false);
       }
     };
+
     fetchUserStats();
   }, [user]);
+
   const currentLevelXP = stats.level * 1000;
-  const progressToNextLevel = stats.xp % 1000 / 10;
+  const progressToNextLevel = (stats.xp % 1000) / 10;
+
+  const challengeCategories = [
+    {
+      id: 'strategy',
+      name: 'Product Strategy',
+      icon: '📊',
+      color: 'blue',
+      completed: challengeStats.strategy
+    },
+    {
+      id: 'research',
+      name: 'User Research',
+      icon: '🔍',
+      color: 'green', 
+      completed: challengeStats.research
+    },
+    {
+      id: 'analytics',
+      name: 'Data Analysis',
+      icon: '📈',
+      color: 'purple',
+      completed: challengeStats.analytics
+    },
+    {
+      id: 'design',
+      name: 'Product Design',
+      icon: '🎨',
+      color: 'pink',
+      completed: challengeStats.design
+    }
+  ];
+
   if (loading) {
-    return <div className="min-h-screen bg-black flex items-center justify-center">
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-white">Loading your dashboard...</div>
-      </div>;
+      </div>
+    );
   }
-  return <div className="min-h-screen bg-black text-white">
+
+  return (
+    <div className="min-h-screen bg-black text-white">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -80,7 +153,9 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <Progress value={progressToNextLevel} className="h-2" />
-              <p className="text-xs text-gray-500 mt-2">{Math.round(progressToNextLevel)}% to level {stats.level + 1}</p>
+              <p className="text-xs text-gray-500 mt-2">
+                {Math.round(progressToNextLevel)}% to level {stats.level + 1}
+              </p>
             </CardContent>
           </Card>
 
@@ -133,7 +208,10 @@ const Dashboard = () => {
                 </div>
                 <span className="text-2xl">🎯</span>
               </div>
-              <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white" onClick={() => navigate('/challenge-selection')}>
+              <Button 
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white" 
+                onClick={() => navigate('/challenge-selection')}
+              >
                 Start Today's Session →
               </Button>
             </CardContent>
@@ -173,41 +251,36 @@ const Dashboard = () => {
           <CardHeader>
             <CardTitle className="text-xl text-white">Challenge Library</CardTitle>
             <CardDescription className="text-gray-400">
-              Revisit previous challenges and practice specific PM skills
+              Explore your progress and revisit challenges by skill area
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid md:grid-cols-3 gap-4">
-              <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700 hover:border-gray-600 transition-colors cursor-pointer">
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-medium text-white">Product Strategy</h4>
-                  <span className="text-blue-400">📊</span>
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {challengeCategories.map((category) => (
+                <div 
+                  key={category.id}
+                  className="p-4 bg-gray-800/50 rounded-lg border border-gray-700 hover:border-gray-600 transition-colors cursor-pointer"
+                  onClick={() => navigate(`/challenge-library/${category.id}`)}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-medium text-white">{category.name}</h4>
+                    <span className={`text-${category.color}-400`}>{category.icon}</span>
+                  </div>
+                  <p className="text-sm text-gray-400 mb-3">
+                    {category.completed} challenges completed
+                  </p>
+                  <Progress value={(category.completed / 300) * 100} className="h-1" />
+                  <p className="text-xs text-gray-500 mt-2">
+                    {category.completed} of 300 available
+                  </p>
                 </div>
-                <p className="text-sm text-gray-400 mb-3">12 challenges completed</p>
-                <Progress value={75} className="h-1" />
-              </div>
-
-              <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700 hover:border-gray-600 transition-colors cursor-pointer">
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-medium text-white">User Research</h4>
-                  <span className="text-green-400">🔍</span>
-                </div>
-                <p className="text-sm text-gray-400 mb-3">8 challenges completed</p>
-                <Progress value={50} className="h-1" />
-              </div>
-
-              <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700 hover:border-gray-600 transition-colors cursor-pointer">
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-medium text-white">Data Analysis</h4>
-                  <span className="text-purple-400">📈</span>
-                </div>
-                <p className="text-sm text-gray-400 mb-3">5 challenges completed</p>
-                <Progress value={25} className="h-1" />
-              </div>
+              ))}
             </div>
           </CardContent>
         </Card>
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default Dashboard;

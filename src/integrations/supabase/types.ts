@@ -9,6 +9,72 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      challenge_history: {
+        Row: {
+          challenge_id: string
+          challenge_title: string
+          challenge_type: string
+          completion_date: string
+          created_at: string
+          difficulty: string
+          id: string
+          score: number | null
+          skill_area: string
+          time_taken: number | null
+          user_id: string
+        }
+        Insert: {
+          challenge_id: string
+          challenge_title: string
+          challenge_type: string
+          completion_date?: string
+          created_at?: string
+          difficulty: string
+          id?: string
+          score?: number | null
+          skill_area: string
+          time_taken?: number | null
+          user_id: string
+        }
+        Update: {
+          challenge_id?: string
+          challenge_title?: string
+          challenge_type?: string
+          completion_date?: string
+          created_at?: string
+          difficulty?: string
+          id?: string
+          score?: number | null
+          skill_area?: string
+          time_taken?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      challenge_metadata: {
+        Row: {
+          challenge_types: Json
+          created_at: string
+          id: string
+          skill_area: string
+          total_challenges: number
+        }
+        Insert: {
+          challenge_types?: Json
+          created_at?: string
+          id?: string
+          skill_area: string
+          total_challenges?: number
+        }
+        Update: {
+          challenge_types?: Json
+          created_at?: string
+          id?: string
+          skill_area?: string
+          total_challenges?: number
+        }
+        Relationships: []
+      }
       sessions: {
         Row: {
           classement_jour: number

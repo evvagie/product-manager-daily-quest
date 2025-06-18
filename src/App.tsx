@@ -16,6 +16,7 @@ import Dashboard from "./pages/Dashboard";
 import ChallengeSelection from "./pages/ChallengeSelection";
 import Challenge from "./pages/Challenge";
 import SessionFeedback from "./pages/SessionFeedback";
+import ChallengeLibrary from "./pages/ChallengeLibrary";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -51,6 +52,11 @@ const App = () => (
               <Route path="/session-feedback" element={
                 <ProtectedRoute>
                   <SessionFeedback />
+                </ProtectedRoute>
+              } />
+              <Route path="/challenge-library/:category" element={
+                <ProtectedRoute>
+                  <ChallengeLibrary />
                 </ProtectedRoute>
               } />
               <Route path="*" element={<NotFound />} />
