@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 export interface Exercise {
@@ -18,13 +19,17 @@ export interface ChallengeSession {
   source?: string;
   generatedAt?: string;
   randomSeed?: number;
+  timestamp?: number;
 }
 
 export const generateDynamicChallenge = async (skillArea: string, difficulty: string): Promise<ChallengeSession> => {
-  console.log('Generating dynamic challenge session:', { skillArea, difficulty });
+  const timestamp = Date.now();
+  console.log('🚀 Starting dynamic challenge generation:', { skillArea, difficulty, timestamp });
   
   try {
     // Always try to call the OpenAI edge function for fresh content
+    console.log('📡 Calling AI generation edge function...');
+    
     const { data, error } = await supabase.functions.invoke('generate-ai-challenge', {
       body: {
         skillArea,
@@ -33,28 +38,54 @@ export const generateDynamicChallenge = async (skillArea: string, difficulty: st
       }
     });
 
+    console.log('📋 Edge function response:', { 
+      success: !error, 
+      hasData: !!data, 
+      exerciseCount: data?.exercises?.length,
+      error: error?.message 
+    });
+
     if (error) {
-      console.error('Supabase function error:', error);
-      throw error;
+      console.error('❌ Supabase function error:', error);
+      throw new Error(`Edge function error: ${error.message}`);
     }
 
-    if (data && !data.error && data.exercises && data.exercises.length === 4) {
-      console.log('AI challenge session generated successfully with', data.exercises.length, 'exercises');
-      console.log('Session ID:', data.sessionId, 'Random Seed:', data.randomSeed);
+    // Validate the AI response
+    if (data && !data.error && data.exercises && Array.isArray(data.exercises) && data.exercises.length === 4) {
+      console.log('✅ AI challenge session generated successfully!', {
+        sessionId: data.sessionId,
+        exerciseCount: data.exercises.length,
+        source: data.source || 'openai',
+        randomSeed: data.randomSeed
+      });
+      
       return {
         ...data,
-        source: 'openai'
+        source: 'openai',
+        timestamp
       };
     } else {
-      console.warn('AI generation failed or incomplete, using fallback:', data?.error);
+      console.warn('⚠️ AI generation returned incomplete data:', {
+        hasError: !!data?.error,
+        errorMessage: data?.error,
+        hasExercises: !!data?.exercises,
+        exerciseCount: data?.exercises?.length,
+        expectedCount: 4
+      });
+      
       throw new Error(data?.error || 'AI generation failed or returned incomplete data');
     }
   } catch (error) {
-    console.error('Error calling AI generation function:', error);
-    console.log('Falling back to enhanced static challenge generation');
+    console.error('💥 Critical error in AI generation:', error);
     
-    // Fallback to enhanced static challenge generation with randomization
-    return generateEnhancedStaticSession(skillArea, difficulty);
+    // Only fallback as absolute last resort - but make it obvious it's fallback
+    console.log('🔄 Using enhanced static fallback as last resort');
+    
+    const fallbackSession = generateEnhancedStaticSession(skillArea, difficulty);
+    fallbackSession.source = 'static-fallback';
+    fallbackSession.timestamp = timestamp;
+    
+    return fallbackSession;
   }
 };
 

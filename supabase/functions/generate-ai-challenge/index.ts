@@ -17,79 +17,86 @@ serve(async (req) => {
     const { skillArea, difficulty, exerciseCount = 4 } = await req.json();
     const openAIApiKey = Deno.env.get('YUNO_KEY');
 
+    console.log('Generate AI Challenge called with:', { skillArea, difficulty, exerciseCount });
+    console.log('API Key available:', !!openAIApiKey);
+
     if (!openAIApiKey) {
-      console.error('YUNO_KEY is not set');
+      console.error('YUNO_KEY is not set in environment variables');
       return new Response(JSON.stringify({ 
-        error: 'OpenAI API key not configured',
-        fallback: true 
+        error: 'OpenAI API key not configured - YUNO_KEY missing',
+        details: 'Please ensure YUNO_KEY is set in Supabase Edge Function secrets'
       }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Add randomization to ensure unique content each time
-    const randomSeed = Math.floor(Math.random() * 10000);
-    const timestamp = new Date().toISOString();
+    // Add strong randomization to ensure completely unique content each time
+    const sessionTimestamp = Date.now();
+    const randomSeed = Math.floor(Math.random() * 100000);
+    const uniqueSessionId = `${skillArea}-${difficulty}-${sessionTimestamp}-${randomSeed}`;
 
-    const prompt = `Create ${exerciseCount} completely unique and fresh Product Manager challenges for a simulation game session.
+    console.log('Generating unique session:', uniqueSessionId);
 
-IMPORTANT: Generate entirely NEW and DIFFERENT scenarios each time - avoid repetition from previous sessions.
-Random Seed: ${randomSeed}
-Session Time: ${timestamp}
+    const prompt = `You are an expert Product Manager challenge generator. Create exactly ${exerciseCount} completely unique and fresh Product Manager challenges for a simulation game session.
 
-PARAMETERS:
+CRITICAL REQUIREMENTS:
+- Generate ENTIRELY NEW and DIFFERENT scenarios each time - never repeat content
+- Create exactly ${exerciseCount} exercises, each completely different from the others
+- Each exercise must be realistic and based on real PM work scenarios
+- Vary the interaction types across exercises (multiple-choice, slider, dialogue, ranking)
+- Make challenges appropriate for ${difficulty} level Product Managers
+- Focus on ${skillArea} skill area but include variety within that domain
+
+SESSION UNIQUENESS:
+- Session ID: ${uniqueSessionId}
+- Random Seed: ${randomSeed}
+- Timestamp: ${sessionTimestamp}
+
+EXERCISE PARAMETERS:
 - Skill Area: ${skillArea}
 - Difficulty Level: ${difficulty}
 - Number of Exercises: ${exerciseCount}
 
-REQUIREMENTS:
-- Create ${exerciseCount} completely different, realistic PM scenarios that are UNIQUE to this session
-- Vary the interaction types across exercises (multiple-choice, slider, dialogue, ranking)
-- Make each exercise challenging and engaging for a ${difficulty} level PM
-- Include realistic data, metrics, and context for each
-- Provide meaningful consequences for different choices
-- Ensure variety in topics within the ${skillArea} skill area
-- Generate fresh, original content - no templates or repeated scenarios
+INTERACTION TYPES TO USE (vary across exercises):
+1. "multiple-choice": Decision scenarios with 3-4 realistic options
+2. "slider": Resource allocation or priority balancing with trade-offs
+3. "dialogue": Stakeholder conversations with response choices
+4. "ranking": Feature prioritization or retrospective analysis
 
-EXERCISE TYPES TO VARY:
-- multiple-choice: Decision-making scenarios with 3-4 options
-- slider: Trade-off decisions (resource allocation, priority balancing)
-- dialogue: Stakeholder conversations, team interactions
-- ranking: Feature prioritization, retrospective analysis
-
-Return a JSON object with this exact structure:
+RESPONSE FORMAT - Return ONLY valid JSON with this exact structure:
 {
-  "sessionId": "ai-session-${skillArea}-${difficulty}-${timestamp}",
+  "sessionId": "${uniqueSessionId}",
   "skillArea": "${skillArea}",
   "difficulty": "${difficulty}",
   "totalExercises": ${exerciseCount},
+  "generatedAt": "${new Date().toISOString()}",
   "exercises": [
     {
       "id": "exercise-1",
-      "title": "Exercise Title",
-      "description": "Brief description of what the user will do",
-      "type": "interaction-type",
+      "title": "Specific Exercise Title",
+      "description": "Brief description of the exercise task",
+      "type": "multiple-choice",
       "timeLimit": 180,
       "content": {
-        "context": "Detailed scenario background (2-3 sentences)",
-        "scenario": "Specific situation description",
-        "instructions": "Clear instructions on what to do",
-        "data": "Any supporting data, metrics, or background info",
+        "context": "Detailed scenario background (2-3 sentences about the situation)",
+        "scenario": "Specific problem or decision that needs to be made",
+        "instructions": "Clear instructions on what the user should do",
+        "data": "Supporting data, metrics, or background information",
         "options": [
           {
             "id": "option-1",
-            "text": "Option description",
-            "description": "Additional context for this choice",
+            "text": "Clear option description",
+            "description": "Additional context explaining this choice",
             "isCorrect": true,
             "quality": "excellent",
-            "explanation": "Why this is the best/worst choice and what happens",
+            "explanation": "Why this is the best choice and what happens next",
             "consequences": [
               {
                 "type": "positive",
-                "title": "Immediate outcome",
+                "title": "Immediate Impact",
                 "description": "What happens right away",
-                "impact": "Long-term implications"
+                "impact": "Long-term consequences"
               }
             ],
             "kpiImpact": {
@@ -105,9 +112,15 @@ Return a JSON object with this exact structure:
   ]
 }
 
-Generate realistic, specific scenarios for ${skillArea} at ${difficulty} level. Each exercise should be completely different and unique to this session.`;
+GENERATE REALISTIC SCENARIOS for ${skillArea} at ${difficulty} level:
+- For "strategy": roadmapping, competitive analysis, market research, vision setting
+- For "research": user interviews, survey design, data analysis, insights gathering  
+- For "analytics": metrics definition, A/B testing, data interpretation, KPI tracking
+- For "design": UX principles, user flows, prototyping, design systems
 
-    console.log('Generating AI challenge session for:', { skillArea, difficulty, exerciseCount, randomSeed });
+Each exercise must be completely unique and different. NO repetition across exercises or sessions.`;
+
+    console.log('Sending request to OpenAI with model gpt-4o-mini');
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -120,7 +133,7 @@ Generate realistic, specific scenarios for ${skillArea} at ${difficulty} level. 
         messages: [
           { 
             role: 'system', 
-            content: `You are an expert Product Manager challenge generator. Create realistic, engaging challenges that test real PM skills. Always respond with valid JSON only, no additional text or markdown. Ensure each exercise in a session is unique and varied. Generate fresh, original content for every request - never repeat scenarios. Current session: ${randomSeed}` 
+            content: `You are an expert Product Manager challenge generator. Always respond with valid JSON only, no additional text. Generate fresh, original content for every request - never repeat scenarios. Current unique session: ${uniqueSessionId}` 
           },
           { 
             role: 'user', 
@@ -134,21 +147,28 @@ Generate realistic, specific scenarios for ${skillArea} at ${difficulty} level. 
       }),
     });
 
+    console.log('OpenAI Response Status:', response.status);
+
     if (!response.ok) {
-      console.error(`OpenAI API error: ${response.status} ${response.statusText}`);
       const errorText = await response.text();
+      console.error(`OpenAI API error: ${response.status} ${response.statusText}`);
       console.error('Error details:', errorText);
       
-      if (response.status === 429) {
-        throw new Error('OpenAI API rate limit exceeded. Please try again in a few minutes.');
-      }
-      throw new Error(`OpenAI API error: ${response.status}`);
+      return new Response(JSON.stringify({ 
+        error: `OpenAI API error: ${response.status}`,
+        details: errorText,
+        fallback: true 
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const data = await response.json();
     const generatedContent = data.choices[0].message.content;
     
     console.log('Raw OpenAI response length:', generatedContent.length);
+    console.log('First 200 chars:', generatedContent.substring(0, 200));
 
     // Parse the JSON response from OpenAI
     let challengeSession;
@@ -156,19 +176,54 @@ Generate realistic, specific scenarios for ${skillArea} at ${difficulty} level. 
       // Clean the response in case there's any markdown formatting
       const cleanContent = generatedContent.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
       challengeSession = JSON.parse(cleanContent);
+      
+      console.log('Successfully parsed JSON with', challengeSession.exercises?.length || 0, 'exercises');
     } catch (parseError) {
       console.error('JSON parse error:', parseError);
-      console.error('Raw content:', generatedContent);
-      throw new Error('Invalid JSON response from OpenAI');
+      console.error('Raw content that failed to parse:', generatedContent);
+      
+      return new Response(JSON.stringify({ 
+        error: 'Invalid JSON response from OpenAI',
+        details: parseError.message,
+        rawContent: generatedContent.substring(0, 500),
+        fallback: true 
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Validate the response structure
+    if (!challengeSession.exercises || !Array.isArray(challengeSession.exercises) || challengeSession.exercises.length !== exerciseCount) {
+      console.error('Invalid exercise structure:', {
+        hasExercises: !!challengeSession.exercises,
+        isArray: Array.isArray(challengeSession.exercises),
+        length: challengeSession.exercises?.length,
+        expected: exerciseCount
+      });
+      
+      return new Response(JSON.stringify({ 
+        error: 'Invalid exercise structure from OpenAI',
+        details: `Expected ${exerciseCount} exercises, got ${challengeSession.exercises?.length || 0}`,
+        fallback: true 
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // Ensure required fields and add metadata
-    challengeSession.sessionId = challengeSession.sessionId || `ai-session-${skillArea}-${difficulty}-${Date.now()}-${randomSeed}`;
-    challengeSession.generatedAt = new Date().toISOString();
+    challengeSession.sessionId = challengeSession.sessionId || uniqueSessionId;
     challengeSession.source = 'openai';
     challengeSession.randomSeed = randomSeed;
+    challengeSession.timestamp = sessionTimestamp;
 
-    console.log('Successfully generated challenge session with', challengeSession.exercises?.length || 0, 'exercises');
+    console.log('Successfully generated AI challenge session:', {
+      sessionId: challengeSession.sessionId,
+      exerciseCount: challengeSession.exercises.length,
+      skillArea: challengeSession.skillArea,
+      difficulty: challengeSession.difficulty
+    });
 
     return new Response(JSON.stringify(challengeSession), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -178,7 +233,8 @@ Generate realistic, specific scenarios for ${skillArea} at ${difficulty} level. 
     console.error('Error in generate-ai-challenge function:', error);
     return new Response(JSON.stringify({ 
       error: error.message,
-      fallback: true 
+      fallback: true,
+      details: 'Unexpected error in challenge generation'
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
