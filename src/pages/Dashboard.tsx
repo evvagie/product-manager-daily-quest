@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+
 interface UserStats {
   xp: number;
   level: number;
@@ -132,7 +133,7 @@ const Dashboard = () => {
                 </div>
                 <span className="text-2xl">🎯</span>
               </div>
-              <Button className="w-full bg-blue-600 hover:bg-blue-700" onClick={() => navigate('/challenge-selection')}>
+              <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white" onClick={() => navigate('/challenge-selection')}>
                 Start Today's Session →
               </Button>
             </CardContent>
