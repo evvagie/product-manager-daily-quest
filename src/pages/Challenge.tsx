@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -12,7 +12,9 @@ import { generateDynamicChallenge } from '@/utils/challengeGenerator';
 import { useToast } from '@/components/ui/use-toast';
 
 const Challenge = () => {
-  const { skillArea, difficulty } = useParams();
+  const [searchParams] = useSearchParams();
+  const skillArea = searchParams.get('category');
+  const difficulty = searchParams.get('difficulty');
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -210,7 +212,7 @@ const Challenge = () => {
         {/* KPI Display */}
         {showConsequences && currentAnswer && (
           <KPIDisplay
-            kpis={challenge.content.options?.find((opt: any) => opt.id === currentAnswer)?.kpiImpact || {}}
+            metrics={challenge.content.options?.find((opt: any) => opt.id === currentAnswer)?.kpiImpact || {}}
           />
         )}
 
