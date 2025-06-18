@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -59,13 +58,31 @@ const ChallengeLibrary = () => {
     }
   };
 
+  const validCategories = Object.keys(categoryInfo);
+  
+  // Check if category is valid, if not redirect to strategy as default
+  useEffect(() => {
+    if (category && !validCategories.includes(category)) {
+      console.log('Invalid category detected:', category, 'Redirecting to strategy');
+      navigate('/challenge-library/strategy', { replace: true });
+      return;
+    }
+    
+    // Handle case where category is missing or is the literal ":category"
+    if (!category || category === ':category') {
+      console.log('Missing or invalid category parameter, redirecting to strategy');
+      navigate('/challenge-library/strategy', { replace: true });
+      return;
+    }
+  }, [category, navigate]);
+
   const currentCategory = category && categoryInfo[category as keyof typeof categoryInfo] 
     ? categoryInfo[category as keyof typeof categoryInfo]
     : null;
 
   useEffect(() => {
     const fetchChallengeData = async () => {
-      if (!user || !category) return;
+      if (!user || !category || !validCategories.includes(category)) return;
 
       console.log('Fetching challenge data for category:', category, 'user:', user.id);
 
@@ -144,6 +161,15 @@ const ChallengeLibrary = () => {
     const remainingSeconds = seconds % 60;
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
+
+  // Don't render anything while redirecting
+  if (!category || category === ':category' || !validCategories.includes(category)) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div>Redirecting...</div>
+      </div>
+    );
+  }
 
   if (!currentCategory) {
     return (
