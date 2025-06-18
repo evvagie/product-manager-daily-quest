@@ -24,301 +24,136 @@ export interface ChallengeSession {
 
 export const generateDynamicChallenge = async (skillArea: string, difficulty: string): Promise<ChallengeSession> => {
   const timestamp = Date.now();
-  console.log('🚀 Starting dynamic challenge generation:', { skillArea, difficulty, timestamp });
+  console.log('🚀 Starting OpenAI challenge generation:', { skillArea, difficulty, timestamp });
   
   try {
-    // Always try to call the OpenAI edge function for fresh content
-    console.log('📡 Calling AI generation edge function...');
+    // Get OpenAI API key from Supabase secrets
+    const { data: secretsData, error: secretsError } = await supabase.functions.invoke('get-secrets');
     
-    const { data, error } = await supabase.functions.invoke('generate-ai-challenge', {
-      body: {
-        skillArea,
-        difficulty,
-        exerciseCount: 4
-      }
-    });
-
-    console.log('📋 Edge function response:', { 
-      success: !error, 
-      hasData: !!data, 
-      exerciseCount: data?.exercises?.length,
-      error: error?.message 
-    });
-
-    if (error) {
-      console.error('❌ Supabase function error:', error);
-      throw new Error(`Edge function error: ${error.message}`);
+    if (secretsError || !secretsData?.OPENAI_API_KEY) {
+      console.error('❌ OpenAI API key not found:', secretsError);
+      throw new Error('OpenAI API key not configured');
     }
 
-    // Validate the AI response
-    if (data && !data.error && data.exercises && Array.isArray(data.exercises) && data.exercises.length === 4) {
-      console.log('✅ AI challenge session generated successfully!', {
-        sessionId: data.sessionId,
-        exerciseCount: data.exercises.length,
-        source: data.source || 'openai',
-        randomSeed: data.randomSeed
-      });
-      
-      return {
-        ...data,
-        source: 'openai',
-        timestamp
-      };
-    } else {
-      console.warn('⚠️ AI generation returned incomplete data:', {
-        hasError: !!data?.error,
-        errorMessage: data?.error,
-        hasExercises: !!data?.exercises,
-        exerciseCount: data?.exercises?.length,
-        expectedCount: 4
-      });
-      
-      throw new Error(data?.error || 'AI generation failed or returned incomplete data');
-    }
-  } catch (error) {
-    console.error('💥 Critical error in AI generation:', error);
-    
-    // Only fallback as absolute last resort - but make it obvious it's fallback
-    console.log('🔄 Using enhanced static fallback as last resort');
-    
-    const fallbackSession = generateEnhancedStaticSession(skillArea, difficulty);
-    fallbackSession.source = 'static-fallback';
-    fallbackSession.timestamp = timestamp;
-    
-    return fallbackSession;
-  }
-};
+    const apiKey = secretsData.OPENAI_API_KEY;
+    console.log('🔑 OpenAI API key retrieved successfully');
 
-const generateEnhancedStaticSession = (skillArea: string, difficulty: string): ChallengeSession => {
-  const randomSeed = Math.floor(Math.random() * 10000);
-  const sessionId = `static-session-${skillArea}-${difficulty}-${Date.now()}-${randomSeed}`;
-  
-  // Generate 4 different exercises with randomized content
-  const exercises: Exercise[] = [
-    generateStaticExercise(skillArea, difficulty, 'multiple-choice', 1, randomSeed),
-    generateStaticExercise(skillArea, difficulty, 'slider', 2, randomSeed),
-    generateStaticExercise(skillArea, difficulty, 'dialogue', 3, randomSeed),
-    generateStaticExercise(skillArea, difficulty, 'ranking', 4, randomSeed)
-  ];
+    // Create a simple, reliable prompt for generating 4 exercises
+    const prompt = `Generate exactly 4 product management exercises for skill area "${skillArea}" at "${difficulty}" level.
 
-  return {
-    sessionId,
-    skillArea,
-    difficulty,
-    totalExercises: 4,
-    exercises,
-    source: 'static',
-    generatedAt: new Date().toISOString(),
-    randomSeed
-  };
-};
-
-const generateStaticExercise = (skillArea: string, difficulty: string, type: string, exerciseNumber: number, seed: number): Exercise => {
-  const baseId = `${skillArea}-${difficulty}-${type}-${exerciseNumber}-${seed}`;
-  
-  // Exercise templates based on type and skill area
-  const exerciseTemplates = {
-    'multiple-choice': {
-      title: `Strategic Decision Making - Exercise ${exerciseNumber}`,
-      description: "Make a critical product decision under pressure",
-      timeLimit: 180,
-      content: {
-        context: `You're facing a critical decision in your ${skillArea} role. Multiple stakeholders have different opinions.`,
-        scenario: `A urgent situation requires immediate action from the product team.`,
-        instructions: "Choose the best approach based on PM best practices.",
-        options: [
+Return a JSON object with this exact structure:
+{
+  "exercises": [
+    {
+      "id": "unique-id-1",
+      "title": "Exercise Title",
+      "description": "Exercise description",
+      "type": "multiple-choice",
+      "timeLimit": 180,
+      "content": {
+        "context": "Scenario description",
+        "scenario": "Specific situation",
+        "instructions": "What to do",
+        "options": [
           {
-            id: `${baseId}-option-1`,
-            text: "Gather more data before deciding",
-            description: "Take time to analyze the situation thoroughly",
-            isCorrect: true,
-            quality: "excellent",
-            explanation: "Data-driven decisions lead to better outcomes in product management.",
-            consequences: [
-              {
-                type: "positive",
-                title: "Informed Decision",
-                description: "Your analysis reveals key insights",
-                impact: "Better long-term outcomes and team confidence"
-              }
-            ],
-            kpiImpact: {
-              revenue: { value: 220 + (exerciseNumber * 10), change: 5 + exerciseNumber },
-              teamMood: { value: 7 + exerciseNumber, change: 1 },
-              customerSat: { value: 4.0 + (exerciseNumber * 0.1), change: 0.2 },
-              userGrowth: { value: 15 + exerciseNumber, change: 3 }
-            }
-          },
-          {
-            id: `${baseId}-option-2`,
-            text: "Make a quick decision based on intuition",
-            description: "Trust your experience and move fast",
-            isCorrect: false,
-            quality: "average",
-            explanation: "While speed is valuable, product decisions benefit from analysis.",
-            consequences: [
-              {
-                type: "neutral",
-                title: "Fast Action",
-                description: "You move quickly but outcomes are uncertain",
-                impact: "Mixed results due to lack of validation"
-              }
-            ],
-            kpiImpact: {
-              revenue: { value: 180 + (exerciseNumber * 5), change: -1 },
-              teamMood: { value: 6, change: -1 },
-              customerSat: { value: 3.8, change: 0 },
-              userGrowth: { value: 12, change: -1 }
-            }
+            "id": "option-1",
+            "text": "Option text",
+            "description": "Option description",
+            "isCorrect": true,
+            "quality": "excellent",
+            "explanation": "Why this is correct"
           }
         ]
       }
-    },
-    'slider': {
-      title: `Resource Allocation - Exercise ${exerciseNumber}`,
-      description: "Balance competing priorities with limited resources",
-      timeLimit: 150,
-      content: {
-        context: `You need to allocate resources between different ${skillArea} initiatives.`,
-        scenario: "Your team has limited capacity and multiple high-priority requests.",
-        instructions: "Use the sliders to allocate resources optimally.",
-        constraints: "Total allocation cannot exceed 100%",
-        tradeOffs: [
+    }
+  ]
+}
+
+Make each exercise unique with different scenarios. Include 2-4 options per exercise with clear explanations.`;
+
+    console.log('📡 Making OpenAI API call...');
+    
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
           {
-            name: "Feature Development",
-            value: 50,
-            max: 80
+            role: 'system',
+            content: 'You are a product management expert who creates educational exercises. Always respond with valid JSON only.'
           },
           {
-            name: "Technical Debt",
-            value: 30,
-            max: 60
-          },
-          {
-            name: "User Research",
-            value: 20,
-            max: 40
+            role: 'user',
+            content: prompt
           }
         ],
-        options: [
-          {
-            id: `${baseId}-balanced`,
-            text: "Balanced Approach (40/35/25)",
-            quality: "good",
-            explanation: "A balanced approach maintains all areas but may not maximize impact."
-          },
-          {
-            id: `${baseId}-feature-focused`,
-            text: "Feature-Focused (60/25/15)",
-            quality: "excellent",
-            explanation: "Prioritizing features can drive immediate user value and business impact."
-          }
-        ]
-      }
-    },
-    'dialogue': {
-      title: `Stakeholder Communication - Exercise ${exerciseNumber}`,
-      description: "Navigate a challenging conversation with key stakeholders",
-      timeLimit: 200,
-      content: {
-        context: `You're in a meeting with stakeholders who have conflicting views on ${skillArea} priorities.`,
-        scenario: "Tension is rising and you need to find a path forward that satisfies everyone.",
-        instructions: "Choose your responses carefully to maintain relationships while making progress.",
-        conversation: [
-          {
-            speaker: "Engineering Lead",
-            message: `We're drowning in technical debt and this new ${skillArea} initiative will make it worse. We need to focus on stability first.`,
-            responses: [
-              {
-                id: `${baseId}-compromise`,
-                text: "Let's find a middle ground - we can address critical tech debt while making progress on the initiative.",
-                tone: "diplomatic",
-                quality: "excellent",
-                explanation: "Finding compromise shows leadership and keeps both priorities moving forward."
-              },
-              {
-                id: `${baseId}-pushback`,
-                text: "I understand the concerns, but this initiative is critical for our business goals.",
-                tone: "assertive",
-                quality: "good",
-                explanation: "Standing firm on priorities is important, but may create tension."
-              },
-              {
-                id: `${baseId}-defer`,
-                text: "You're right, let's postpone the initiative until we fix the technical issues.",
-                tone: "agreeable",
-                quality: "poor",
-                explanation: "Constantly deferring product initiatives can hurt business outcomes."
-              }
-            ]
-          }
-        ]
-      }
-    },
-    'ranking': {
-      title: `Priority Setting - Exercise ${exerciseNumber}`,
-      description: "Rank initiatives based on impact and feasibility",
-      timeLimit: 120,
-      content: {
-        context: `Your ${skillArea} team has identified several potential improvements from recent feedback.`,
-        scenario: "You can only tackle 2 initiatives this quarter. Choose wisely to maximize impact.",
-        instructions: "Rank the initiatives by priority and select the top 2 to pursue.",
-        retrospectiveData: {
-          whatWentWell: [
-            "Strong user engagement with core features",
-            "Improved team collaboration and communication",
-            "Successful implementation of agile practices"
-          ],
-          whatWentWrong: [
-            "User onboarding completion rate is low",
-            "Customer support tickets are increasing",
-            "Feature adoption is slower than expected"
-          ]
-        },
-        options: [
-          {
-            id: `${baseId}-onboarding`,
-            text: "Improve User Onboarding Experience",
-            description: "Streamline the first-time user experience",
-            priority: 3,
-            quality: "excellent",
-            explanation: "Better onboarding directly impacts user activation and retention.",
-            kpiImpact: {
-              revenue: { value: 280, change: 12 },
-              teamMood: { value: 8, change: 1 },
-              customerSat: { value: 4.3, change: 0.4 },
-              userGrowth: { value: 25, change: 8 }
-            }
-          },
-          {
-            id: `${baseId}-support`,
-            text: "Reduce Customer Support Load",
-            description: "Implement self-service options and better documentation",
-            priority: 2,
-            quality: "good",
-            explanation: "Reducing support load improves efficiency but may not drive growth."
-          },
-          {
-            id: `${baseId}-adoption`,
-            text: "Increase Feature Adoption",
-            description: "Add in-app guidance and feature discovery",
-            priority: 1,
-            quality: "average",
-            explanation: "Feature adoption is important but may not address root causes."
-          }
-        ]
-      }
-    }
-  };
+        temperature: 0.8,
+        max_tokens: 2000
+      }),
+    });
 
-  const template = exerciseTemplates[type as keyof typeof exerciseTemplates];
-  
-  return {
-    id: baseId,
-    title: template.title,
-    description: template.description,
-    type,
-    timeLimit: template.timeLimit,
-    content: template.content
-  };
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ OpenAI API error:', response.status, errorText);
+      throw new Error(`OpenAI API error: ${response.status}`);
+    }
+
+    const aiResponse = await response.json();
+    console.log('📋 OpenAI response received:', { 
+      hasChoices: !!aiResponse.choices,
+      choiceCount: aiResponse.choices?.length 
+    });
+
+    const content = aiResponse.choices[0]?.message?.content;
+    if (!content) {
+      throw new Error('No content in OpenAI response');
+    }
+
+    // Parse the JSON response
+    let exerciseData;
+    try {
+      exerciseData = JSON.parse(content);
+    } catch (parseError) {
+      console.error('❌ JSON parsing error:', parseError);
+      console.error('Raw content:', content);
+      throw new Error('Failed to parse OpenAI response as JSON');
+    }
+
+    // Validate the response structure
+    if (!exerciseData.exercises || !Array.isArray(exerciseData.exercises) || exerciseData.exercises.length !== 4) {
+      console.error('❌ Invalid exercise structure:', exerciseData);
+      throw new Error('OpenAI response does not contain 4 exercises');
+    }
+
+    // Create the challenge session
+    const sessionId = `ai-session-${skillArea}-${difficulty}-${timestamp}`;
+    const challengeSession: ChallengeSession = {
+      sessionId,
+      skillArea,
+      difficulty,
+      totalExercises: 4,
+      exercises: exerciseData.exercises,
+      source: 'openai-direct',
+      generatedAt: new Date().toISOString(),
+      timestamp
+    };
+
+    console.log('✅ AI challenge session generated successfully!', {
+      sessionId,
+      exerciseCount: challengeSession.exercises.length,
+      source: challengeSession.source
+    });
+
+    return challengeSession;
+
+  } catch (error) {
+    console.error('💥 Error in OpenAI challenge generation:', error);
+    
+    // Show user-friendly error instead of fallback
+    throw new Error(`Failed to generate AI challenges: ${error.message}. Please check your OpenAI API key configuration.`);
+  }
 };
