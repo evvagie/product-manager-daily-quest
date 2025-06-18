@@ -75,6 +75,51 @@ export type Database = {
         }
         Relationships: []
       }
+      exercise_scores: {
+        Row: {
+          challenge_session_id: string
+          completion_date: string
+          correct_answer: string | null
+          created_at: string
+          exercise_id: string
+          id: string
+          is_correct: boolean
+          question_title: string
+          score_percentage: number
+          time_taken: number | null
+          user_answer: string | null
+          user_id: string
+        }
+        Insert: {
+          challenge_session_id: string
+          completion_date?: string
+          correct_answer?: string | null
+          created_at?: string
+          exercise_id: string
+          id?: string
+          is_correct?: boolean
+          question_title: string
+          score_percentage?: number
+          time_taken?: number | null
+          user_answer?: string | null
+          user_id: string
+        }
+        Update: {
+          challenge_session_id?: string
+          completion_date?: string
+          correct_answer?: string | null
+          created_at?: string
+          exercise_id?: string
+          id?: string
+          is_correct?: boolean
+          question_title?: string
+          score_percentage?: number
+          time_taken?: number | null
+          user_answer?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       sessions: {
         Row: {
           classement_jour: number

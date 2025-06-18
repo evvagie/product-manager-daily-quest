@@ -36,11 +36,36 @@ const SessionFeedback = () => {
   const answers = exerciseAnswers || (answer ? [answer] : [])
   const totalExercises = challengeSession?.totalExercises || 1
   
-  // Calculate performance metrics
+  // Calculate performance metrics with proper scoring
+  const calculateExerciseScores = () => {
+    if (!challengeSession?.exercises || !exerciseAnswers) return [];
+    
+    return challengeSession.exercises.map((exercise: any, index: number) => {
+      const exerciseAnswer = exerciseAnswers[index];
+      if (!exerciseAnswer || !exercise.content?.options) return { score: 0, isCorrect: false };
+      
+      const correctOption = exercise.content.options.find((opt: any) => opt.isCorrect);
+      const selectedOption = exercise.content.options.find((opt: any) => opt.id === exerciseAnswer.selectedOptionId);
+      const isCorrect = selectedOption?.isCorrect || false;
+      
+      return {
+        score: isCorrect ? 100 : 0,
+        isCorrect,
+        correctAnswer: correctOption?.text || '',
+        userAnswer: selectedOption?.text || '',
+        questionTitle: exercise.title || `Exercise ${index + 1}`
+      };
+    });
+  };
+
+  const exerciseScores = calculateExerciseScores();
   const completedExercises = answers.filter((a: any) => a !== undefined && a !== null).length
+  const totalScore = exerciseScores.length > 0 
+    ? Math.round(exerciseScores.reduce((sum, score) => sum + score.score, 0) / exerciseScores.length)
+    : 0;
   const completionRate = (completedExercises / totalExercises) * 100
   const baseXP = difficulty === 'beginner' ? 50 : difficulty === 'intermediate' ? 100 : 200
-  const sessionMultiplier = totalExercises > 1 ? totalExercises * 0.8 : 1 // Bonus for multi-exercise sessions
+  const sessionMultiplier = totalExercises > 1 ? totalExercises * 0.8 : 1
   const earnedXP = Math.round(baseXP * (completionRate / 100) * sessionMultiplier)
 
   // Generate feedback only once when component mounts
@@ -58,7 +83,6 @@ const SessionFeedback = () => {
             .limit(2);
           
           if (recentSessions && recentSessions.length > 1) {
-            // Calculate previous score based on XP and completion
             const prevSession = recentSessions[1];
             previousScore = Math.round((prevSession.xp_gagne / baseXP) * 100);
           }
@@ -69,12 +93,15 @@ const SessionFeedback = () => {
           previousScore
         );
         
-        setPersonalizedFeedback(feedback);
+        // Use calculated score instead of feedback score
+        setPersonalizedFeedback({
+          ...feedback,
+          score: totalScore
+        });
       } catch (error) {
         console.error('Error generating feedback:', error);
-        // Fallback to basic feedback if generation fails
         setPersonalizedFeedback({
-          score: Math.round(completionRate * 0.8),
+          score: totalScore,
           strengths: ["You completed the challenge session successfully"],
           improvements: ["Keep practicing to improve your PM skills"],
           progress_statement: "You're making progress in your PM journey",
@@ -86,7 +113,7 @@ const SessionFeedback = () => {
     if (!personalizedFeedback) {
       generateFeedback();
     }
-  }, []); // Only run once on mount
+  }, [totalScore]);
 
   // Save session data and individual exercises
   useEffect(() => {
@@ -102,7 +129,7 @@ const SessionFeedback = () => {
             user_id: user.id,
             date: new Date().toISOString().split('T')[0],
             xp_gagne: earnedXP,
-            duree_totale: 15, // Mock duration
+            duree_totale: 15,
             classement_jour: Math.floor(Math.random() * 100) + 1,
             session_complete: completionRate === 100
           })
@@ -111,12 +138,37 @@ const SessionFeedback = () => {
 
         if (sessionError) throw sessionError
 
-        // Save individual exercises to challenge_history
+        // Save individual exercises to both tables
         if (challengeSession && challengeSession.exercises) {
+          // Save to exercise_scores table with accurate scoring
+          const exerciseScoreRecords = challengeSession.exercises.map((exercise: any, index: number) => {
+            const scoreData = exerciseScores[index] || { score: 0, isCorrect: false, correctAnswer: '', userAnswer: '', questionTitle: `Exercise ${index + 1}` };
+            
+            return {
+              user_id: user.id,
+              exercise_id: `${challengeSession.sessionId}-exercise-${index}`,
+              challenge_session_id: challengeSession.sessionId,
+              question_title: scoreData.questionTitle,
+              user_answer: scoreData.userAnswer,
+              correct_answer: scoreData.correctAnswer,
+              is_correct: scoreData.isCorrect,
+              score_percentage: scoreData.score,
+              time_taken: exercise.timeLimit || 60,
+              completion_date: new Date().toISOString()
+            };
+          });
+
+          const { error: exerciseScoresError } = await supabase
+            .from('exercise_scores')
+            .insert(exerciseScoreRecords);
+
+          if (exerciseScoresError) {
+            console.error('Error saving exercise scores:', exerciseScoresError);
+          }
+
+          // Save to challenge_history table with aggregated score
           const challengeHistoryRecords = challengeSession.exercises.map((exercise: any, index: number) => {
-            const exerciseAnswer = exerciseAnswers ? exerciseAnswers[index] : null;
-            const isCorrect = exerciseAnswer && exercise.content?.options?.find((opt: any) => opt.id === exerciseAnswer?.selectedOptionId)?.isCorrect;
-            const exerciseScore = isCorrect ? 100 : 0;
+            const scoreData = exerciseScores[index] || { score: 0 };
             
             return {
               user_id: user.id,
@@ -125,8 +177,8 @@ const SessionFeedback = () => {
               challenge_type: exercise.type || 'multiple-choice',
               challenge_title: exercise.title,
               completion_date: new Date().toISOString(),
-              score: exerciseScore,
-              time_taken: exercise.timeLimit || 60, // Default to 60 seconds
+              score: scoreData.score,
+              time_taken: exercise.timeLimit || 60,
               difficulty: difficulty
             };
           });
@@ -137,9 +189,8 @@ const SessionFeedback = () => {
 
           if (historyError) {
             console.error('Error saving challenge history:', historyError);
-            // Don't throw error, just log it
           } else {
-            console.log('Challenge history saved successfully');
+            console.log('Challenge history and exercise scores saved successfully');
           }
         }
 
