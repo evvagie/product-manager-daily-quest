@@ -6,17 +6,17 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-
 interface UserStats {
   xp: number;
   level: number;
   streak: number;
   progression_jour: number;
 }
-
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const {
+    user
+  } = useAuth();
   const [stats, setStats] = useState<UserStats>({
     xp: 0,
     level: 1,
@@ -24,27 +24,26 @@ const Dashboard = () => {
     progression_jour: 0
   });
   const [loading, setLoading] = useState(true);
-
   useEffect(() => {
     const fetchUserStats = async () => {
       if (!user) return;
-      
       try {
         // First, update the user's streak using the new realistic calculation
-        const { data: updatedStreak, error: streakError } = await supabase
-          .rpc('update_user_streak', { user_uuid: user.id });
-
+        const {
+          data: updatedStreak,
+          error: streakError
+        } = await supabase.rpc('update_user_streak', {
+          user_uuid: user.id
+        });
         if (streakError) {
           console.error('Error updating streak:', streakError);
         }
 
         // Then fetch the updated user stats
-        const { data, error } = await supabase
-          .from('users')
-          .select('xp, level, streak, progression_jour')
-          .eq('id', user.id)
-          .single();
-
+        const {
+          data,
+          error
+        } = await supabase.from('users').select('xp, level, streak, progression_jour').eq('id', user.id).single();
         if (data && !error) {
           setStats(data);
         }
@@ -54,21 +53,16 @@ const Dashboard = () => {
         setLoading(false);
       }
     };
-
     fetchUserStats();
   }, [user]);
-
   const currentLevelXP = stats.level * 1000;
   const progressToNextLevel = stats.xp % 1000 / 10;
-
   if (loading) {
     return <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-white">Loading your dashboard...</div>
       </div>;
   }
-
-  return (
-    <div className="min-h-screen bg-black text-white">
+  return <div className="min-h-screen bg-black text-white">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -123,7 +117,7 @@ const Dashboard = () => {
         {/* Main Actions */}
         <div className="grid lg:grid-cols-2 gap-8 mb-8">
           {/* Daily Challenge */}
-          <Card className="bg-gradient-to-br from-blue-900/30 to-purple-900/30 border-blue-800 bg-violet-300">
+          <Card className="bg-gradient-to-br from-blue-900/30 to-purple-900/30 border-blue-800 bg-zinc-50">
             <CardHeader>
               <CardTitle className="text-xl text-white">Today's Challenge Session</CardTitle>
               <CardDescription className="text-slate-50">
@@ -213,8 +207,6 @@ const Dashboard = () => {
           </CardContent>
         </Card>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default Dashboard;
