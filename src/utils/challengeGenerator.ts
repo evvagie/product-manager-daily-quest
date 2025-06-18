@@ -1,3 +1,4 @@
+
 interface ChallengeFormat {
   id: string;
   name: string;
@@ -35,7 +36,7 @@ const challengeFormats: ChallengeFormat[] = [
     type: 'stakeholder-tension',
     timeLimit: 180,
     steps: 2,
-    interactionType: 'drag-drop'
+    interactionType: 'multiple-choice' // FIXED: Changed from 'drag-drop' to 'multiple-choice'
   },
   {
     id: 'trade-off-slider',
