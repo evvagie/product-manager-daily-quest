@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
@@ -26,21 +25,23 @@ const SessionFeedback = () => {
     return null
   }
 
-  const { challenge, answer, timeUsed } = sessionData
+  // Handle both single challenge (legacy) and multi-exercise session formats
+  const { challengeSession, exerciseAnswers, challenge, answer, timeUsed } = sessionData
   
-  // Extract category and difficulty from challenge or URL params
-  const category = challenge?.content?.category || 'general'
-  const difficulty = challenge?.content?.difficulty || 'beginner'
+  // Extract category and difficulty
+  const category = challengeSession?.skillArea || challenge?.content?.category || 'general'
+  const difficulty = challengeSession?.difficulty || challenge?.content?.difficulty || 'beginner'
   
-  // For single challenge format, we have 1 challenge and 1 answer
-  const answers = answer ? [answer] : []
-  const challenges = 1
+  // For multi-exercise sessions vs single challenge
+  const answers = exerciseAnswers || (answer ? [answer] : [])
+  const totalExercises = challengeSession?.totalExercises || 1
   
   // Calculate performance metrics
-  const completedChallenges = answers.filter((a: any) => a !== undefined).length
-  const completionRate = (completedChallenges / challenges) * 100
+  const completedExercises = answers.filter((a: any) => a !== undefined && a !== null).length
+  const completionRate = (completedExercises / totalExercises) * 100
   const baseXP = difficulty === 'beginner' ? 50 : difficulty === 'intermediate' ? 100 : 200
-  const earnedXP = Math.round(baseXP * (completionRate / 100))
+  const sessionMultiplier = totalExercises > 1 ? totalExercises * 0.8 : 1 // Bonus for multi-exercise sessions
+  const earnedXP = Math.round(baseXP * (completionRate / 100) * sessionMultiplier)
 
   // Generate feedback only once when component mounts
   useEffect(() => {
@@ -64,7 +65,7 @@ const SessionFeedback = () => {
         }
         
         const feedback = generatePersonalizedFeedback(
-          { answers, category, difficulty, challenges },
+          { answers, category, difficulty, challenges: totalExercises },
           previousScore
         );
         
@@ -74,7 +75,7 @@ const SessionFeedback = () => {
         // Fallback to basic feedback if generation fails
         setPersonalizedFeedback({
           score: Math.round(completionRate * 0.8),
-          strengths: ["You completed the challenge successfully"],
+          strengths: ["You completed the challenge session successfully"],
           improvements: ["Keep practicing to improve your PM skills"],
           progress_statement: "You're making progress in your PM journey",
           recommendation: "Try another session to continue improving your skills"
@@ -149,7 +150,7 @@ const SessionFeedback = () => {
         
         // Check for new badges
         const badges = []
-        if (completedChallenges === challenges) badges.push('Session Complete')
+        if (completedExercises === totalExercises) badges.push('Session Complete')
         if ((updatedStreak || 0) >= 7) badges.push('Week Warrior')
         if (newLevel > userData.level) badges.push('Level Up!')
         if (personalizedFeedback.score >= 85) badges.push('High Performer')
@@ -174,10 +175,17 @@ const SessionFeedback = () => {
     if (!personalizedFeedback) return "Analyzing your performance..."
     
     const score = personalizedFeedback.score
-    if (score >= 85) return "Outstanding performance! 🏆"
-    if (score >= 75) return "Great job! Keep it up! 💪"
-    if (score >= 60) return "Good effort! You're improving 📈"
-    return "Keep practicing! You're learning 🎯"
+    if (totalExercises > 1) {
+      if (score >= 85) return `Outstanding session performance! 🏆 (${totalExercises} exercises)`
+      if (score >= 75) return `Great session! Keep it up! 💪 (${totalExercises} exercises)`
+      if (score >= 60) return `Good effort across all exercises! 📈 (${totalExercises} exercises)`
+      return `Keep practicing! You're learning 🎯 (${totalExercises} exercises)`
+    } else {
+      if (score >= 85) return "Outstanding performance! 🏆"
+      if (score >= 75) return "Great job! Keep it up! 💪"
+      if (score >= 60) return "Good effort! You're improving 📈"
+      return "Keep practicing! You're learning 🎯"
+    }
   }
 
   const getResourceRecommendations = () => {
@@ -240,8 +248,8 @@ const SessionFeedback = () => {
 
             <Card className="bg-gray-900 border-gray-800 text-center">
               <CardHeader>
-                <CardTitle className="text-2xl text-green-400">{completedChallenges}/{challenges}</CardTitle>
-                <CardDescription>Challenges Completed</CardDescription>
+                <CardTitle className="text-2xl text-green-400">{completedExercises}/{totalExercises}</CardTitle>
+                <CardDescription>Exercises Completed</CardDescription>
               </CardHeader>
             </Card>
 
@@ -258,7 +266,7 @@ const SessionFeedback = () => {
             <CardHeader>
               <CardTitle className="text-xl text-white">Your Performance Analysis</CardTitle>
               <CardDescription className="text-gray-400">
-                {category} • {difficulty} • {personalizedFeedback.progress_statement}
+                {category} • {difficulty} • {totalExercises} exercise{totalExercises > 1 ? 's' : ''} • {personalizedFeedback.progress_statement}
               </CardDescription>
             </CardHeader>
             <CardContent>

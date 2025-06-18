@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,9 +7,10 @@ import { KPIDisplay } from './KPIDisplay';
 import { TeamChat } from './TeamChat';
 import { ConsequenceDisplay } from './ConsequenceDisplay';
 import { AIGeneratedChallenge } from './AIGeneratedChallenge';
+import { type Exercise } from '@/utils/challengeGenerator';
 
 interface DynamicChallengeRendererProps {
-  challenge: any;
+  challenge: Exercise;
   onAnswer: (answer: any) => void;
   currentAnswer: any;
   showConsequences: boolean;
@@ -28,18 +28,17 @@ export const DynamicChallengeRenderer = ({
 
   // Memoize the challenge analysis to prevent re-computation
   const challengeInfo = useMemo(() => {
-    console.log('Analyzing challenge:', {
+    console.log('Analyzing exercise:', {
       type: challenge.type,
-      formatType: challenge.format?.type,
-      source: challenge.source,
+      title: challenge.title,
       content: challenge.content
     });
 
     return {
       type: challenge.type,
-      isAIGenerated: challenge.source === 'openai' || challenge.generatedAt
+      isAIGenerated: false // All exercises are now handled consistently
     };
-  }, [challenge.type, challenge.format?.type, challenge.source, challenge.generatedAt]);
+  }, [challenge.type, challenge.title]);
 
   // Check if this is an AI-generated challenge
   if (challengeInfo.isAIGenerated) {
@@ -104,9 +103,9 @@ export const DynamicChallengeRenderer = ({
     if (options.length === 0) {
       return (
         <div className="space-y-4">
-          <p className="text-gray-700">{challenge.content?.context || 'Challenge context not available'}</p>
+          <p className="text-gray-700">{challenge.content?.context || 'Exercise context not available'}</p>
           <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <p className="text-yellow-800">This challenge format is not fully supported yet.</p>
+            <p className="text-yellow-800">This exercise format is not fully supported yet.</p>
             <Button 
               onClick={() => onAnswer('fallback-complete')}
               className="mt-2 bg-blue-600 hover:bg-blue-700 text-white"
@@ -123,9 +122,15 @@ export const DynamicChallengeRenderer = ({
 
   const renderMultipleChoice = () => (
     <div className="space-y-4">
-      {challenge.content.teamMessages && (
-        <TeamChat messages={challenge.content.teamMessages} />
-      )}
+      <div className="mb-4">
+        <p className="text-gray-700 text-base">{challenge.content.scenario}</p>
+        {challenge.content.data && (
+          <div className="mt-2 p-3 bg-blue-50 rounded-lg">
+            <p className="text-blue-800 text-sm font-medium">Context Data:</p>
+            <p className="text-blue-700 text-sm">{challenge.content.data}</p>
+          </div>
+        )}
+      </div>
       
       <div className="space-y-3">
         {challenge.content.options?.map((option: any) => (
@@ -404,40 +409,12 @@ export const DynamicChallengeRenderer = ({
           <CardDescription className="text-gray-700 text-lg">
             {challenge.content.context}
           </CardDescription>
+          <p className="text-gray-600 text-sm mt-2">{challenge.content.instructions}</p>
         </CardHeader>
         <CardContent>
           {renderChallengeContent()}
         </CardContent>
       </Card>
-
-      {challenge.content.incidentData && (
-        <Card className="bg-yellow-50 border-yellow-200">
-          <CardHeader>
-            <h4 className="font-medium text-yellow-800">Incident Data</h4>
-          </CardHeader>
-          <CardContent>
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <h5 className="font-medium text-black mb-2">Timeline</h5>
-                {challenge.content.incidentData.timeline.map((event: any, index: number) => (
-                  <div key={index} className="flex items-center space-x-2 text-sm">
-                    <span className="text-gray-600">{event.time}</span>
-                    <span className="text-gray-800">{event.event}</span>
-                  </div>
-                ))}
-              </div>
-              <div>
-                <h5 className="font-medium text-black mb-2">Impact</h5>
-                <div className="space-y-1 text-sm">
-                  <p className="text-gray-700">Users Affected: <span className="font-medium">{challenge.content.incidentData.impact.usersAffected}</span></p>
-                  <p className="text-gray-700">Downtime: <span className="font-medium">{challenge.content.incidentData.impact.downtime}</span></p>
-                  <p className="text-gray-700">Revenue Impact: <span className="font-medium">{challenge.content.incidentData.impact.revenueImpact}</span></p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 };

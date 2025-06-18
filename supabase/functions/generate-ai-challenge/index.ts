@@ -14,82 +14,91 @@ serve(async (req) => {
   }
 
   try {
-    const { skillArea, difficulty } = await req.json();
+    const { skillArea, difficulty, exerciseCount = 4 } = await req.json();
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
     if (!openAIApiKey) {
-      throw new Error('OPENAI_API_KEY is not set');
+      console.error('OPENAI_API_KEY is not set');
+      return new Response(JSON.stringify({ 
+        error: 'OpenAI API key not configured',
+        fallback: true 
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
-    const prompt = `Create a realistic Product Manager challenge for a simulation game.
+    const prompt = `Create ${exerciseCount} unique Product Manager challenges for a simulation game session.
 
 PARAMETERS:
 - Skill Area: ${skillArea}
 - Difficulty Level: ${difficulty}
+- Number of Exercises: ${exerciseCount}
 
 REQUIREMENTS:
-- Create a completely original, realistic PM scenario
-- Choose an appropriate interaction type (multiple-choice, slider, drag-drop, dialogue, ranking, or invent a new one)
-- Make it challenging and engaging for a ${difficulty} level PM
-- Include realistic data, metrics, and context
+- Create ${exerciseCount} completely different, realistic PM scenarios
+- Vary the interaction types across exercises (multiple-choice, slider, dialogue, ranking)
+- Make each exercise challenging and engaging for a ${difficulty} level PM
+- Include realistic data, metrics, and context for each
 - Provide meaningful consequences for different choices
+- Ensure variety in topics within the ${skillArea} skill area
 
-CHALLENGE TYPES TO CHOOSE FROM:
+EXERCISE TYPES TO VARY:
 - multiple-choice: Decision-making scenarios with 3-4 options
 - slider: Trade-off decisions (resource allocation, priority balancing)
-- drag-drop: Prioritization matrices, resource allocation
 - dialogue: Stakeholder conversations, team interactions
 - ranking: Feature prioritization, retrospective analysis
-- Or create a custom interaction type that fits the scenario
 
 Return a JSON object with this exact structure:
 {
-  "id": "unique-challenge-id",
-  "title": "Challenge Title",
-  "description": "Brief description of what the user will do",
-  "type": "interaction-type",
-  "timeLimit": 180,
-  "content": {
-    "context": "Detailed scenario background (2-3 sentences)",
-    "scenario": "Specific situation description",
-    "instructions": "Clear instructions on what to do",
-    "data": "Any supporting data, metrics, or background info",
-    "options": [
-      {
-        "id": "option-1",
-        "text": "Option description",
-        "description": "Additional context for this choice",
-        "isCorrect": true,
-        "quality": "excellent",
-        "explanation": "Why this is the best/worst choice and what happens",
-        "consequences": [
+  "sessionId": "unique-session-id",
+  "skillArea": "${skillArea}",
+  "difficulty": "${difficulty}",
+  "totalExercises": ${exerciseCount},
+  "exercises": [
+    {
+      "id": "exercise-1",
+      "title": "Exercise Title",
+      "description": "Brief description of what the user will do",
+      "type": "interaction-type",
+      "timeLimit": 180,
+      "content": {
+        "context": "Detailed scenario background (2-3 sentences)",
+        "scenario": "Specific situation description",
+        "instructions": "Clear instructions on what to do",
+        "data": "Any supporting data, metrics, or background info",
+        "options": [
           {
-            "type": "positive",
-            "title": "Immediate outcome",
-            "description": "What happens right away",
-            "impact": "Long-term implications"
+            "id": "option-1",
+            "text": "Option description",
+            "description": "Additional context for this choice",
+            "isCorrect": true,
+            "quality": "excellent",
+            "explanation": "Why this is the best/worst choice and what happens",
+            "consequences": [
+              {
+                "type": "positive",
+                "title": "Immediate outcome",
+                "description": "What happens right away",
+                "impact": "Long-term implications"
+              }
+            ],
+            "kpiImpact": {
+              "revenue": { "value": 250, "change": 5 },
+              "teamMood": { "value": 8, "change": 1 },
+              "customerSat": { "value": 4.2, "change": 0.2 },
+              "userGrowth": { "value": 18, "change": 3 }
+            }
           }
-        ],
-        "kpiImpact": {
-          "revenue": { "value": 250, "change": 5 },
-          "teamMood": { "value": 8, "change": 1 },
-          "customerSat": { "value": 4.2, "change": 0.2 },
-          "userGrowth": { "value": 18, "change": 3 }
-        }
+        ]
       }
-    ]
-  },
-  "format": {
-    "id": "format-id",
-    "name": "Format Name",
-    "type": "interaction-type",
-    "timeLimit": 180
-  }
+    }
+  ]
 }
 
-Make it realistic, specific to ${skillArea}, and appropriate for ${difficulty} level. Focus on real PM scenarios like stakeholder management, feature prioritization, technical trade-offs, user research, go-to-market decisions, etc.`;
+Make each exercise realistic, specific to ${skillArea}, appropriate for ${difficulty} level, and DIFFERENT from the others. Focus on real PM scenarios like stakeholder management, feature prioritization, technical trade-offs, user research, go-to-market decisions, etc.`;
 
-    console.log('Generating AI challenge for:', { skillArea, difficulty });
+    console.log('Generating AI challenge session for:', { skillArea, difficulty, exerciseCount });
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -102,7 +111,7 @@ Make it realistic, specific to ${skillArea}, and appropriate for ${difficulty} l
         messages: [
           { 
             role: 'system', 
-            content: 'You are an expert Product Manager challenge generator. Create realistic, engaging challenges that test real PM skills. Always respond with valid JSON only, no additional text or markdown.' 
+            content: 'You are an expert Product Manager challenge generator. Create realistic, engaging challenges that test real PM skills. Always respond with valid JSON only, no additional text or markdown. Ensure each exercise in a session is unique and varied.' 
           },
           { 
             role: 'user', 
@@ -110,7 +119,7 @@ Make it realistic, specific to ${skillArea}, and appropriate for ${difficulty} l
           }
         ],
         temperature: 0.9,
-        max_tokens: 2500,
+        max_tokens: 4000,
       }),
     });
 
@@ -131,11 +140,11 @@ Make it realistic, specific to ${skillArea}, and appropriate for ${difficulty} l
     console.log('Raw OpenAI response length:', generatedContent.length);
 
     // Parse the JSON response from OpenAI
-    let challengeData;
+    let challengeSession;
     try {
       // Clean the response in case there's any markdown formatting
       const cleanContent = generatedContent.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      challengeData = JSON.parse(cleanContent);
+      challengeSession = JSON.parse(cleanContent);
     } catch (parseError) {
       console.error('JSON parse error:', parseError);
       console.error('Raw content:', generatedContent);
@@ -143,15 +152,13 @@ Make it realistic, specific to ${skillArea}, and appropriate for ${difficulty} l
     }
 
     // Ensure required fields and add metadata
-    challengeData.id = challengeData.id || `ai-${skillArea}-${difficulty}-${Date.now()}`;
-    challengeData.generatedAt = new Date().toISOString();
-    challengeData.source = 'openai';
-    challengeData.skillArea = skillArea;
-    challengeData.difficulty = difficulty;
+    challengeSession.sessionId = challengeSession.sessionId || `ai-session-${skillArea}-${difficulty}-${Date.now()}`;
+    challengeSession.generatedAt = new Date().toISOString();
+    challengeSession.source = 'openai';
 
-    console.log('Successfully generated challenge:', challengeData.title);
+    console.log('Successfully generated challenge session with', challengeSession.exercises?.length || 0, 'exercises');
 
-    return new Response(JSON.stringify(challengeData), {
+    return new Response(JSON.stringify(challengeSession), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
