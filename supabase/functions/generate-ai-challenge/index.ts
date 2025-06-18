@@ -15,10 +15,10 @@ serve(async (req) => {
 
   try {
     const { skillArea, difficulty, exerciseCount = 4 } = await req.json();
-    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+    const openAIApiKey = Deno.env.get('YUNO_KEY');
 
     if (!openAIApiKey) {
-      console.error('OPENAI_API_KEY is not set');
+      console.error('YUNO_KEY is not set');
       return new Response(JSON.stringify({ 
         error: 'OpenAI API key not configured',
         fallback: true 
@@ -28,7 +28,15 @@ serve(async (req) => {
       });
     }
 
-    const prompt = `Create ${exerciseCount} unique Product Manager challenges for a simulation game session.
+    // Add randomization to ensure unique content each time
+    const randomSeed = Math.floor(Math.random() * 10000);
+    const timestamp = new Date().toISOString();
+
+    const prompt = `Create ${exerciseCount} completely unique and fresh Product Manager challenges for a simulation game session.
+
+IMPORTANT: Generate entirely NEW and DIFFERENT scenarios each time - avoid repetition from previous sessions.
+Random Seed: ${randomSeed}
+Session Time: ${timestamp}
 
 PARAMETERS:
 - Skill Area: ${skillArea}
@@ -36,12 +44,13 @@ PARAMETERS:
 - Number of Exercises: ${exerciseCount}
 
 REQUIREMENTS:
-- Create ${exerciseCount} completely different, realistic PM scenarios
+- Create ${exerciseCount} completely different, realistic PM scenarios that are UNIQUE to this session
 - Vary the interaction types across exercises (multiple-choice, slider, dialogue, ranking)
 - Make each exercise challenging and engaging for a ${difficulty} level PM
 - Include realistic data, metrics, and context for each
 - Provide meaningful consequences for different choices
 - Ensure variety in topics within the ${skillArea} skill area
+- Generate fresh, original content - no templates or repeated scenarios
 
 EXERCISE TYPES TO VARY:
 - multiple-choice: Decision-making scenarios with 3-4 options
@@ -51,7 +60,7 @@ EXERCISE TYPES TO VARY:
 
 Return a JSON object with this exact structure:
 {
-  "sessionId": "unique-session-id",
+  "sessionId": "ai-session-${skillArea}-${difficulty}-${timestamp}",
   "skillArea": "${skillArea}",
   "difficulty": "${difficulty}",
   "totalExercises": ${exerciseCount},
@@ -96,9 +105,9 @@ Return a JSON object with this exact structure:
   ]
 }
 
-Make each exercise realistic, specific to ${skillArea}, appropriate for ${difficulty} level, and DIFFERENT from the others. Focus on real PM scenarios like stakeholder management, feature prioritization, technical trade-offs, user research, go-to-market decisions, etc.`;
+Generate realistic, specific scenarios for ${skillArea} at ${difficulty} level. Each exercise should be completely different and unique to this session.`;
 
-    console.log('Generating AI challenge session for:', { skillArea, difficulty, exerciseCount });
+    console.log('Generating AI challenge session for:', { skillArea, difficulty, exerciseCount, randomSeed });
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -111,7 +120,7 @@ Make each exercise realistic, specific to ${skillArea}, appropriate for ${diffic
         messages: [
           { 
             role: 'system', 
-            content: 'You are an expert Product Manager challenge generator. Create realistic, engaging challenges that test real PM skills. Always respond with valid JSON only, no additional text or markdown. Ensure each exercise in a session is unique and varied.' 
+            content: `You are an expert Product Manager challenge generator. Create realistic, engaging challenges that test real PM skills. Always respond with valid JSON only, no additional text or markdown. Ensure each exercise in a session is unique and varied. Generate fresh, original content for every request - never repeat scenarios. Current session: ${randomSeed}` 
           },
           { 
             role: 'user', 
@@ -120,6 +129,8 @@ Make each exercise realistic, specific to ${skillArea}, appropriate for ${diffic
         ],
         temperature: 0.9,
         max_tokens: 4000,
+        presence_penalty: 0.6,
+        frequency_penalty: 0.8,
       }),
     });
 
@@ -152,9 +163,10 @@ Make each exercise realistic, specific to ${skillArea}, appropriate for ${diffic
     }
 
     // Ensure required fields and add metadata
-    challengeSession.sessionId = challengeSession.sessionId || `ai-session-${skillArea}-${difficulty}-${Date.now()}`;
+    challengeSession.sessionId = challengeSession.sessionId || `ai-session-${skillArea}-${difficulty}-${Date.now()}-${randomSeed}`;
     challengeSession.generatedAt = new Date().toISOString();
     challengeSession.source = 'openai';
+    challengeSession.randomSeed = randomSeed;
 
     console.log('Successfully generated challenge session with', challengeSession.exercises?.length || 0, 'exercises');
 

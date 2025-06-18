@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export interface Exercise {
@@ -18,13 +17,14 @@ export interface ChallengeSession {
   exercises: Exercise[];
   source?: string;
   generatedAt?: string;
+  randomSeed?: number;
 }
 
 export const generateDynamicChallenge = async (skillArea: string, difficulty: string): Promise<ChallengeSession> => {
   console.log('Generating dynamic challenge session:', { skillArea, difficulty });
   
   try {
-    // Try to call the OpenAI edge function first
+    // Always try to call the OpenAI edge function for fresh content
     const { data, error } = await supabase.functions.invoke('generate-ai-challenge', {
       body: {
         skillArea,
@@ -38,34 +38,36 @@ export const generateDynamicChallenge = async (skillArea: string, difficulty: st
       throw error;
     }
 
-    if (data && !data.error) {
-      console.log('AI challenge session generated successfully with', data.exercises?.length || 0, 'exercises');
+    if (data && !data.error && data.exercises && data.exercises.length === 4) {
+      console.log('AI challenge session generated successfully with', data.exercises.length, 'exercises');
+      console.log('Session ID:', data.sessionId, 'Random Seed:', data.randomSeed);
       return {
         ...data,
         source: 'openai'
       };
     } else {
-      console.warn('AI generation failed, using fallback:', data?.error);
-      throw new Error(data?.error || 'AI generation failed');
+      console.warn('AI generation failed or incomplete, using fallback:', data?.error);
+      throw new Error(data?.error || 'AI generation failed or returned incomplete data');
     }
   } catch (error) {
     console.error('Error calling AI generation function:', error);
     console.log('Falling back to enhanced static challenge generation');
     
-    // Fallback to enhanced static challenge generation
+    // Fallback to enhanced static challenge generation with randomization
     return generateEnhancedStaticSession(skillArea, difficulty);
   }
 };
 
 const generateEnhancedStaticSession = (skillArea: string, difficulty: string): ChallengeSession => {
-  const sessionId = `static-session-${skillArea}-${difficulty}-${Date.now()}`;
+  const randomSeed = Math.floor(Math.random() * 10000);
+  const sessionId = `static-session-${skillArea}-${difficulty}-${Date.now()}-${randomSeed}`;
   
-  // Generate 4 different exercises for variety
+  // Generate 4 different exercises with randomized content
   const exercises: Exercise[] = [
-    generateStaticExercise(skillArea, difficulty, 'multiple-choice', 1),
-    generateStaticExercise(skillArea, difficulty, 'slider', 2),
-    generateStaticExercise(skillArea, difficulty, 'dialogue', 3),
-    generateStaticExercise(skillArea, difficulty, 'ranking', 4)
+    generateStaticExercise(skillArea, difficulty, 'multiple-choice', 1, randomSeed),
+    generateStaticExercise(skillArea, difficulty, 'slider', 2, randomSeed),
+    generateStaticExercise(skillArea, difficulty, 'dialogue', 3, randomSeed),
+    generateStaticExercise(skillArea, difficulty, 'ranking', 4, randomSeed)
   ];
 
   return {
@@ -75,12 +77,13 @@ const generateEnhancedStaticSession = (skillArea: string, difficulty: string): C
     totalExercises: 4,
     exercises,
     source: 'static',
-    generatedAt: new Date().toISOString()
+    generatedAt: new Date().toISOString(),
+    randomSeed
   };
 };
 
-const generateStaticExercise = (skillArea: string, difficulty: string, type: string, exerciseNumber: number): Exercise => {
-  const baseId = `${skillArea}-${difficulty}-${type}-${exerciseNumber}`;
+const generateStaticExercise = (skillArea: string, difficulty: string, type: string, exerciseNumber: number, seed: number): Exercise => {
+  const baseId = `${skillArea}-${difficulty}-${type}-${exerciseNumber}-${seed}`;
   
   // Exercise templates based on type and skill area
   const exerciseTemplates = {
