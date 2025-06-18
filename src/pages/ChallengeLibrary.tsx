@@ -17,6 +17,7 @@ interface ChallengeHistory {
   time_taken: number | null;
   difficulty: string;
   challenge_id: string;
+  skill_area: string;
 }
 
 const ChallengeLibrary = () => {
