@@ -24,6 +24,13 @@ export const DynamicChallengeRenderer = ({
   const [resourceAllocation, setResourceAllocation] = useState<{ [key: string]: number }>({});
   const [conversationState, setConversationState] = useState(0);
 
+  // Add debugging
+  console.log('Rendering challenge:', {
+    type: challenge.type,
+    formatType: challenge.format?.type,
+    content: challenge.content
+  });
+
   const getQualityBadge = (quality: string) => {
     const qualityConfig = {
       excellent: { color: 'bg-green-100 text-green-700', label: '✓ Excellent' },
@@ -37,7 +44,12 @@ export const DynamicChallengeRenderer = ({
   };
 
   const renderChallengeContent = () => {
-    switch (challenge.type) {
+    // Use challenge.type (which comes from format.interactionType) for switching
+    const challengeType = challenge.type;
+    
+    console.log('Rendering challenge type:', challengeType);
+    
+    switch (challengeType) {
       case 'multiple-choice':
         return renderMultipleChoice();
       case 'slider':
@@ -49,8 +61,33 @@ export const DynamicChallengeRenderer = ({
       case 'ranking':
         return renderRetrospective();
       default:
-        return renderMultipleChoice();
+        console.warn('Unknown challenge type, falling back to multiple choice:', challengeType);
+        return renderMultipleChoiceFallback();
     }
+  };
+
+  const renderMultipleChoiceFallback = () => {
+    // Fallback for unrecognized challenge types - always show options if they exist
+    const options = challenge.content?.options || [];
+    
+    if (options.length === 0) {
+      return (
+        <div className="space-y-4">
+          <p className="text-gray-700">{challenge.content?.context || 'Challenge context not available'}</p>
+          <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <p className="text-yellow-800">This challenge format is not fully supported yet.</p>
+            <Button 
+              onClick={() => onAnswer('fallback-complete')}
+              className="mt-2 bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              Mark as Complete
+            </Button>
+          </div>
+        </div>
+      );
+    }
+    
+    return renderMultipleChoice();
   };
 
   const renderMultipleChoice = () => (

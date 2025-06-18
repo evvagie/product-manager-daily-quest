@@ -37,10 +37,12 @@ const Challenge = () => {
 
   // Generate dynamic challenges when session starts
   const generateSessionChallenges = () => {
+    console.log('Generating challenges for:', { category, difficulty });
     const challenges = [];
     for (let i = 0; i < 4; i++) {
       challenges.push(generateDynamicChallenge(category, difficulty));
     }
+    console.log('Generated challenges:', challenges);
     setGeneratedChallenges(challenges);
     return challenges;
   };
@@ -74,6 +76,7 @@ const Challenge = () => {
   };
 
   const handleAnswer = (answer: any) => {
+    console.log('Answer received:', answer, 'for challenge:', currentChallengeData?.title);
     const newAnswers = [...answers];
     newAnswers[currentChallenge] = answer;
     setAnswers(newAnswers);
@@ -191,6 +194,8 @@ const Challenge = () => {
       </div>
     );
   }
+
+  console.log('Rendering challenge page with:', currentChallengeData);
 
   return (
     <div className="min-h-screen bg-white text-black">

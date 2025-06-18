@@ -193,15 +193,25 @@ export const generateDynamicChallenge = (skillArea: string, difficulty: string):
       content = generateTimeBombChallenge(areaContent, modifier, context);
   }
   
-  return {
+  const challenge = {
     id: `${skillArea}-${difficulty}-${format.id}-${Date.now()}`,
     title: `${format.name}: ${context}`,
     description: `A ${difficulty} level ${format.description.toLowerCase()} in ${skillArea}`,
-    type: format.interactionType,
+    type: format.interactionType, // Use interactionType for rendering
     timeLimit: adjustedTimeLimit,
     content,
     format
   };
+  
+  // Add debugging
+  console.log('Generated challenge:', {
+    formatType: format.type,
+    interactionType: format.interactionType,
+    challengeType: challenge.type,
+    title: challenge.title
+  });
+  
+  return challenge;
 };
 
 const generateTimeBombChallenge = (areaContent: any, modifier: any, context: string) => {
