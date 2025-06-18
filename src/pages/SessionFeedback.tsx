@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
@@ -15,6 +16,9 @@ const SessionFeedback = () => {
   const { user } = useAuth()
   const [loading, setLoading] = useState(false)
   const [personalizedFeedback, setPersonalizedFeedback] = useState<any>(null)
+  const [streak, setStreak] = useState(0)
+  const [newBadges, setNewBadges] = useState<string[]>([])
+  const [sessionSaved, setSessionSaved] = useState(false)
   
   const sessionData = location.state
   if (!sessionData) {
@@ -37,10 +41,8 @@ const SessionFeedback = () => {
   const completionRate = (completedChallenges / challenges) * 100
   const baseXP = difficulty === 'beginner' ? 50 : difficulty === 'intermediate' ? 100 : 200
   const earnedXP = Math.round(baseXP * (completionRate / 100))
-  
-  const [streak, setStreak] = useState(0)
-  const [newBadges, setNewBadges] = useState<string[]>([])
 
+  // Generate feedback only once when component mounts
   useEffect(() => {
     const generateFeedback = async () => {
       try {
@@ -80,12 +82,15 @@ const SessionFeedback = () => {
       }
     };
 
-    generateFeedback();
-  }, [answers, category, difficulty, challenges, user, baseXP, completionRate]);
+    if (!personalizedFeedback) {
+      generateFeedback();
+    }
+  }, []); // Only run once on mount
 
+  // Save session data only when feedback is ready and not already saved
   useEffect(() => {
     const saveSessionData = async () => {
-      if (!user || loading || !personalizedFeedback) return
+      if (!user || loading || !personalizedFeedback || sessionSaved) return
       
       setLoading(true)
       try {
@@ -150,6 +155,7 @@ const SessionFeedback = () => {
         if (personalizedFeedback.score >= 85) badges.push('High Performer')
         
         setNewBadges(badges)
+        setSessionSaved(true)
         
         toast.success(`Session saved! +${earnedXP} XP earned`)
         
@@ -162,7 +168,7 @@ const SessionFeedback = () => {
     }
 
     saveSessionData()
-  }, [user, earnedXP, completionRate, completedChallenges, challenges, personalizedFeedback])
+  }, [personalizedFeedback]) // Only run when feedback is ready
 
   const getPerformanceMessage = () => {
     if (!personalizedFeedback) return "Analyzing your performance..."
