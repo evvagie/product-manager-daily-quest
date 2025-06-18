@@ -27,16 +27,16 @@ export const generateDynamicChallenge = async (skillArea: string, difficulty: st
   console.log('🚀 Starting OpenAI challenge generation:', { skillArea, difficulty, timestamp });
   
   try {
-    // Get OpenAI API key from Supabase secrets
+    // Get YUNO_KEY from Supabase secrets
     const { data: secretsData, error: secretsError } = await supabase.functions.invoke('get-secrets');
     
     if (secretsError || !secretsData?.OPENAI_API_KEY) {
-      console.error('❌ OpenAI API key not found:', secretsError);
-      throw new Error('OpenAI API key not configured');
+      console.error('❌ YUNO_KEY not found:', secretsError);
+      throw new Error('YUNO_KEY not configured');
     }
 
     const apiKey = secretsData.OPENAI_API_KEY;
-    console.log('🔑 OpenAI API key retrieved successfully');
+    console.log('🔑 YUNO_KEY retrieved successfully');
 
     // Create a simple, reliable prompt for generating 4 exercises
     const prompt = `Generate exactly 4 product management exercises for skill area "${skillArea}" at "${difficulty}" level.
@@ -154,6 +154,6 @@ Make each exercise unique with different scenarios. Include 2-4 options per exer
     console.error('💥 Error in OpenAI challenge generation:', error);
     
     // Show user-friendly error instead of fallback
-    throw new Error(`Failed to generate AI challenges: ${error.message}. Please check your OpenAI API key configuration.`);
+    throw new Error(`Failed to generate AI challenges: ${error.message}. Please check your YUNO_KEY configuration.`);
   }
 };

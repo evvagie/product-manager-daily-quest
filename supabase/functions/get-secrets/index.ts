@@ -12,12 +12,12 @@ serve(async (req) => {
   }
 
   try {
-    const openaiKey = Deno.env.get('OPENAI_API_KEY');
+    const yunoKey = Deno.env.get('YUNO_KEY');
     
     return new Response(
       JSON.stringify({ 
-        OPENAI_API_KEY: openaiKey,
-        success: !!openaiKey 
+        OPENAI_API_KEY: yunoKey,
+        success: !!yunoKey 
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
