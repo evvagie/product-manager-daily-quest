@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -9,13 +10,14 @@ import { DynamicChallengeRenderer } from '@/components/challenges/DynamicChallen
 import { ConsequenceDisplay } from '@/components/challenges/ConsequenceDisplay';
 import { KPIDisplay } from '@/components/challenges/KPIDisplay';
 import { generateDynamicChallenge, type ChallengeSession, type Exercise } from '@/utils/challengeGenerator';
-import { toast } from 'sonner';
+import { useToast } from '@/components/ui/use-toast';
 
 const Challenge = () => {
   const [searchParams] = useSearchParams();
   const skillArea = searchParams.get('category');
   const difficulty = searchParams.get('difficulty');
   const navigate = useNavigate();
+  const { toast } = useToast();
   
   const [challengeSession, setChallengeSession] = useState<ChallengeSession | null>(null);
   const [loading, setLoading] = useState(true);
@@ -47,20 +49,24 @@ const Challenge = () => {
         setTimeLeft(newChallengeSession.exercises[0]?.timeLimit || 180);
         setExerciseAnswers(new Array(newChallengeSession.totalExercises).fill(null));
         
-        // Show success message using sonner toast
+        // Show success message based on source
         if (newChallengeSession.source === 'openai') {
-          toast.success('🤖 AI Challenge Session Generated!', {
-            description: `${newChallengeSession.totalExercises} unique exercises created just for you`
+          toast({
+            title: "🤖 AI Challenge Session Generated!",
+            description: `${newChallengeSession.totalExercises} unique exercises created just for you`,
           });
         } else {
-          toast.success('Challenge Session Ready', {
-            description: `${newChallengeSession.totalExercises} exercises using enhanced static content`
+          toast({
+            title: "Challenge Session Ready",
+            description: `${newChallengeSession.totalExercises} exercises using enhanced static content`,
           });
         }
       } catch (error) {
         console.error('Error loading challenge session:', error);
-        toast.error('Failed to load challenge session', {
-          description: 'Please try again.'
+        toast({
+          title: "Error",
+          description: "Failed to load challenge session. Please try again.",
+          variant: "destructive",
         });
         navigate('/challenge-selection');
       } finally {
@@ -69,7 +75,7 @@ const Challenge = () => {
     };
 
     loadChallengeSession();
-  }, [skillArea, difficulty, navigate]);
+  }, [skillArea, difficulty, navigate, toast]);
 
   useEffect(() => {
     if (timeLeft > 0 && !isComplete && !showConsequences) {
@@ -90,8 +96,10 @@ const Challenge = () => {
 
   const handleTimeUp = () => {
     if (!isComplete && !showConsequences) {
-      toast.warning("Time's Up!", {
-        description: "Moving to next exercise."
+      toast({
+        title: "Time's Up!",
+        description: "Moving to next exercise.",
+        variant: "destructive",
       });
       handleNextExercise();
     }

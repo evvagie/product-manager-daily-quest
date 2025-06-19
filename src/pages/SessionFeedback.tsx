@@ -28,7 +28,7 @@ const SessionFeedback = () => {
   // Handle both single challenge (legacy) and multi-exercise session formats
   const { challengeSession, exerciseAnswers, challenge, answer, timeUsed } = sessionData
   
-  // Extract category and difficulty with database safety checks
+  // Extract category and difficulty
   const category = challengeSession?.skillArea || challenge?.content?.category || 'general'
   const difficulty = challengeSession?.difficulty || challenge?.content?.difficulty || 'beginner'
   
@@ -36,7 +36,7 @@ const SessionFeedback = () => {
   const answers = exerciseAnswers || (answer ? [answer] : [])
   const totalExercises = challengeSession?.totalExercises || 1
   
-  // Enhanced scoring calculation with database-safe operations
+  // Fixed scoring calculation to properly extract and evaluate user answers
   const calculateExerciseScores = () => {
     if (!challengeSession?.exercises || !exerciseAnswers) {
       console.log('No exercises or answers found for scoring');
@@ -122,19 +122,17 @@ const SessionFeedback = () => {
   useEffect(() => {
     const generateFeedback = async () => {
       try {
-        // Get previous session score for comparison with database safety
+        // Get previous session score for comparison
         let previousScore = null;
         if (user) {
-          const { data: recentSessions, error } = await supabase
+          const { data: recentSessions } = await supabase
             .from('sessions')
             .select('*')
             .eq('user_id', user.id)
             .order('created_at', { ascending: false })
             .limit(2);
           
-          if (error) {
-            console.error('Error fetching recent sessions:', error);
-          } else if (recentSessions && recentSessions.length > 1) {
+          if (recentSessions && recentSessions.length > 1) {
             const prevSession = recentSessions[1];
             previousScore = Math.round((prevSession.xp_gagne / baseXP) * 100);
           }
@@ -165,9 +163,9 @@ const SessionFeedback = () => {
     if (!personalizedFeedback) {
       generateFeedback();
     }
-  }, [totalScore, user, baseXP, answers, category, difficulty, totalExercises]);
+  }, [totalScore]);
 
-  // Save session data with enhanced database safety and error handling
+  // Save session data and individual exercises with accurate scoring
   useEffect(() => {
     const saveSessionData = async () => {
       if (!user || loading || !personalizedFeedback || sessionSaved) return
@@ -176,7 +174,7 @@ const SessionFeedback = () => {
       try {
         console.log('Saving session data with scores:', exerciseScores);
         
-        // Create session record with error handling
+        // Create session record
         const { data: sessionRecord, error: sessionError } = await supabase
           .from('sessions')
           .insert({
@@ -190,12 +188,9 @@ const SessionFeedback = () => {
           .select()
           .single()
 
-        if (sessionError) {
-          console.error('Session insert error:', sessionError);
-          throw sessionError;
-        }
+        if (sessionError) throw sessionError
 
-        // Save individual exercises to both tables with accurate scores and enhanced error handling
+        // Save individual exercises to both tables with accurate scores
         if (challengeSession && challengeSession.exercises && exerciseScores.length > 0) {
           // Save to exercise_scores table with accurate scoring
           const exerciseScoreRecords = challengeSession.exercises.map((exercise: any, index: number) => {
@@ -257,23 +252,20 @@ const SessionFeedback = () => {
           }
         }
 
-        // Get current user data with error handling
+        // Get current user data
         const { data: userData, error: userError } = await supabase
           .from('users')
           .select('xp, level, streak')
           .eq('id', user.id)
           .single()
 
-        if (userError) {
-          console.error('User data fetch error:', userError);
-          throw userError;
-        }
+        if (userError) throw userError
         if (!userData) throw new Error('User data not found')
 
         const newXP = userData.xp + earnedXP
         const newLevel = Math.floor(newXP / 1000) + 1
 
-        // Update user stats (XP, level, progression) with error handling
+        // Update user stats (XP, level, progression) but let the streak function handle streak calculation
         const { error: updateError } = await supabase
           .from('users')
           .update({
@@ -284,12 +276,9 @@ const SessionFeedback = () => {
           })
           .eq('id', user.id)
 
-        if (updateError) {
-          console.error('User update error:', updateError);
-          throw updateError;
-        }
+        if (updateError) throw updateError
 
-        // Update streak using the realistic calculation function with error handling
+        // Update streak using the realistic calculation function
         const { data: updatedStreak, error: streakError } = await supabase
           .rpc('update_user_streak', { user_uuid: user.id });
 
@@ -314,16 +303,14 @@ const SessionFeedback = () => {
         
       } catch (error: any) {
         console.error('Error saving session:', error)
-        toast.error('Failed to save session data', {
-          description: error.message || 'Please try again'
-        });
+        toast.error('Failed to save session data')
       } finally {
         setLoading(false)
       }
     }
 
     saveSessionData()
-  }, [personalizedFeedback, user, earnedXP, completionRate, exerciseScores, challengeSession, category, difficulty, loading, sessionSaved]);
+  }, [personalizedFeedback]) // Only run when feedback is ready
 
   const getPerformanceMessage = () => {
     if (!personalizedFeedback) return "Analyzing your performance..."

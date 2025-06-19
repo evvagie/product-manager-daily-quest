@@ -1,12 +1,12 @@
 
-import React from 'react';
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Header from "@/components/Layout/Header";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import ErrorBoundary from "@/components/ErrorBoundary";
-import { Toaster } from "@/components/ui/sonner";
 
 // Pages
 import Landing from "./pages/Landing";
@@ -21,52 +21,51 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const App: React.FC = () => {
-  return (
-    <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <AuthProvider>
-            <div className="min-h-screen bg-black">
-              <Header />
-              <Routes>
-                <Route path="/" element={<Landing />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/signup" element={<Signup />} />
-                <Route path="/dashboard" element={
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                } />
-                <Route path="/challenge-selection" element={
-                  <ProtectedRoute>
-                    <ChallengeSelection />
-                  </ProtectedRoute>
-                } />
-                <Route path="/challenge" element={
-                  <ProtectedRoute>
-                    <Challenge />
-                  </ProtectedRoute>
-                } />
-                <Route path="/session-feedback" element={
-                  <ProtectedRoute>
-                    <SessionFeedback />
-                  </ProtectedRoute>
-                } />
-                <Route path="/challenge-library/:category" element={
-                  <ProtectedRoute>
-                    <ChallengeLibrary />
-                  </ProtectedRoute>
-                } />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-              <Toaster />
-            </div>
-          </AuthProvider>
-        </BrowserRouter>
-      </QueryClientProvider>
-    </ErrorBoundary>
-  );
-};
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
+        <AuthProvider>
+          <div className="min-h-screen bg-black">
+            <Header />
+            <Routes>
+              <Route path="/" element={<Landing />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/challenge-selection" element={
+                <ProtectedRoute>
+                  <ChallengeSelection />
+                </ProtectedRoute>
+              } />
+              <Route path="/challenge" element={
+                <ProtectedRoute>
+                  <Challenge />
+                </ProtectedRoute>
+              } />
+              <Route path="/session-feedback" element={
+                <ProtectedRoute>
+                  <SessionFeedback />
+                </ProtectedRoute>
+              } />
+              <Route path="/challenge-library/:category" element={
+                <ProtectedRoute>
+                  <ChallengeLibrary />
+                </ProtectedRoute>
+              } />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </div>
+        </AuthProvider>
+      </BrowserRouter>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
 
 export default App;

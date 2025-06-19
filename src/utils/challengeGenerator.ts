@@ -113,27 +113,13 @@ Make each exercise unique with different scenarios. Include 2-4 options per exer
       throw new Error('No content in OpenAI response');
     }
 
-    // Clean the response content to handle markdown code blocks
-    let cleanedContent = content.trim();
-    console.log('Raw content length:', cleanedContent.length);
-    
-    // Remove markdown code block wrapper if present
-    if (cleanedContent.startsWith('```json')) {
-      cleanedContent = cleanedContent.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-      console.log('Removed markdown wrapper, cleaned content length:', cleanedContent.length);
-    } else if (cleanedContent.startsWith('```')) {
-      cleanedContent = cleanedContent.replace(/^```\s*/, '').replace(/\s*```$/, '');
-      console.log('Removed generic markdown wrapper, cleaned content length:', cleanedContent.length);
-    }
-
     // Parse the JSON response
     let exerciseData;
     try {
-      exerciseData = JSON.parse(cleanedContent);
-      console.log('✅ Successfully parsed JSON response');
+      exerciseData = JSON.parse(content);
     } catch (parseError) {
       console.error('❌ JSON parsing error:', parseError);
-      console.error('Cleaned content that failed to parse:', cleanedContent.substring(0, 500));
+      console.error('Raw content:', content);
       throw new Error('Failed to parse OpenAI response as JSON');
     }
 
@@ -151,7 +137,7 @@ Make each exercise unique with different scenarios. Include 2-4 options per exer
       difficulty,
       totalExercises: 4,
       exercises: exerciseData.exercises,
-      source: 'openai',
+      source: 'openai-direct',
       generatedAt: new Date().toISOString(),
       timestamp
     };
