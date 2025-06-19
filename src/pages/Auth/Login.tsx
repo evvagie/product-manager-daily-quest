@@ -1,4 +1,3 @@
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -35,7 +34,7 @@ const Login = () => {
       <Card className="w-full max-w-md bg-white border-gray-200 shadow-lg">
         <CardHeader className="text-center">
           <div className="w-12 h-12 bg-gradient-to-br from-[#0400ff] to-purple-600 rounded-xl flex items-center justify-center mx-auto mb-4">
-            <span className="text-white font-bold text-xl">Y</span>
+            <span className="!text-white font-bold text-xl" style={{ color: 'white !important' }}>Y</span>
           </div>
           <CardTitle className="text-2xl font-bold text-gray-900">Welcome Back</CardTitle>
           <CardDescription className="text-gray-600">
@@ -66,7 +65,8 @@ const Login = () => {
             </div>
             <Button
               type="submit"
-              className="w-full bg-gradient-to-r from-[#0400ff] to-purple-600 hover:from-[#0300cc] hover:to-purple-700 text-white"
+              className="w-full bg-gradient-to-r from-[#0400ff] to-purple-600 hover:from-[#0300cc] hover:to-purple-700 !text-white"
+              style={{ color: 'white !important' }}
               disabled={loading}
             >
               {loading ? "Signing in..." : "Sign In"}
