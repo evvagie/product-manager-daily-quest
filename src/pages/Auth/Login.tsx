@@ -31,14 +31,14 @@ const Login = () => {
   }
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-4">
-      <Card className="w-full max-w-md bg-gray-900 border-gray-800">
+    <div className="min-h-screen bg-white flex items-center justify-center p-4">
+      <Card className="w-full max-w-md bg-white border-gray-200 shadow-lg">
         <CardHeader className="text-center">
-          <div className="w-12 h-12 bg-[#0400ff] rounded-xl flex items-center justify-center mx-auto mb-4">
+          <div className="w-12 h-12 bg-gradient-to-br from-[#0400ff] to-purple-600 rounded-xl flex items-center justify-center mx-auto mb-4">
             <span className="text-white font-bold text-xl">Y</span>
           </div>
-          <CardTitle className="text-2xl font-bold text-white">Welcome Back</CardTitle>
-          <CardDescription className="text-gray-400">
+          <CardTitle className="text-2xl font-bold text-gray-900">Welcome Back</CardTitle>
+          <CardDescription className="text-gray-600">
             Sign in to continue your PM learning journey
           </CardDescription>
         </CardHeader>
@@ -51,7 +51,7 @@ const Login = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="bg-gray-800 border-gray-700 text-white placeholder-gray-400"
+                className="bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-500"
               />
             </div>
             <div>
@@ -61,12 +61,12 @@ const Login = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="bg-gray-800 border-gray-700 text-white placeholder-gray-400"
+                className="bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-500"
               />
             </div>
             <Button
               type="submit"
-              className="w-full bg-[#0400ff] hover:bg-[#0300cc]"
+              className="w-full bg-gradient-to-r from-[#0400ff] to-purple-600 hover:from-[#0300cc] hover:to-purple-700 text-white"
               disabled={loading}
             >
               {loading ? "Signing in..." : "Sign In"}
@@ -74,7 +74,7 @@ const Login = () => {
           </form>
           
           <div className="mt-6 text-center">
-            <p className="text-gray-400">
+            <p className="text-gray-600">
               Don't have an account?{" "}
               <Link to="/signup" className="text-[#0400ff] hover:text-[#0300cc]">
                 Sign up
