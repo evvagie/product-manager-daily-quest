@@ -19,8 +19,8 @@ interface RequestBody {
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-// Simple static recommendations based on skill area and performance
-const generateSimpleRecommendations = (skillArea: string, performanceScore: number, improvementAreas: string[]) => {
+// Generate only 2 static recommendations (book and article) - the 3rd will be AI-generated
+const generateStaticRecommendations = (skillArea: string, performanceScore: number, improvementAreas: string[]) => {
   const recommendations = [];
   
   // Book recommendation based on skill area
@@ -67,19 +67,6 @@ const generateSimpleRecommendations = (skillArea: string, performanceScore: numb
     }
   };
 
-  // TED talk recommendation based on improvement areas
-  const tedTalk = improvementAreas.includes('stakeholder') ? {
-    title: "How Great Leaders Inspire Action",
-    author_speaker: "Simon Sinek",
-    description: "Understanding the 'why' behind decisions and inspiring stakeholders through clear communication and vision.",
-    source_url: "https://www.ted.com/talks/simon_sinek_how_great_leaders_inspire_action"
-  } : {
-    title: "The Power of Yet",
-    author_speaker: "Carol Dweck",
-    description: "Developing a growth mindset to overcome challenges and continuously improve your skills.",
-    source_url: "https://www.ted.com/talks/carol_dweck_the_power_of_believing_that_you_can_improve"
-  };
-
   // Add book recommendation
   const bookRec = books[skillArea as keyof typeof books] || books.general;
   recommendations.push({
@@ -101,15 +88,6 @@ const generateSimpleRecommendations = (skillArea: string, performanceScore: numb
     source_url: articleRec.source_url
   });
 
-  // Add TED talk recommendation
-  recommendations.push({
-    type: "ted_talk",
-    title: tedTalk.title,
-    author_speaker: tedTalk.author_speaker,
-    description: tedTalk.description,
-    source_url: tedTalk.source_url
-  });
-
   return recommendations;
 };
 
@@ -122,7 +100,7 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const { userId, skillArea, difficulty, performanceScore, improvementAreas, strengths }: RequestBody = await req.json();
 
-    console.log('Generating simple recommendations for user:', userId, 'skill:', skillArea, 'score:', performanceScore);
+    console.log('Generating static recommendations for user:', userId, 'skill:', skillArea, 'score:', performanceScore);
 
     // Check if recommendations already exist for today
     const today = new Date().toISOString().split('T')[0];
@@ -132,16 +110,16 @@ serve(async (req) => {
       .eq('user_id', userId)
       .eq('date', today);
 
-    if (existingRecs && existingRecs.length >= 3) {
-      console.log('Found existing recommendations:', existingRecs.length);
+    if (existingRecs && existingRecs.length >= 2) {
+      console.log('Found existing static recommendations:', existingRecs.length);
       return new Response(JSON.stringify({ recommendations: existingRecs }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Generate simple recommendations
-    const recommendations = generateSimpleRecommendations(skillArea, performanceScore, improvementAreas);
-    console.log('Generated recommendations:', recommendations.length);
+    // Generate only 2 static recommendations (book and article)
+    const recommendations = generateStaticRecommendations(skillArea, performanceScore, improvementAreas);
+    console.log('Generated static recommendations:', recommendations.length);
 
     // Insert recommendations into database
     const dbRecords = recommendations.map((rec: any) => ({
@@ -171,7 +149,7 @@ serve(async (req) => {
       throw error;
     }
 
-    console.log('Successfully inserted recommendations:', insertedRecs?.length);
+    console.log('Successfully inserted static recommendations:', insertedRecs?.length);
 
     return new Response(JSON.stringify({ recommendations: insertedRecs }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

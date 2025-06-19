@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
@@ -10,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 import { generatePersonalizedFeedback } from "@/utils/feedbackGenerator"
 import { useDailyRecommendations } from "@/hooks/useDailyRecommendations"
+import { usePersonalizedRecommendation } from "@/hooks/usePersonalizedRecommendation"
 
 const SessionFeedback = () => {
   const location = useLocation()
@@ -167,9 +167,9 @@ const SessionFeedback = () => {
     }
   }, [totalScore]);
 
-  // Get AI-powered recommendations
+  // Get static recommendations (2: book + article)
   const {
-    recommendations,
+    recommendations: staticRecommendations,
     loading: recommendationsLoading,
     error: recommendationsError
   } = useDailyRecommendations({
@@ -178,6 +178,20 @@ const SessionFeedback = () => {
     performanceScore: totalScore,
     improvementAreas: personalizedFeedback?.improvements || [],
     strengths: personalizedFeedback?.strengths || [],
+    triggerGeneration: !!personalizedFeedback && sessionSaved
+  });
+
+  // Get AI-generated personalized recommendation (1: ted_talk)
+  const {
+    recommendation: personalizedRecommendation,
+    loading: personalizedLoading,
+    error: personalizedError
+  } = usePersonalizedRecommendation({
+    skillArea: category,
+    difficulty: difficulty,
+    performanceScore: totalScore,
+    exerciseScores: exerciseScores,
+    totalExercises: totalExercises,
     triggerGeneration: !!personalizedFeedback && sessionSaved
   });
 
@@ -468,30 +482,31 @@ const SessionFeedback = () => {
             </Card>
           )}
 
-          {/* AI-Powered Personalized Recommendations */}
+          {/* Combined AI-Powered Recommendations */}
           <Card className="bg-gray-900 border-gray-800 mb-8">
             <CardHeader>
               <CardTitle className="text-xl text-white flex items-center">
-                🤖 AI-Personalized Learning Resources
+                🤖 Personalized Learning Resources
               </CardTitle>
               <CardDescription className="text-gray-400">
-                Tailored recommendations based on your performance in {category}
+                Curated recommendations based on your performance in {category}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {recommendationsLoading ? (
+              {(recommendationsLoading || personalizedLoading) ? (
                 <div className="flex items-center justify-center py-8">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mr-3"></div>
                   <span className="text-gray-400">Generating personalized recommendations...</span>
                 </div>
-              ) : recommendationsError ? (
+              ) : (recommendationsError && personalizedError) ? (
                 <div className="text-center py-8">
                   <p className="text-red-400 mb-4">Failed to generate recommendations</p>
-                  <p className="text-gray-500 text-sm">{recommendationsError}</p>
+                  <p className="text-gray-500 text-sm">{recommendationsError || personalizedError}</p>
                 </div>
-              ) : recommendations.length > 0 ? (
+              ) : (staticRecommendations.length > 0 || personalizedRecommendation) ? (
                 <div className="space-y-4">
-                  {recommendations.map((resource, index) => (
+                  {/* Static recommendations */}
+                  {staticRecommendations.map((resource, index) => (
                     <div key={index} className="p-4 bg-gray-800/50 rounded-lg border border-gray-700 hover:border-gray-600 transition-colors">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
@@ -517,6 +532,37 @@ const SessionFeedback = () => {
                       </div>
                     </div>
                   ))}
+                  
+                  {/* AI-generated personalized recommendation */}
+                  {personalizedRecommendation && (
+                    <div className="p-4 bg-gradient-to-r from-purple-900/30 to-blue-900/30 rounded-lg border border-purple-700/50 hover:border-purple-600/50 transition-colors">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <h4 className="text-white font-medium">{personalizedRecommendation.title}</h4>
+                            <Badge className="bg-gradient-to-r from-purple-600/20 to-blue-600/20 text-purple-300 text-xs border-purple-500/30">
+                              AI Personalized
+                            </Badge>
+                            <Badge variant="secondary" className="bg-orange-600/20 text-orange-400 text-xs">
+                              {personalizedRecommendation.recommendation_type.replace('_', ' ')}
+                            </Badge>
+                          </div>
+                          <p className="text-gray-400 text-sm mb-1">by {personalizedRecommendation.author_speaker}</p>
+                          <p className="text-gray-300 text-sm">{personalizedRecommendation.description}</p>
+                        </div>
+                        {personalizedRecommendation.source_url && (
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="border-purple-600 text-purple-300 hover:bg-purple-800/20 ml-4"
+                            onClick={() => window.open(personalizedRecommendation.source_url, '_blank')}
+                          >
+                            Watch
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="text-center py-8">
