@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -10,14 +9,12 @@ import { DynamicChallengeRenderer } from '@/components/challenges/DynamicChallen
 import { ConsequenceDisplay } from '@/components/challenges/ConsequenceDisplay';
 import { KPIDisplay } from '@/components/challenges/KPIDisplay';
 import { generateDynamicChallenge, type ChallengeSession, type Exercise } from '@/utils/challengeGenerator';
-import { useToast } from '@/components/ui/use-toast';
 
 const Challenge = () => {
   const [searchParams] = useSearchParams();
   const skillArea = searchParams.get('category');
   const difficulty = searchParams.get('difficulty');
   const navigate = useNavigate();
-  const { toast } = useToast();
   
   const [challengeSession, setChallengeSession] = useState<ChallengeSession | null>(null);
   const [loading, setLoading] = useState(true);
@@ -49,25 +46,14 @@ const Challenge = () => {
         setTimeLeft(newChallengeSession.exercises[0]?.timeLimit || 180);
         setExerciseAnswers(new Array(newChallengeSession.totalExercises).fill(null));
         
-        // Show success message based on source
+        // Show success message in console instead of toast for now
         if (newChallengeSession.source === 'openai') {
-          toast({
-            title: "🤖 AI Challenge Session Generated!",
-            description: `${newChallengeSession.totalExercises} unique exercises created just for you`,
-          });
+          console.log('🤖 AI Challenge Session Generated!', `${newChallengeSession.totalExercises} unique exercises created just for you`);
         } else {
-          toast({
-            title: "Challenge Session Ready",
-            description: `${newChallengeSession.totalExercises} exercises using enhanced static content`,
-          });
+          console.log('Challenge Session Ready', `${newChallengeSession.totalExercises} exercises using enhanced static content`);
         }
       } catch (error) {
         console.error('Error loading challenge session:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load challenge session. Please try again.",
-          variant: "destructive",
-        });
         navigate('/challenge-selection');
       } finally {
         setLoading(false);
@@ -75,7 +61,7 @@ const Challenge = () => {
     };
 
     loadChallengeSession();
-  }, [skillArea, difficulty, navigate, toast]);
+  }, [skillArea, difficulty, navigate]);
 
   useEffect(() => {
     if (timeLeft > 0 && !isComplete && !showConsequences) {
@@ -96,11 +82,7 @@ const Challenge = () => {
 
   const handleTimeUp = () => {
     if (!isComplete && !showConsequences) {
-      toast({
-        title: "Time's Up!",
-        description: "Moving to next exercise.",
-        variant: "destructive",
-      });
+      console.log("Time's Up! Moving to next exercise.");
       handleNextExercise();
     }
   };
