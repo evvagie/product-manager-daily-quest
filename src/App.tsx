@@ -22,51 +22,53 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const App: React.FC = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-          <div className="min-h-screen bg-black">
-            <Header />
-            <Routes>
-              <Route path="/" element={<Landing />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
-              <Route path="/dashboard" element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              } />
-              <Route path="/challenge-selection" element={
-                <ProtectedRoute>
-                  <ChallengeSelection />
-                </ProtectedRoute>
-              } />
-              <Route path="/challenge" element={
-                <ProtectedRoute>
-                  <Challenge />
-                </ProtectedRoute>
-              } />
-              <Route path="/session-feedback" element={
-                <ProtectedRoute>
-                  <SessionFeedback />
-                </ProtectedRoute>
-              } />
-              <Route path="/challenge-library/:category" element={
-                <ProtectedRoute>
-                  <ChallengeLibrary />
-                </ProtectedRoute>
-              } />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </div>
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App: React.FC = () => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AuthProvider>
+            <div className="min-h-screen bg-black">
+              <Header />
+              <Routes>
+                <Route path="/" element={<Landing />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<Signup />} />
+                <Route path="/dashboard" element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/challenge-selection" element={
+                  <ProtectedRoute>
+                    <ChallengeSelection />
+                  </ProtectedRoute>
+                } />
+                <Route path="/challenge" element={
+                  <ProtectedRoute>
+                    <Challenge />
+                  </ProtectedRoute>
+                } />
+                <Route path="/session-feedback" element={
+                  <ProtectedRoute>
+                    <SessionFeedback />
+                  </ProtectedRoute>
+                } />
+                <Route path="/challenge-library/:category" element={
+                  <ProtectedRoute>
+                    <ChallengeLibrary />
+                  </ProtectedRoute>
+                } />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </div>
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
