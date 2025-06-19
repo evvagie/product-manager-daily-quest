@@ -32,17 +32,17 @@ const AchievementsCard = () => {
           <div className="space-y-3">
             {loading ? (
               <div className="animate-pulse">
-                <div className="flex items-center space-x-3 p-3 bg-white/10 rounded-lg">
-                  <div className="w-8 h-8 bg-white/20 rounded"></div>
+                <div className="flex items-center space-x-3 p-3 bg-white/20 rounded-lg border border-gradient-to-r from-blue-500/30 to-purple-500/30">
+                  <div className="w-8 h-8 bg-white/30 rounded"></div>
                   <div className="flex-1">
-                    <div className="h-4 bg-white/20 rounded mb-2"></div>
-                    <div className="h-3 bg-white/20 rounded w-2/3"></div>
+                    <div className="h-4 bg-white/30 rounded mb-2"></div>
+                    <div className="h-3 bg-white/30 rounded w-2/3"></div>
                   </div>
                 </div>
               </div>
             ) : recentAchievements.length > 0 ? (
               recentAchievements.map((achievement) => (
-                <div key={achievement.achievement_id} className="flex items-center space-x-3 p-3 bg-white/10 rounded-lg">
+                <div key={achievement.achievement_id} className="flex items-center space-x-3 p-3 bg-white/20 rounded-lg border border-white/30 bg-gradient-to-r from-blue-500/5 to-purple-500/5">
                   <span className="text-2xl">{achievement.icon}</span>
                   <div>
                     <p className="font-medium text-white">{achievement.name}</p>
@@ -51,7 +51,7 @@ const AchievementsCard = () => {
                 </div>
               ))
             ) : (
-              <div className="flex items-center space-x-3 p-3 bg-white/5 rounded-lg border-2 border-dashed border-white/20">
+              <div className="flex items-center space-x-3 p-3 bg-white/15 rounded-lg border-2 border-dashed border-white/30">
                 <span className="text-2xl opacity-50">🏆</span>
                 <div>
                   <p className="font-medium text-gray-500">No achievements yet</p>
