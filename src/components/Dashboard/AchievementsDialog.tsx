@@ -45,8 +45,8 @@ const AchievementsDialog = ({ isOpen, onClose }: AchievementsDialogProps) => {
       key={achievement.achievement_id}
       className={`p-4 rounded-lg border ${
         achievement.is_unlocked 
-          ? 'bg-gradient-to-br from-white/20 via-blue-500/10 to-purple-500/15 border border-white/30' 
-          : 'bg-gradient-to-br from-white/10 via-purple-500/5 to-blue-500/8 border border-white/20'
+          ? 'bg-white/70 bg-gradient-to-br from-blue-500/20 via-purple-500/15 to-white/80 border border-white/50' 
+          : 'bg-white/40 bg-gradient-to-br from-purple-500/10 via-blue-500/10 to-white/50 border border-white/30'
       }`}
     >
       <div className="flex items-center justify-between mb-3">
