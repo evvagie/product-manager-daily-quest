@@ -35,7 +35,7 @@ const Signup = () => {
     <div className="min-h-screen bg-black flex items-center justify-center p-4">
       <Card className="w-full max-w-md bg-gray-900 border-gray-800">
         <CardHeader className="text-center">
-          <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+          <div className="w-12 h-12 bg-gradient-to-br from-[#0400ff] to-purple-600 rounded-xl flex items-center justify-center mx-auto mb-4">
             <span className="text-white font-bold text-xl">Y</span>
           </div>
           <CardTitle className="text-2xl font-bold text-white">Join Yuno</CardTitle>
@@ -77,7 +77,7 @@ const Signup = () => {
             </div>
             <Button
               type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700"
+              className="w-full bg-gradient-to-r from-[#0400ff] to-purple-600 hover:from-[#0300cc] hover:to-purple-700 text-white"
               disabled={loading}
             >
               {loading ? "Creating account..." : "Create Account"}
