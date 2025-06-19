@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -267,12 +266,9 @@ const Dashboard = () => {
                     <span className={`text-${category.color}-400`}>{category.icon}</span>
                   </div>
                   <p className="text-sm text-gray-400 mb-3">
-                    {category.completed} challenges completed
+                    {category.completed} completed
                   </p>
                   <Progress value={(category.completed / 300) * 100} className="h-1" />
-                  <p className="text-xs text-gray-500 mt-2">
-                    {category.completed} of 300 available
-                  </p>
                 </div>
               ))}
             </div>
