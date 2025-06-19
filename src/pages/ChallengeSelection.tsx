@@ -160,33 +160,6 @@ const ChallengeSelection = () => {
             </CardContent>
           </Card>
         )}
-
-        {/* Info Card */}
-        <Card className="bg-white border-gray-200">
-          <CardHeader>
-            <CardTitle className="text-lg text-black">How It Works</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid md:grid-cols-4 gap-4 text-sm">
-              <div className="text-center">
-                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-2 text-white font-bold">1</div>
-                <p className="text-gray-700">Choose category & difficulty</p>
-              </div>
-              <div className="text-center">
-                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-2 text-white font-bold">2</div>
-                <p className="text-gray-700">Complete 4 interactive challenges</p>
-              </div>
-              <div className="text-center">
-                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-2 text-white font-bold">3</div>
-                <p className="text-gray-700">Get instant feedback</p>
-              </div>
-              <div className="text-center">
-                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-2 text-white font-bold">4</div>
-                <p className="text-gray-700">Earn XP and improve</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
