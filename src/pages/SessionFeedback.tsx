@@ -36,25 +36,71 @@ const SessionFeedback = () => {
   const answers = exerciseAnswers || (answer ? [answer] : [])
   const totalExercises = challengeSession?.totalExercises || 1
   
-  // Calculate performance metrics with proper scoring
+  // Fixed scoring calculation to properly extract and evaluate user answers
   const calculateExerciseScores = () => {
-    if (!challengeSession?.exercises || !exerciseAnswers) return [];
+    if (!challengeSession?.exercises || !exerciseAnswers) {
+      console.log('No exercises or answers found for scoring');
+      return [];
+    }
+    
+    console.log('Calculating scores for exercises:', challengeSession.exercises.length);
+    console.log('Exercise answers:', exerciseAnswers);
     
     return challengeSession.exercises.map((exercise: any, index: number) => {
       const exerciseAnswer = exerciseAnswers[index];
-      if (!exerciseAnswer || !exercise.content?.options) return { score: 0, isCorrect: false };
+      console.log(`Exercise ${index + 1} answer:`, exerciseAnswer);
+      
+      if (!exerciseAnswer || !exercise.content?.options) {
+        console.log(`No answer or options for exercise ${index + 1}`);
+        return { 
+          score: 0, 
+          isCorrect: false, 
+          correctAnswer: 'N/A', 
+          userAnswer: 'No answer provided',
+          questionTitle: exercise.title || `Exercise ${index + 1}`
+        };
+      }
       
       const correctOption = exercise.content.options.find((opt: any) => opt.isCorrect);
-      const selectedOption = exercise.content.options.find((opt: any) => opt.id === exerciseAnswer.selectedOptionId);
-      const isCorrect = selectedOption?.isCorrect || false;
       
-      return {
-        score: isCorrect ? 100 : 0,
+      // Try multiple property names to find the selected option
+      let selectedOption = null;
+      let userSelectedId = null;
+      
+      // Check different possible property names for the user's selection
+      if (exerciseAnswer.selectedOptionId) {
+        userSelectedId = exerciseAnswer.selectedOptionId;
+      } else if (exerciseAnswer.selectedOption) {
+        userSelectedId = exerciseAnswer.selectedOption;
+      } else if (exerciseAnswer.answer) {
+        userSelectedId = exerciseAnswer.answer;
+      } else if (exerciseAnswer.optionId) {
+        userSelectedId = exerciseAnswer.optionId;
+      } else if (typeof exerciseAnswer === 'string') {
+        userSelectedId = exerciseAnswer;
+      }
+      
+      console.log(`Exercise ${index + 1} - User selected ID:`, userSelectedId);
+      
+      if (userSelectedId) {
+        selectedOption = exercise.content.options.find((opt: any) => 
+          opt.id === userSelectedId || opt.text === userSelectedId
+        );
+      }
+      
+      const isCorrect = selectedOption?.isCorrect || false;
+      const score = isCorrect ? 100 : 0;
+      
+      const result = {
+        score,
         isCorrect,
-        correctAnswer: correctOption?.text || '',
-        userAnswer: selectedOption?.text || '',
+        correctAnswer: correctOption?.text || 'N/A',
+        userAnswer: selectedOption?.text || 'No valid selection',
         questionTitle: exercise.title || `Exercise ${index + 1}`
       };
+      
+      console.log(`Exercise ${index + 1} score result:`, result);
+      return result;
     });
   };
 
@@ -63,6 +109,10 @@ const SessionFeedback = () => {
   const totalScore = exerciseScores.length > 0 
     ? Math.round(exerciseScores.reduce((sum, score) => sum + score.score, 0) / exerciseScores.length)
     : 0;
+  
+  console.log('Final calculated total score:', totalScore);
+  console.log('Exercise scores breakdown:', exerciseScores);
+  
   const completionRate = (completedExercises / totalExercises) * 100
   const baseXP = difficulty === 'beginner' ? 50 : difficulty === 'intermediate' ? 100 : 200
   const sessionMultiplier = totalExercises > 1 ? totalExercises * 0.8 : 1
@@ -115,13 +165,15 @@ const SessionFeedback = () => {
     }
   }, [totalScore]);
 
-  // Save session data and individual exercises
+  // Save session data and individual exercises with accurate scoring
   useEffect(() => {
     const saveSessionData = async () => {
       if (!user || loading || !personalizedFeedback || sessionSaved) return
       
       setLoading(true)
       try {
+        console.log('Saving session data with scores:', exerciseScores);
+        
         // Create session record
         const { data: sessionRecord, error: sessionError } = await supabase
           .from('sessions')
@@ -138,11 +190,11 @@ const SessionFeedback = () => {
 
         if (sessionError) throw sessionError
 
-        // Save individual exercises to both tables
-        if (challengeSession && challengeSession.exercises) {
+        // Save individual exercises to both tables with accurate scores
+        if (challengeSession && challengeSession.exercises && exerciseScores.length > 0) {
           // Save to exercise_scores table with accurate scoring
           const exerciseScoreRecords = challengeSession.exercises.map((exercise: any, index: number) => {
-            const scoreData = exerciseScores[index] || { score: 0, isCorrect: false, correctAnswer: '', userAnswer: '', questionTitle: `Exercise ${index + 1}` };
+            const scoreData = exerciseScores[index];
             
             return {
               user_id: user.id,
@@ -158,17 +210,21 @@ const SessionFeedback = () => {
             };
           });
 
+          console.log('Saving exercise score records:', exerciseScoreRecords);
+
           const { error: exerciseScoresError } = await supabase
             .from('exercise_scores')
             .insert(exerciseScoreRecords);
 
           if (exerciseScoresError) {
             console.error('Error saving exercise scores:', exerciseScoresError);
+          } else {
+            console.log('Exercise scores saved successfully');
           }
 
-          // Save to challenge_history table with aggregated score
+          // Save to challenge_history table with accurate scores
           const challengeHistoryRecords = challengeSession.exercises.map((exercise: any, index: number) => {
-            const scoreData = exerciseScores[index] || { score: 0 };
+            const scoreData = exerciseScores[index];
             
             return {
               user_id: user.id,
@@ -183,6 +239,8 @@ const SessionFeedback = () => {
             };
           });
 
+          console.log('Saving challenge history records:', challengeHistoryRecords);
+
           const { error: historyError } = await supabase
             .from('challenge_history')
             .insert(challengeHistoryRecords);
@@ -190,7 +248,7 @@ const SessionFeedback = () => {
           if (historyError) {
             console.error('Error saving challenge history:', historyError);
           } else {
-            console.log('Challenge history and exercise scores saved successfully');
+            console.log('Challenge history saved successfully');
           }
         }
 
