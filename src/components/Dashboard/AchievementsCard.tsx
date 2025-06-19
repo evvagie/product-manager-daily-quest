@@ -1,34 +1,74 @@
 
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useUserAchievements } from "@/hooks/useUserAchievements";
+import AchievementsDialog from "./AchievementsDialog";
 
 const AchievementsCard = () => {
+  const [showAchievementsDialog, setShowAchievementsDialog] = useState(false);
+  const { unlockedAchievements, achievements, loading } = useUserAchievements();
+
+  // Get the most recent unlocked achievements to display
+  const recentAchievements = unlockedAchievements
+    .sort((a, b) => new Date(b.unlocked_at || '').getTime() - new Date(a.unlocked_at || '').getTime())
+    .slice(0, 2);
+
   return (
-    <Card className="bg-gray-900 border-gray-800">
-      <CardHeader>
-        <CardTitle className="text-xl text-white">Recent Achievements</CardTitle>
-        <CardDescription className="text-gray-400">
-          Your latest unlocked badges and milestones
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
-          <div className="flex items-center space-x-3 p-3 bg-gray-800/50 rounded-lg">
-            <span className="text-2xl">🏅</span>
-            <div>
-              <p className="font-medium text-white">First Steps</p>
-              <p className="text-sm text-gray-400">Completed your first challenge</p>
-            </div>
+    <>
+      <Card 
+        className="bg-gray-900 border-gray-800 cursor-pointer hover:bg-gray-800 transition-colors"
+        onClick={() => setShowAchievementsDialog(true)}
+      >
+        <CardHeader>
+          <CardTitle className="text-xl text-white">Recent Achievements</CardTitle>
+          <CardDescription className="text-gray-400">
+            {loading 
+              ? "Loading your achievements..." 
+              : `${unlockedAchievements.length} of ${achievements.length} unlocked`
+            }
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {loading ? (
+              <div className="animate-pulse">
+                <div className="flex items-center space-x-3 p-3 bg-gray-800/50 rounded-lg">
+                  <div className="w-8 h-8 bg-gray-700 rounded"></div>
+                  <div className="flex-1">
+                    <div className="h-4 bg-gray-700 rounded mb-2"></div>
+                    <div className="h-3 bg-gray-700 rounded w-2/3"></div>
+                  </div>
+                </div>
+              </div>
+            ) : recentAchievements.length > 0 ? (
+              recentAchievements.map((achievement) => (
+                <div key={achievement.achievement_id} className="flex items-center space-x-3 p-3 bg-gray-800/50 rounded-lg">
+                  <span className="text-2xl">{achievement.icon}</span>
+                  <div>
+                    <p className="font-medium text-white">{achievement.name}</p>
+                    <p className="text-sm text-gray-400">{achievement.description}</p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="flex items-center space-x-3 p-3 bg-gray-800/30 rounded-lg border-2 border-dashed border-gray-700">
+                <span className="text-2xl opacity-50">🏆</span>
+                <div>
+                  <p className="font-medium text-gray-500">No achievements yet</p>
+                  <p className="text-sm text-gray-600">Complete challenges to unlock your first achievement!</p>
+                </div>
+              </div>
+            )}
           </div>
-          <div className="flex items-center space-x-3 p-3 bg-gray-800/30 rounded-lg border-2 border-dashed border-gray-700">
-            <span className="text-2xl opacity-50">🎪</span>
-            <div>
-              <p className="font-medium text-gray-500">Week Warrior</p>
-              <p className="text-sm text-gray-600">Complete 7 days in a row</p>
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+          <p className="text-xs text-blue-400 mt-4 text-center">Click to view all achievements</p>
+        </CardContent>
+      </Card>
+
+      <AchievementsDialog
+        isOpen={showAchievementsDialog}
+        onClose={() => setShowAchievementsDialog(false)}
+      />
+    </>
   );
 };
 
