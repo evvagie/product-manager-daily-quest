@@ -1,7 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0';
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -19,7 +18,100 @@ interface RequestBody {
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const openaiKey = Deno.env.get('YUNO_KEY');
+
+// Simple static recommendations based on skill area and performance
+const generateSimpleRecommendations = (skillArea: string, performanceScore: number, improvementAreas: string[]) => {
+  const recommendations = [];
+  
+  // Book recommendation based on skill area
+  const books = {
+    strategy: {
+      title: "Good Strategy Bad Strategy",
+      author_speaker: "Richard Rumelt",
+      description: "A practical guide to developing and implementing effective strategies in business and product management.",
+      source_url: "https://www.amazon.com/Good-Strategy-Bad-Strategy-Difference/dp/0307886239"
+    },
+    research: {
+      title: "The Mom Test",
+      author_speaker: "Rob Fitzpatrick",
+      description: "How to talk to customers and learn if your business is a good idea when everyone is lying to you.",
+      source_url: "https://www.amazon.com/Mom-Test-customers-business-everyone/dp/1492180742"
+    },
+    general: {
+      title: "Inspired",
+      author_speaker: "Marty Cagan",
+      description: "How to create tech products customers love by focusing on customer needs and market validation.",
+      source_url: "https://www.amazon.com/INSPIRED-Create-Tech-Products-Customers/dp/1119387507"
+    }
+  };
+
+  // Article recommendation based on performance
+  const articles = {
+    low: {
+      title: "Product Management Fundamentals",
+      author_speaker: "Mind the Product",
+      description: "Essential concepts and frameworks every product manager should know to build better products.",
+      source_url: "https://www.mindtheproduct.com/what-exactly-is-a-product-manager/"
+    },
+    medium: {
+      title: "Advanced PM Techniques",
+      author_speaker: "Product Coalition",
+      description: "Advanced strategies for product discovery, prioritization, and stakeholder management.",
+      source_url: "https://productcoalition.com/advanced-product-management-techniques-d4a8c8c4c8c4"
+    },
+    high: {
+      title: "Leadership in Product Management",
+      author_speaker: "Harvard Business Review", 
+      description: "How successful product leaders build teams, influence stakeholders, and drive organizational change.",
+      source_url: "https://hbr.org/2019/12/what-it-takes-to-become-a-great-product-manager"
+    }
+  };
+
+  // TED talk recommendation based on improvement areas
+  const tedTalk = improvementAreas.includes('stakeholder') ? {
+    title: "How Great Leaders Inspire Action",
+    author_speaker: "Simon Sinek",
+    description: "Understanding the 'why' behind decisions and inspiring stakeholders through clear communication and vision.",
+    source_url: "https://www.ted.com/talks/simon_sinek_how_great_leaders_inspire_action"
+  } : {
+    title: "The Power of Yet",
+    author_speaker: "Carol Dweck",
+    description: "Developing a growth mindset to overcome challenges and continuously improve your skills.",
+    source_url: "https://www.ted.com/talks/carol_dweck_the_power_of_believing_that_you_can_improve"
+  };
+
+  // Add book recommendation
+  const bookRec = books[skillArea as keyof typeof books] || books.general;
+  recommendations.push({
+    type: "book",
+    title: bookRec.title,
+    author_speaker: bookRec.author_speaker,
+    description: bookRec.description,
+    source_url: bookRec.source_url
+  });
+
+  // Add article recommendation based on performance
+  const performanceLevel = performanceScore >= 80 ? 'high' : performanceScore >= 60 ? 'medium' : 'low';
+  const articleRec = articles[performanceLevel];
+  recommendations.push({
+    type: "article",
+    title: articleRec.title,
+    author_speaker: articleRec.author_speaker,
+    description: articleRec.description,
+    source_url: articleRec.source_url
+  });
+
+  // Add TED talk recommendation
+  recommendations.push({
+    type: "ted_talk",
+    title: tedTalk.title,
+    author_speaker: tedTalk.author_speaker,
+    description: tedTalk.description,
+    source_url: tedTalk.source_url
+  });
+
+  return recommendations;
+};
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -27,14 +119,10 @@ serve(async (req) => {
   }
 
   try {
-    if (!openaiKey) {
-      throw new Error('OpenAI API key not configured');
-    }
-
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const { userId, skillArea, difficulty, performanceScore, improvementAreas, strengths }: RequestBody = await req.json();
 
-    console.log('Generating recommendations for user:', userId, 'skill:', skillArea);
+    console.log('Generating simple recommendations for user:', userId, 'skill:', skillArea, 'score:', performanceScore);
 
     // Check if recommendations already exist for today
     const today = new Date().toISOString().split('T')[0];
@@ -45,82 +133,15 @@ serve(async (req) => {
       .eq('date', today);
 
     if (existingRecs && existingRecs.length >= 3) {
+      console.log('Found existing recommendations:', existingRecs.length);
       return new Response(JSON.stringify({ recommendations: existingRecs }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Generate AI recommendations using OpenAI
-    const prompt = `You are a Product Management learning advisor. Generate 3 REAL, specific learning resource recommendations for a PM who just completed a ${skillArea} challenge at ${difficulty} level with ${performanceScore}% performance.
-
-Areas needing improvement: ${improvementAreas.join(', ')}
-Areas of strength: ${strengths.join(', ')}
-
-For EACH recommendation, provide:
-1. ONE real book with actual author and brief description
-2. ONE real TED talk with actual speaker name and brief description  
-3. ONE real article from a reputable PM publication with actual author
-
-Requirements:
-- All resources must be REAL and exist (not fictional)
-- Include actual author/speaker names
-- Provide specific, actionable descriptions
-- Focus on ${skillArea} and the improvement areas mentioned
-- Suitable for ${difficulty} level
-
-Format your response as a JSON array with exactly 3 objects, each having: type, title, author_speaker, description, source_url (use real URLs when possible, or null if unsure)`;
-
-    const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openaiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: 'You are a PM learning advisor who only recommends real, existing resources. Always respond with valid JSON.' },
-          { role: 'user', content: prompt }
-        ],
-        temperature: 0.7,
-        max_tokens: 1500,
-      }),
-    });
-
-    const openaiData = await openaiResponse.json();
-    console.log('OpenAI response:', openaiData);
-
-    if (!openaiData.choices || !openaiData.choices[0]) {
-      throw new Error('Invalid OpenAI response');
-    }
-
-    let recommendations;
-    try {
-      let content = openaiData.choices[0].message.content;
-      console.log('Raw OpenAI content:', content);
-      
-      // Clean the content to handle markdown code blocks
-      if (content.includes('```json') && content.includes('```')) {
-        // Extract JSON content between ```json and ```
-        const jsonStart = content.indexOf('```json') + 7; // 7 = length of '```json'
-        const jsonEnd = content.lastIndexOf('```');
-        content = content.substring(jsonStart, jsonEnd).trim();
-        console.log('Cleaned JSON content:', content);
-      } else if (content.includes('```') && content.includes('```')) {
-        // Handle generic code blocks
-        const jsonStart = content.indexOf('```') + 3;
-        const jsonEnd = content.lastIndexOf('```');
-        content = content.substring(jsonStart, jsonEnd).trim();
-        console.log('Cleaned generic content:', content);
-      }
-      
-      recommendations = JSON.parse(content);
-      console.log('Successfully parsed recommendations:', recommendations);
-    } catch (e) {
-      console.error('Failed to parse OpenAI response as JSON:', openaiData.choices[0].message.content);
-      console.error('Parse error:', e);
-      throw new Error('Failed to parse AI recommendations');
-    }
+    // Generate simple recommendations
+    const recommendations = generateSimpleRecommendations(skillArea, performanceScore, improvementAreas);
+    console.log('Generated recommendations:', recommendations.length);
 
     // Insert recommendations into database
     const dbRecords = recommendations.map((rec: any) => ({
