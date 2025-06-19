@@ -18,11 +18,11 @@ const AchievementsDialog = ({ isOpen, onClose }: AchievementsDialogProps) => {
   if (loading) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto bg-gradient-to-br from-blue-500/15 via-purple-500/8 to-cyan-500/10 backdrop-blur-md border border-white/20">
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto bg-white backdrop-blur-md border border-gray-200">
           <DialogHeader>
-            <DialogTitle className="text-xl text-white">Achievements</DialogTitle>
+            <DialogTitle className="text-xl text-gray-800">Achievements</DialogTitle>
           </DialogHeader>
-          <div className="text-center text-gray-400 py-8">
+          <div className="text-center text-gray-600 py-8">
             Loading your achievements...
           </div>
         </DialogContent>
@@ -45,20 +45,20 @@ const AchievementsDialog = ({ isOpen, onClose }: AchievementsDialogProps) => {
       key={achievement.achievement_id}
       className={`p-4 rounded-lg border ${
         achievement.is_unlocked 
-          ? 'bg-white/70 bg-gradient-to-br from-blue-500/20 via-purple-500/15 to-white/80 border border-white/50' 
-          : 'bg-white/40 bg-gradient-to-br from-purple-500/10 via-blue-500/10 to-white/50 border border-white/30'
+          ? 'bg-white bg-gradient-to-br from-blue-500/20 via-purple-500/15 to-white/80 border border-blue-300/50 shadow-lg' 
+          : 'bg-white bg-gradient-to-br from-purple-500/15 via-blue-500/15 to-white/90 border border-gray-300/60 shadow-md'
       }`}
     >
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center space-x-3">
-          <span className={`text-3xl ${achievement.is_unlocked ? '' : 'opacity-50'}`}>
+          <span className={`text-3xl ${achievement.is_unlocked ? '' : 'opacity-60'}`}>
             {achievement.icon}
           </span>
           <div>
-            <h3 className={`font-semibold ${achievement.is_unlocked ? 'text-white' : 'text-gray-400'}`}>
+            <h3 className={`font-semibold ${achievement.is_unlocked ? 'text-gray-800' : 'text-gray-600'}`}>
               {achievement.name}
             </h3>
-            <p className={`text-sm ${achievement.is_unlocked ? 'text-gray-300' : 'text-gray-500'}`}>
+            <p className={`text-sm ${achievement.is_unlocked ? 'text-gray-600' : 'text-gray-500'}`}>
               {achievement.description}
             </p>
           </div>
@@ -71,7 +71,7 @@ const AchievementsDialog = ({ isOpen, onClose }: AchievementsDialogProps) => {
             {achievement.category.toUpperCase()}
           </Badge>
           {achievement.is_unlocked && (
-            <span className="text-xs text-green-400">
+            <span className="text-xs text-green-600">
               ✓ Unlocked {new Date(achievement.unlocked_at).toLocaleDateString()}
             </span>
           )}
@@ -81,8 +81,8 @@ const AchievementsDialog = ({ isOpen, onClose }: AchievementsDialogProps) => {
       {!achievement.is_unlocked && achievement.required_value > 0 && (
         <div className="mt-3">
           <div className="flex justify-between text-sm mb-1">
-            <span className="text-gray-400">Progress</span>
-            <span className="text-gray-400">
+            <span className="text-gray-600">Progress</span>
+            <span className="text-gray-600">
               {achievement.current_value} / {achievement.required_value}
             </span>
           </div>
@@ -100,23 +100,23 @@ const AchievementsDialog = ({ isOpen, onClose }: AchievementsDialogProps) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto bg-gradient-to-br from-blue-500/15 via-purple-500/8 to-cyan-500/10 backdrop-blur-md border border-white/20">
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto bg-white backdrop-blur-md border border-gray-200">
         <DialogHeader>
-          <DialogTitle className="text-xl text-white">Achievements</DialogTitle>
-          <p className="text-gray-400">
+          <DialogTitle className="text-xl text-gray-800">Achievements</DialogTitle>
+          <p className="text-gray-600">
             {unlockedAchievements.length} of {achievements.length} achievements unlocked
           </p>
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 bg-white/10 backdrop-blur-sm border border-white/20">
-            <TabsTrigger value="all" className="text-white">
+          <TabsList className="grid w-full grid-cols-3 bg-gray-100 backdrop-blur-sm border border-gray-200">
+            <TabsTrigger value="all" className="text-gray-700">
               All ({achievements.length})
             </TabsTrigger>
-            <TabsTrigger value="unlocked" className="text-white">
+            <TabsTrigger value="unlocked" className="text-gray-700">
               Unlocked ({unlockedAchievements.length})
             </TabsTrigger>
-            <TabsTrigger value="locked" className="text-white">
+            <TabsTrigger value="locked" className="text-gray-700">
               Locked ({lockedAchievements.length})
             </TabsTrigger>
           </TabsList>
@@ -129,7 +129,7 @@ const AchievementsDialog = ({ isOpen, onClose }: AchievementsDialogProps) => {
             {unlockedAchievements.length > 0 ? (
               unlockedAchievements.map(renderAchievementCard)
             ) : (
-              <div className="text-center text-gray-400 py-8">
+              <div className="text-center text-gray-500 py-8">
                 No achievements unlocked yet. Keep playing to earn your first achievement!
               </div>
             )}
@@ -139,7 +139,7 @@ const AchievementsDialog = ({ isOpen, onClose }: AchievementsDialogProps) => {
             {lockedAchievements.length > 0 ? (
               lockedAchievements.map(renderAchievementCard)
             ) : (
-              <div className="text-center text-gray-400 py-8">
+              <div className="text-center text-gray-500 py-8">
                 Congratulations! You've unlocked all achievements!
               </div>
             )}
