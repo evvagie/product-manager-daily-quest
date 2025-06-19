@@ -18,7 +18,7 @@ const AchievementsDialog = ({ isOpen, onClose }: AchievementsDialogProps) => {
   if (loading) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto bg-gray-900 border-gray-800">
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto bg-gradient-to-br from-blue-500/15 via-purple-500/8 to-cyan-500/10 backdrop-blur-md border border-white/20">
           <DialogHeader>
             <DialogTitle className="text-xl text-white">Achievements</DialogTitle>
           </DialogHeader>
@@ -45,8 +45,8 @@ const AchievementsDialog = ({ isOpen, onClose }: AchievementsDialogProps) => {
       key={achievement.achievement_id}
       className={`p-4 rounded-lg border ${
         achievement.is_unlocked 
-          ? 'bg-gray-800/70 border-green-600/50' 
-          : 'bg-gray-800/30 border-gray-700'
+          ? 'bg-gradient-to-br from-white/20 via-blue-500/10 to-purple-500/15 border border-white/30' 
+          : 'bg-gradient-to-br from-white/10 via-purple-500/5 to-blue-500/8 border border-white/20'
       }`}
     >
       <div className="flex items-center justify-between mb-3">
@@ -100,7 +100,7 @@ const AchievementsDialog = ({ isOpen, onClose }: AchievementsDialogProps) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto bg-gray-900 border-gray-800">
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto bg-gradient-to-br from-blue-500/15 via-purple-500/8 to-cyan-500/10 backdrop-blur-md border border-white/20">
         <DialogHeader>
           <DialogTitle className="text-xl text-white">Achievements</DialogTitle>
           <p className="text-gray-400">
@@ -109,7 +109,7 @@ const AchievementsDialog = ({ isOpen, onClose }: AchievementsDialogProps) => {
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 bg-gray-800">
+          <TabsList className="grid w-full grid-cols-3 bg-white/10 backdrop-blur-sm border border-white/20">
             <TabsTrigger value="all" className="text-white">
               All ({achievements.length})
             </TabsTrigger>
