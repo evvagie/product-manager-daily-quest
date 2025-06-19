@@ -24,7 +24,8 @@ const DailyChallengeCard = () => {
           <span className="text-2xl">🎯</span>
         </div>
         <Button 
-          className="w-full bg-gradient-to-r from-[#0400ff] to-purple-600 hover:from-[#0300cc] hover:to-purple-700 text-white shadow-lg" 
+          className="w-full bg-gradient-to-r from-[#0400ff] to-purple-600 hover:from-[#0300cc] hover:to-purple-700 !text-white shadow-lg" 
+          style={{ color: 'white !important' }}
           onClick={() => navigate('/challenge-selection')}
         >
           Start Today's Session →
