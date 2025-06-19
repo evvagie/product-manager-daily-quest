@@ -22,7 +22,7 @@ const UserStatsCards = ({ stats }: UserStatsCardsProps) => {
   return (
     <>
       <div className="grid md:grid-cols-3 gap-6 mb-8">
-        <Card className="bg-gray-900 border-gray-800">
+        <Card className="bg-gradient-to-br from-blue-500/10 to-cyan-500/5 backdrop-blur-md border border-white/20 shadow-xl">
           <CardHeader className="pb-2">
             <CardDescription className="text-gray-400">XP Points</CardDescription>
             <CardTitle className="text-2xl text-blue-400">{stats.xp.toLocaleString()}</CardTitle>
@@ -36,7 +36,7 @@ const UserStatsCards = ({ stats }: UserStatsCardsProps) => {
         </Card>
 
         <Card 
-          className="bg-gray-900 border-gray-800 cursor-pointer hover:bg-gray-800 transition-colors"
+          className="bg-gradient-to-br from-blue-500/10 to-cyan-500/5 backdrop-blur-md border border-white/20 shadow-xl cursor-pointer hover:bg-white/5 transition-colors"
           onClick={() => setShowLevelDialog(true)}
         >
           <CardHeader className="pb-2">
@@ -49,7 +49,7 @@ const UserStatsCards = ({ stats }: UserStatsCardsProps) => {
           </CardContent>
         </Card>
 
-        <Card className="bg-gray-900 border-gray-800">
+        <Card className="bg-gradient-to-br from-blue-500/10 to-cyan-500/5 backdrop-blur-md border border-white/20 shadow-xl">
           <CardHeader className="pb-2">
             <CardDescription className="text-gray-400">Current Streak</CardDescription>
             <CardTitle className="text-2xl text-orange-400">{stats.streak} days</CardTitle>
