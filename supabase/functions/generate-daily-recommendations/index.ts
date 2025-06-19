@@ -96,9 +96,29 @@ Format your response as a JSON array with exactly 3 objects, each having: type, 
 
     let recommendations;
     try {
-      recommendations = JSON.parse(openaiData.choices[0].message.content);
+      let content = openaiData.choices[0].message.content;
+      console.log('Raw OpenAI content:', content);
+      
+      // Clean the content to handle markdown code blocks
+      if (content.includes('```json') && content.includes('```')) {
+        // Extract JSON content between ```json and ```
+        const jsonStart = content.indexOf('```json') + 7; // 7 = length of '```json'
+        const jsonEnd = content.lastIndexOf('```');
+        content = content.substring(jsonStart, jsonEnd).trim();
+        console.log('Cleaned JSON content:', content);
+      } else if (content.includes('```') && content.includes('```')) {
+        // Handle generic code blocks
+        const jsonStart = content.indexOf('```') + 3;
+        const jsonEnd = content.lastIndexOf('```');
+        content = content.substring(jsonStart, jsonEnd).trim();
+        console.log('Cleaned generic content:', content);
+      }
+      
+      recommendations = JSON.parse(content);
+      console.log('Successfully parsed recommendations:', recommendations);
     } catch (e) {
       console.error('Failed to parse OpenAI response as JSON:', openaiData.choices[0].message.content);
+      console.error('Parse error:', e);
       throw new Error('Failed to parse AI recommendations');
     }
 
