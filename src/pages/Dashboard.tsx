@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -43,12 +44,16 @@ const Dashboard = () => {
       if (!user) return;
 
       try {
+        console.log('Fetching user stats for user:', user.id);
+        
         // First, update the user's streak using the new realistic calculation
         const { data: updatedStreak, error: streakError } = await supabase
           .rpc('update_user_streak', { user_uuid: user.id });
 
         if (streakError) {
           console.error('Error updating streak:', streakError);
+        } else {
+          console.log('Updated streak result:', updatedStreak);
         }
 
         // Then fetch the updated user stats
@@ -58,9 +63,24 @@ const Dashboard = () => {
           .eq('id', user.id)
           .single();
 
+        console.log('Fetched user data:', data);
+        console.log('User stats error:', error);
+
         if (data && !error) {
           setStats(data);
         }
+
+        // Also fetch recent sessions to debug streak calculation
+        const { data: sessionsData, error: sessionsError } = await supabase
+          .from('sessions')
+          .select('date, session_complete')
+          .eq('user_id', user.id)
+          .eq('session_complete', true)
+          .order('date', { ascending: false })
+          .limit(10);
+
+        console.log('Recent completed sessions:', sessionsData);
+        console.log('Sessions error:', sessionsError);
 
         // Fetch challenge completion counts for each category
         const { data: challengeData, error: challengeError } = await supabase
