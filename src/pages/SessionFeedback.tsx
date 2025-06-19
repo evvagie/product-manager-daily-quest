@@ -179,7 +179,7 @@ const SessionFeedback = () => {
     performanceScore: totalScore,
     exerciseScores: exerciseScores,
     totalExercises: totalExercises,
-    triggerGeneration: !!personalizedFeedback && sessionSaved
+    triggerGeneration: !!personalizedFeedback
   });
 
   // Get second AI-generated personalized recommendation (avoiding duplicate type)
@@ -194,7 +194,7 @@ const SessionFeedback = () => {
     exerciseScores: exerciseScores,
     totalExercises: totalExercises,
     firstAIRecommendationType: firstAIRecommendation?.recommendation_type,
-    triggerGeneration: !!personalizedFeedback && sessionSaved && !!firstAIRecommendation
+    triggerGeneration: !!personalizedFeedback && !!firstAIRecommendation
   });
 
   // Get third AI-generated personalized recommendation (avoiding both previous types)
@@ -210,7 +210,7 @@ const SessionFeedback = () => {
     totalExercises: totalExercises,
     firstAIRecommendationType: firstAIRecommendation?.recommendation_type,
     secondAIRecommendationType: secondAIRecommendation?.recommendation_type,
-    triggerGeneration: !!personalizedFeedback && sessionSaved && !!firstAIRecommendation && !!secondAIRecommendation
+    triggerGeneration: !!personalizedFeedback && !!firstAIRecommendation && !!secondAIRecommendation
   });
 
   // Save session data and individual exercises with accurate scoring
