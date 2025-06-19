@@ -16,7 +16,7 @@ const AchievementsCard = () => {
   return (
     <>
       <Card 
-        className="bg-gray-900 border-gray-800 cursor-pointer hover:bg-gray-800 transition-colors"
+        className="bg-gradient-to-br from-blue-500/15 via-purple-500/8 to-cyan-500/10 backdrop-blur-md border border-white/20 shadow-xl cursor-pointer hover:bg-white/5 transition-colors"
         onClick={() => setShowAchievementsDialog(true)}
       >
         <CardHeader>
@@ -32,17 +32,17 @@ const AchievementsCard = () => {
           <div className="space-y-3">
             {loading ? (
               <div className="animate-pulse">
-                <div className="flex items-center space-x-3 p-3 bg-gray-800/50 rounded-lg">
-                  <div className="w-8 h-8 bg-gray-700 rounded"></div>
+                <div className="flex items-center space-x-3 p-3 bg-white/10 rounded-lg">
+                  <div className="w-8 h-8 bg-white/20 rounded"></div>
                   <div className="flex-1">
-                    <div className="h-4 bg-gray-700 rounded mb-2"></div>
-                    <div className="h-3 bg-gray-700 rounded w-2/3"></div>
+                    <div className="h-4 bg-white/20 rounded mb-2"></div>
+                    <div className="h-3 bg-white/20 rounded w-2/3"></div>
                   </div>
                 </div>
               </div>
             ) : recentAchievements.length > 0 ? (
               recentAchievements.map((achievement) => (
-                <div key={achievement.achievement_id} className="flex items-center space-x-3 p-3 bg-gray-800/50 rounded-lg">
+                <div key={achievement.achievement_id} className="flex items-center space-x-3 p-3 bg-white/10 rounded-lg">
                   <span className="text-2xl">{achievement.icon}</span>
                   <div>
                     <p className="font-medium text-white">{achievement.name}</p>
@@ -51,7 +51,7 @@ const AchievementsCard = () => {
                 </div>
               ))
             ) : (
-              <div className="flex items-center space-x-3 p-3 bg-gray-800/30 rounded-lg border-2 border-dashed border-gray-700">
+              <div className="flex items-center space-x-3 p-3 bg-white/5 rounded-lg border-2 border-dashed border-white/20">
                 <span className="text-2xl opacity-50">🏆</span>
                 <div>
                   <p className="font-medium text-gray-500">No achievements yet</p>
