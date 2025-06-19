@@ -20,7 +20,9 @@ interface RequestBody {
   }>;
   totalExercises: number;
   excludeType?: string;
+  excludeTypes?: string[];
   isSecondRecommendation?: boolean;
+  isThirdRecommendation?: boolean;
 }
 
 serve(async (req) => {
@@ -36,7 +38,9 @@ serve(async (req) => {
       exerciseScores, 
       totalExercises,
       excludeType,
-      isSecondRecommendation = false
+      excludeTypes,
+      isSecondRecommendation = false,
+      isThirdRecommendation = false
     }: RequestBody = await req.json();
     
     console.log('Generating personalized recommendation for:', { 
@@ -45,7 +49,9 @@ serve(async (req) => {
       performanceScore, 
       totalExercises,
       excludeType,
-      isSecondRecommendation
+      excludeTypes,
+      isSecondRecommendation,
+      isThirdRecommendation
     });
 
     const openAIApiKey = Deno.env.get('YUNO_KEY');
@@ -63,7 +69,13 @@ serve(async (req) => {
 
     // Define content types to choose from
     const contentTypes = ['ted_talk', 'podcast', 'book', 'article', 'online_course'];
-    const availableTypes = excludeType ? contentTypes.filter(type => type !== excludeType) : contentTypes;
+    
+    // Build list of types to exclude (support both single excludeType and multiple excludeTypes)
+    let typesToExclude: string[] = [];
+    if (excludeType) typesToExclude.push(excludeType);
+    if (excludeTypes && excludeTypes.length > 0) typesToExclude = [...typesToExclude, ...excludeTypes];
+    
+    const availableTypes = contentTypes.filter(type => !typesToExclude.includes(type));
     
     // Select a random type from available types
     const selectedType = availableTypes[Math.floor(Math.random() * availableTypes.length)];
@@ -105,6 +117,12 @@ serve(async (req) => {
       ]
     };
 
+    const recommendationContext = isThirdRecommendation 
+      ? 'This is a third recommendation, so provide a unique perspective that complements the previous two recommendations.' 
+      : isSecondRecommendation 
+        ? 'This is a second recommendation, so provide a different perspective or complementary learning approach.' 
+        : '';
+
     const prompt = `You are an expert Product Management coach providing personalized learning recommendations. 
 
 Based on this performance data:
@@ -120,7 +138,7 @@ ${performanceDetails}
 
 Please recommend ONE specific ${typeDescriptions[selectedType]} that would help this person improve their Product Management skills based on their exact performance. Focus on areas where they struggled or could grow.
 
-${isSecondRecommendation ? 'This is a second recommendation, so provide a different perspective or complementary learning approach.' : ''}
+${recommendationContext}
 
 IMPORTANT: For the source_url, you must use one of these REAL, working URLs based on the content type:
 ${selectedType === 'ted_talk' ? realUrlExamples.ted_talk.join(', ') : ''}

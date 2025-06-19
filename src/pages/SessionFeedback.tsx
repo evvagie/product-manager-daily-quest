@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
@@ -11,6 +10,7 @@ import { toast } from "sonner"
 import { generatePersonalizedFeedback } from "@/utils/feedbackGenerator"
 import { usePersonalizedRecommendation } from "@/hooks/usePersonalizedRecommendation"
 import { useSecondPersonalizedRecommendation } from "@/hooks/useSecondPersonalizedRecommendation"
+import { useThirdPersonalizedRecommendation } from "@/hooks/useThirdPersonalizedRecommendation"
 
 const SessionFeedback = () => {
   const location = useLocation()
@@ -195,6 +195,22 @@ const SessionFeedback = () => {
     totalExercises: totalExercises,
     firstAIRecommendationType: firstAIRecommendation?.recommendation_type,
     triggerGeneration: !!personalizedFeedback && sessionSaved && !!firstAIRecommendation
+  });
+
+  // Get third AI-generated personalized recommendation (avoiding both previous types)
+  const {
+    recommendation: thirdAIRecommendation,
+    loading: thirdAILoading,
+    error: thirdAIError
+  } = useThirdPersonalizedRecommendation({
+    skillArea: category,
+    difficulty: difficulty,
+    performanceScore: totalScore,
+    exerciseScores: exerciseScores,
+    totalExercises: totalExercises,
+    firstAIRecommendationType: firstAIRecommendation?.recommendation_type,
+    secondAIRecommendationType: secondAIRecommendation?.recommendation_type,
+    triggerGeneration: !!personalizedFeedback && sessionSaved && !!firstAIRecommendation && !!secondAIRecommendation
   });
 
   // Save session data and individual exercises with accurate scoring
@@ -495,17 +511,17 @@ const SessionFeedback = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {(firstAILoading || secondAILoading) ? (
+              {(firstAILoading || secondAILoading || thirdAILoading) ? (
                 <div className="flex items-center justify-center py-8">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mr-3"></div>
                   <span className="text-gray-400">Generating personalized recommendations...</span>
                 </div>
-              ) : (firstAIError && secondAIError) ? (
+              ) : (firstAIError && secondAIError && thirdAIError) ? (
                 <div className="text-center py-8">
                   <p className="text-red-400 mb-4">Failed to generate recommendations</p>
-                  <p className="text-gray-500 text-sm">{firstAIError || secondAIError}</p>
+                  <p className="text-gray-500 text-sm">{firstAIError || secondAIError || thirdAIError}</p>
                 </div>
-              ) : (firstAIRecommendation || secondAIRecommendation) ? (
+              ) : (firstAIRecommendation || secondAIRecommendation || thirdAIRecommendation) ? (
                 <div className="space-y-4">
                   {/* First AI-generated personalized recommendation */}
                   {firstAIRecommendation && (
@@ -561,6 +577,37 @@ const SessionFeedback = () => {
                             size="sm" 
                             className="border-indigo-600 text-indigo-300 hover:bg-indigo-800/20 ml-4"
                             onClick={() => window.open(secondAIRecommendation.source_url, '_blank')}
+                          >
+                            View
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Third AI-generated personalized recommendation */}
+                  {thirdAIRecommendation && (
+                    <div className="p-4 bg-gradient-to-r from-emerald-900/30 to-teal-900/30 rounded-lg border border-emerald-700/50 hover:border-emerald-600/50 transition-colors">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <h4 className="text-white font-medium">{thirdAIRecommendation.title}</h4>
+                            <Badge className="bg-gradient-to-r from-emerald-600/20 to-teal-600/20 text-emerald-300 text-xs border-emerald-500/30">
+                              AI Personalized
+                            </Badge>
+                            <Badge variant="secondary" className="bg-cyan-600/20 text-cyan-400 text-xs">
+                              {thirdAIRecommendation.recommendation_type.replace('_', ' ')}
+                            </Badge>
+                          </div>
+                          <p className="text-gray-400 text-sm mb-1">by {thirdAIRecommendation.author_speaker}</p>
+                          <p className="text-gray-300 text-sm">{thirdAIRecommendation.description}</p>
+                        </div>
+                        {thirdAIRecommendation.source_url && (
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="border-emerald-600 text-emerald-300 hover:bg-emerald-800/20 ml-4"
+                            onClick={() => window.open(thirdAIRecommendation.source_url, '_blank')}
                           >
                             View
                           </Button>
