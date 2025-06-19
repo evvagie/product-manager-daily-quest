@@ -43,8 +43,24 @@ export const useThirdPersonalizedRecommendation = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Create a unique session key based on session data
+  const sessionKey = `personalized_rec_3_${user?.id}_${skillArea}_${difficulty}_${performanceScore}_${totalExercises}_${exerciseScores.length}_${firstAIRecommendationType || 'none'}_${secondAIRecommendationType || 'none'}`;
+
   useEffect(() => {
     if (!user || !triggerGeneration || exerciseScores.length === 0) return;
+
+    // Check sessionStorage first
+    const cachedRecommendation = sessionStorage.getItem(sessionKey);
+    if (cachedRecommendation) {
+      try {
+        const parsed = JSON.parse(cachedRecommendation);
+        setRecommendation(parsed);
+        return;
+      } catch (e) {
+        console.error('Error parsing cached recommendation:', e);
+        sessionStorage.removeItem(sessionKey);
+      }
+    }
 
     const fetchThirdPersonalizedRecommendation = async () => {
       setLoading(true);
@@ -77,6 +93,8 @@ export const useThirdPersonalizedRecommendation = ({
 
         if (data?.recommendation) {
           setRecommendation(data.recommendation);
+          // Cache in sessionStorage
+          sessionStorage.setItem(sessionKey, JSON.stringify(data.recommendation));
         }
       } catch (err: any) {
         console.error('Error in third personalized recommendation hook:', err);
@@ -87,7 +105,7 @@ export const useThirdPersonalizedRecommendation = ({
     };
 
     fetchThirdPersonalizedRecommendation();
-  }, [user, skillArea, difficulty, performanceScore, triggerGeneration, exerciseScores.length, firstAIRecommendationType, secondAIRecommendationType]);
+  }, [user, skillArea, difficulty, performanceScore, triggerGeneration, exerciseScores.length, firstAIRecommendationType, secondAIRecommendationType, sessionKey]);
 
   return { recommendation, loading, error };
 };

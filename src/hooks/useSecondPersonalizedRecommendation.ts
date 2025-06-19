@@ -41,8 +41,24 @@ export const useSecondPersonalizedRecommendation = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Create a unique session key based on session data
+  const sessionKey = `personalized_rec_2_${user?.id}_${skillArea}_${difficulty}_${performanceScore}_${totalExercises}_${exerciseScores.length}_${firstAIRecommendationType || 'none'}`;
+
   useEffect(() => {
     if (!user || !triggerGeneration || exerciseScores.length === 0) return;
+
+    // Check sessionStorage first
+    const cachedRecommendation = sessionStorage.getItem(sessionKey);
+    if (cachedRecommendation) {
+      try {
+        const parsed = JSON.parse(cachedRecommendation);
+        setRecommendation(parsed);
+        return;
+      } catch (e) {
+        console.error('Error parsing cached recommendation:', e);
+        sessionStorage.removeItem(sessionKey);
+      }
+    }
 
     const fetchSecondPersonalizedRecommendation = async () => {
       setLoading(true);
@@ -73,6 +89,8 @@ export const useSecondPersonalizedRecommendation = ({
 
         if (data?.recommendation) {
           setRecommendation(data.recommendation);
+          // Cache in sessionStorage
+          sessionStorage.setItem(sessionKey, JSON.stringify(data.recommendation));
         }
       } catch (err: any) {
         console.error('Error in second personalized recommendation hook:', err);
@@ -83,7 +101,7 @@ export const useSecondPersonalizedRecommendation = ({
     };
 
     fetchSecondPersonalizedRecommendation();
-  }, [user, skillArea, difficulty, performanceScore, triggerGeneration, exerciseScores.length, firstAIRecommendationType]);
+  }, [user, skillArea, difficulty, performanceScore, triggerGeneration, exerciseScores.length, firstAIRecommendationType, sessionKey]);
 
   return { recommendation, loading, error };
 };
