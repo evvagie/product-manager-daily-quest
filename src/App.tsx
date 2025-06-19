@@ -6,6 +6,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import Header from "@/components/Layout/Header";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { Toaster } from "@/components/ui/sonner";
 
 // Pages
 import Landing from "./pages/Landing";
@@ -59,6 +60,7 @@ const App: React.FC = () => {
                 } />
                 <Route path="*" element={<NotFound />} />
               </Routes>
+              <Toaster />
             </div>
           </AuthProvider>
         </BrowserRouter>

@@ -9,6 +9,7 @@ import { DynamicChallengeRenderer } from '@/components/challenges/DynamicChallen
 import { ConsequenceDisplay } from '@/components/challenges/ConsequenceDisplay';
 import { KPIDisplay } from '@/components/challenges/KPIDisplay';
 import { generateDynamicChallenge, type ChallengeSession, type Exercise } from '@/utils/challengeGenerator';
+import { toast } from 'sonner';
 
 const Challenge = () => {
   const [searchParams] = useSearchParams();
@@ -46,14 +47,21 @@ const Challenge = () => {
         setTimeLeft(newChallengeSession.exercises[0]?.timeLimit || 180);
         setExerciseAnswers(new Array(newChallengeSession.totalExercises).fill(null));
         
-        // Show success message in console instead of toast for now
+        // Show success message using sonner toast
         if (newChallengeSession.source === 'openai') {
-          console.log('🤖 AI Challenge Session Generated!', `${newChallengeSession.totalExercises} unique exercises created just for you`);
+          toast.success('🤖 AI Challenge Session Generated!', {
+            description: `${newChallengeSession.totalExercises} unique exercises created just for you`
+          });
         } else {
-          console.log('Challenge Session Ready', `${newChallengeSession.totalExercises} exercises using enhanced static content`);
+          toast.success('Challenge Session Ready', {
+            description: `${newChallengeSession.totalExercises} exercises using enhanced static content`
+          });
         }
       } catch (error) {
         console.error('Error loading challenge session:', error);
+        toast.error('Failed to load challenge session', {
+          description: 'Please try again.'
+        });
         navigate('/challenge-selection');
       } finally {
         setLoading(false);
@@ -82,7 +90,9 @@ const Challenge = () => {
 
   const handleTimeUp = () => {
     if (!isComplete && !showConsequences) {
-      console.log("Time's Up! Moving to next exercise.");
+      toast.warning("Time's Up!", {
+        description: "Moving to next exercise."
+      });
       handleNextExercise();
     }
   };
