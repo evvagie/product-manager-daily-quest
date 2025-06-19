@@ -201,6 +201,10 @@ export type Database = {
         Args: { user_uuid: string }
         Returns: number
       }
+      refresh_all_streaks: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       update_user_streak: {
         Args: { user_uuid: string }
         Returns: number
