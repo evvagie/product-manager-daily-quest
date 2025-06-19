@@ -76,6 +76,35 @@ serve(async (req) => {
       'online_course': 'Online course'
     };
 
+    // Real URL examples for each content type
+    const realUrlExamples = {
+      'ted_talk': [
+        'https://www.ted.com/talks/simon_sinek_how_great_leaders_inspire_action',
+        'https://www.ted.com/talks/brene_brown_the_power_of_vulnerability',
+        'https://www.ted.com/talks/carol_dweck_the_power_of_believing_that_you_can_improve'
+      ],
+      'podcast': [
+        'https://podcasts.apple.com/us/podcast/masters-of-scale/id1227971746',
+        'https://podcasts.apple.com/us/podcast/the-tim-ferriss-show/id863897795',
+        'https://podcasts.apple.com/us/podcast/how-i-built-this-with-guy-raz/id1150510297'
+      ],
+      'book': [
+        'https://www.amazon.com/INSPIRED-Create-Tech-Products-Customers/dp/1119387507',
+        'https://www.amazon.com/Lean-Startup-Entrepreneurs-Continuous-Innovation/dp/0307887898',
+        'https://www.amazon.com/Crossing-Chasm-3rd-Disruptive-Mainstream/dp/0062292986'
+      ],
+      'article': [
+        'https://www.mindtheproduct.com/what-exactly-is-a-product-manager/',
+        'https://medium.com/@noah_weiss/50-articles-and-books-that-will-make-you-a-great-product-manager-aad5babee2f7',
+        'https://hbr.org/2017/12/what-it-really-means-to-be-customer-centric'
+      ],
+      'online_course': [
+        'https://www.coursera.org/learn/product-management',
+        'https://www.udemy.com/course/become-a-product-manager-learn-the-skills-get-a-job/',
+        'https://productschool.com/product-management-courses/'
+      ]
+    };
+
     const prompt = `You are an expert Product Management coach providing personalized learning recommendations. 
 
 Based on this performance data:
@@ -93,12 +122,21 @@ Please recommend ONE specific ${typeDescriptions[selectedType]} that would help 
 
 ${isSecondRecommendation ? 'This is a second recommendation, so provide a different perspective or complementary learning approach.' : ''}
 
+IMPORTANT: For the source_url, you must use one of these REAL, working URLs based on the content type:
+${selectedType === 'ted_talk' ? realUrlExamples.ted_talk.join(', ') : ''}
+${selectedType === 'podcast' ? realUrlExamples.podcast.join(', ') : ''}
+${selectedType === 'book' ? realUrlExamples.book.join(', ') : ''}
+${selectedType === 'article' ? realUrlExamples.article.join(', ') : ''}
+${selectedType === 'online_course' ? realUrlExamples.online_course.join(', ') : ''}
+
+Choose the most relevant URL from the list above that best matches your recommendation.
+
 Respond in this exact JSON format:
 {
-  "title": "${typeDescriptions[selectedType]} Title",
+  "title": "Actual ${typeDescriptions[selectedType]} Title",
   "author_speaker": "${selectedType === 'ted_talk' ? 'Speaker Name' : selectedType === 'podcast' ? 'Host/Guest Name' : selectedType === 'book' ? 'Author Name' : selectedType === 'online_course' ? 'Instructor/Platform' : 'Author Name'}", 
   "description": "Brief description explaining why this ${selectedType.replace('_', ' ')} is perfect for their specific performance and learning needs (2-3 sentences)",
-  "source_url": "https://example.com/..."
+  "source_url": "MUST be one of the real URLs provided above"
 }
 
 Make sure the description is personalized to their specific performance and explains how this ${selectedType.replace('_', ' ')} addresses their particular strengths and improvement areas.`;
@@ -112,7 +150,7 @@ Make sure the description is personalized to their specific performance and expl
       body: JSON.stringify({
         model: 'gpt-4o-mini',
         messages: [
-          { role: 'system', content: 'You are a Product Management expert who provides personalized learning recommendations based on performance data.' },
+          { role: 'system', content: 'You are a Product Management expert who provides personalized learning recommendations based on performance data. Always use real, working URLs from the provided list.' },
           { role: 'user', content: prompt }
         ],
         temperature: 0.7,
@@ -133,15 +171,22 @@ Make sure the description is personalized to their specific performance and expl
     let recommendation;
     try {
       recommendation = JSON.parse(content);
+      
+      // Validate that the URL is from our approved list
+      const allValidUrls = Object.values(realUrlExamples).flat();
+      if (!allValidUrls.includes(recommendation.source_url)) {
+        // Force a valid URL if AI didn't follow instructions
+        recommendation.source_url = realUrlExamples[selectedType][0];
+      }
     } catch (parseError) {
       console.error('Failed to parse OpenAI response as JSON:', parseError);
-      // Fallback recommendation with the selected type
+      // Fallback recommendation with real URLs
       const fallbackRecommendations = {
         'ted_talk': {
-          title: "The Power of Yet",
-          author_speaker: "Carol Dweck",
-          description: "Based on your performance, developing a growth mindset will help you approach Product Management challenges with resilience and continuous learning.",
-          source_url: "https://www.ted.com/talks/carol_dweck_the_power_of_believing_that_you_can_improve"
+          title: "How Great Leaders Inspire Action",
+          author_speaker: "Simon Sinek",
+          description: "Based on your performance, understanding leadership principles will help you approach Product Management challenges with better strategic thinking and team alignment.",
+          source_url: "https://www.ted.com/talks/simon_sinek_how_great_leaders_inspire_action"
         },
         'podcast': {
           title: "Masters of Scale",
@@ -156,16 +201,16 @@ Make sure the description is personalized to their specific performance and expl
           source_url: "https://www.amazon.com/INSPIRED-Create-Tech-Products-Customers/dp/1119387507"
         },
         'article': {
-          title: "Product Management Fundamentals",
+          title: "What Exactly Is a Product Manager?",
           author_speaker: "Mind the Product",
           description: "Based on your performance, this article will help you strengthen your PM fundamentals.",
           source_url: "https://www.mindtheproduct.com/what-exactly-is-a-product-manager/"
         },
         'online_course': {
-          title: "Product Strategy Fundamentals",
-          author_speaker: "Product School",
+          title: "Product Management Fundamentals",
+          author_speaker: "Coursera",
           description: "Based on your performance, this course will help you develop stronger strategic thinking skills.",
-          source_url: "https://productschool.com/product-management-courses/product-strategy/"
+          source_url: "https://www.coursera.org/learn/product-management"
         }
       };
       
