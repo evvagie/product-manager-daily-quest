@@ -62,7 +62,7 @@ const Landing = () => {
                   <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mb-6 backdrop-blur-sm">
                     <span className="text-3xl font-bold !text-white" style={{ color: 'white !important' }}>Y</span>
                   </div>
-                  <h3 className="text-xl font-bold mb-2 text-white">Yuno</h3>
+                  <h3 className="text-xl font-bold mb-2 !text-white" style={{ color: 'white !important' }}>Yuno</h3>
                   <p className="text-sm text-white/80">Think like a PM</p>
                 </div>
               </div>
