@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
@@ -8,7 +9,6 @@ import { useEffect, useState } from "react"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 import { generatePersonalizedFeedback } from "@/utils/feedbackGenerator"
-import { useDailyRecommendations } from "@/hooks/useDailyRecommendations"
 import { usePersonalizedRecommendation } from "@/hooks/usePersonalizedRecommendation"
 import { useSecondPersonalizedRecommendation } from "@/hooks/useSecondPersonalizedRecommendation"
 
@@ -167,20 +167,6 @@ const SessionFeedback = () => {
       generateFeedback();
     }
   }, [totalScore]);
-
-  // Get static recommendation (1: random type)
-  const {
-    recommendations: staticRecommendations,
-    loading: recommendationsLoading,
-    error: recommendationsError
-  } = useDailyRecommendations({
-    skillArea: category,
-    difficulty: difficulty,
-    performanceScore: totalScore,
-    improvementAreas: personalizedFeedback?.improvements || [],
-    strengths: personalizedFeedback?.strengths || [],
-    triggerGeneration: !!personalizedFeedback && sessionSaved
-  });
 
   // Get first AI-generated personalized recommendation
   const {
@@ -498,60 +484,29 @@ const SessionFeedback = () => {
             </Card>
           )}
 
-          {/* Combined AI-Powered Recommendations */}
+          {/* AI-Powered Recommendations Only */}
           <Card className="bg-gray-900 border-gray-800 mb-8">
             <CardHeader>
               <CardTitle className="text-xl text-white flex items-center">
-                🤖 Personalized Learning Resources
+                🤖 AI-Powered Learning Resources
               </CardTitle>
               <CardDescription className="text-gray-400">
-                Curated recommendations based on your performance in {category}
+                Personalized recommendations based on your performance in {category}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {(recommendationsLoading || firstAILoading || secondAILoading) ? (
+              {(firstAILoading || secondAILoading) ? (
                 <div className="flex items-center justify-center py-8">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mr-3"></div>
                   <span className="text-gray-400">Generating personalized recommendations...</span>
                 </div>
-              ) : (recommendationsError && firstAIError && secondAIError) ? (
+              ) : (firstAIError && secondAIError) ? (
                 <div className="text-center py-8">
                   <p className="text-red-400 mb-4">Failed to generate recommendations</p>
-                  <p className="text-gray-500 text-sm">{recommendationsError || firstAIError || secondAIError}</p>
+                  <p className="text-gray-500 text-sm">{firstAIError || secondAIError}</p>
                 </div>
-              ) : (staticRecommendations.length > 0 || firstAIRecommendation || secondAIRecommendation) ? (
+              ) : (firstAIRecommendation || secondAIRecommendation) ? (
                 <div className="space-y-4">
-                  {/* Static recommendation */}
-                  {staticRecommendations.map((resource, index) => (
-                    <div key={index} className="p-4 bg-gray-800/50 rounded-lg border border-gray-700 hover:border-gray-600 transition-colors">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <h4 className="text-white font-medium">{resource.title}</h4>
-                            <Badge variant="secondary" className="bg-green-600/20 text-green-400 text-xs">
-                              Static
-                            </Badge>
-                            <Badge variant="secondary" className="bg-blue-600/20 text-blue-400 text-xs">
-                              {resource.recommendation_type.replace('_', ' ')}
-                            </Badge>
-                          </div>
-                          <p className="text-gray-400 text-sm mb-1">by {resource.author_speaker}</p>
-                          <p className="text-gray-300 text-sm">{resource.description}</p>
-                        </div>
-                        {resource.source_url && (
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="border-gray-600 text-gray-300 hover:bg-gray-800 ml-4"
-                            onClick={() => window.open(resource.source_url, '_blank')}
-                          >
-                            View
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                  
                   {/* First AI-generated personalized recommendation */}
                   {firstAIRecommendation && (
                     <div className="p-4 bg-gradient-to-r from-purple-900/30 to-blue-900/30 rounded-lg border border-purple-700/50 hover:border-purple-600/50 transition-colors">
