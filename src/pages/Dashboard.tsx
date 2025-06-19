@@ -144,7 +144,7 @@ const Dashboard = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid md:grid-cols-4 gap-6 mb-8">
+        <div className="grid md:grid-cols-3 gap-6 mb-8">
           <Card className="bg-gray-900 border-gray-800">
             <CardHeader className="pb-2">
               <CardDescription className="text-gray-400">XP Points</CardDescription>
@@ -175,16 +175,6 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-gray-400">Keep it going! 🔥</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gray-900 border-gray-800">
-            <CardHeader className="pb-2">
-              <CardDescription className="text-gray-400">Today's Progress</CardDescription>
-              <CardTitle className="text-2xl text-purple-400">{stats.progression_jour}%</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Progress value={stats.progression_jour} className="h-2" />
             </CardContent>
           </Card>
         </div>
