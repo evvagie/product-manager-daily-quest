@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
@@ -8,6 +9,7 @@ import { useEffect, useState } from "react"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 import { generatePersonalizedFeedback } from "@/utils/feedbackGenerator"
+import { useDailyRecommendations } from "@/hooks/useDailyRecommendations"
 
 const SessionFeedback = () => {
   const location = useLocation()
@@ -164,6 +166,20 @@ const SessionFeedback = () => {
       generateFeedback();
     }
   }, [totalScore]);
+
+  // Get AI-powered recommendations
+  const {
+    recommendations,
+    loading: recommendationsLoading,
+    error: recommendationsError
+  } = useDailyRecommendations({
+    skillArea: category,
+    difficulty: difficulty,
+    performanceScore: totalScore,
+    improvementAreas: personalizedFeedback?.improvements || [],
+    strengths: personalizedFeedback?.strengths || [],
+    triggerGeneration: !!personalizedFeedback && sessionSaved
+  });
 
   // Save session data and individual exercises with accurate scoring
   useEffect(() => {
@@ -329,31 +345,6 @@ const SessionFeedback = () => {
     }
   }
 
-  const getResourceRecommendations = () => {
-    const recommendations = [
-      {
-        title: "Product Management Fundamentals",
-        type: "Course",
-        description: "Master the basics of product strategy and execution",
-        url: "#"
-      },
-      {
-        title: "Data-Driven Product Decisions",
-        type: "Article", 
-        description: "Learn how to use analytics for better PM decisions",
-        url: "#"
-      },
-      {
-        title: "Stakeholder Management Guide",
-        type: "Guide",
-        description: "Navigate complex stakeholder relationships",
-        url: "#"
-      }
-    ]
-    
-    return recommendations.slice(0, 2)
-  }
-
   if (!personalizedFeedback) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
@@ -477,35 +468,61 @@ const SessionFeedback = () => {
             </Card>
           )}
 
-          {/* Recommended Resources */}
+          {/* AI-Powered Personalized Recommendations */}
           <Card className="bg-gray-900 border-gray-800 mb-8">
             <CardHeader>
-              <CardTitle className="text-xl text-white">Recommended for You</CardTitle>
+              <CardTitle className="text-xl text-white flex items-center">
+                🤖 AI-Personalized Learning Resources
+              </CardTitle>
               <CardDescription className="text-gray-400">
-                Resources to help you improve your PM skills
+                Tailored recommendations based on your performance in {category}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {getResourceRecommendations().map((resource, index) => (
-                  <div key={index} className="p-4 bg-gray-800/50 rounded-lg border border-gray-700 hover:border-gray-600 transition-colors">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <div className="flex items-center space-x-2 mb-1">
-                          <h4 className="text-white font-medium">{resource.title}</h4>
-                          <Badge variant="secondary" className="bg-blue-600/20 text-blue-400 text-xs">
-                            {resource.type}
-                          </Badge>
+              {recommendationsLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mr-3"></div>
+                  <span className="text-gray-400">Generating personalized recommendations...</span>
+                </div>
+              ) : recommendationsError ? (
+                <div className="text-center py-8">
+                  <p className="text-red-400 mb-4">Failed to generate recommendations</p>
+                  <p className="text-gray-500 text-sm">{recommendationsError}</p>
+                </div>
+              ) : recommendations.length > 0 ? (
+                <div className="space-y-4">
+                  {recommendations.map((resource, index) => (
+                    <div key={index} className="p-4 bg-gray-800/50 rounded-lg border border-gray-700 hover:border-gray-600 transition-colors">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <h4 className="text-white font-medium">{resource.title}</h4>
+                            <Badge variant="secondary" className="bg-blue-600/20 text-blue-400 text-xs">
+                              {resource.recommendation_type.replace('_', ' ')}
+                            </Badge>
+                          </div>
+                          <p className="text-gray-400 text-sm mb-1">by {resource.author_speaker}</p>
+                          <p className="text-gray-300 text-sm">{resource.description}</p>
                         </div>
-                        <p className="text-gray-400 text-sm">{resource.description}</p>
+                        {resource.source_url && (
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="border-gray-600 text-gray-300 hover:bg-gray-800 ml-4"
+                            onClick={() => window.open(resource.source_url, '_blank')}
+                          >
+                            View
+                          </Button>
+                        )}
                       </div>
-                      <Button variant="outline" size="sm" className="border-gray-600 text-gray-300 hover:bg-gray-800">
-                        View
-                      </Button>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-400">Personalized recommendations will appear here after session completion.</p>
+                </div>
+              )}
             </CardContent>
           </Card>
 

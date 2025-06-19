@@ -123,6 +123,51 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_recommendations: {
+        Row: {
+          author_speaker: string
+          created_at: string
+          date: string
+          description: string
+          difficulty_level: string
+          id: string
+          performance_context: Json | null
+          recommendation_type: string
+          skill_area: string
+          source_url: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          author_speaker: string
+          created_at?: string
+          date?: string
+          description: string
+          difficulty_level: string
+          id?: string
+          performance_context?: Json | null
+          recommendation_type: string
+          skill_area: string
+          source_url?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          author_speaker?: string
+          created_at?: string
+          date?: string
+          description?: string
+          difficulty_level?: string
+          id?: string
+          performance_context?: Json | null
+          recommendation_type?: string
+          skill_area?: string
+          source_url?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       exercise_scores: {
         Row: {
           challenge_session_id: string
