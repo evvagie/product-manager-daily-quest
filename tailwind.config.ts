@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -83,6 +84,14 @@ export default {
 					},
 					to: {
 						height: '0'
+					}
+				},
+				'pulse': {
+					'0%, 100%': {
+						transform: 'scale(1)'
+					},
+					'50%': {
+						transform: 'scale(1.05)'
 					}
 				}
 			},

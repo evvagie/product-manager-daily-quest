@@ -39,7 +39,7 @@ const Landing = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
               <Button 
                 size="lg" 
-                className="bg-gradient-to-r from-[#0400ff] to-purple-600 hover:from-[#0300cc] hover:to-purple-700 text-black px-8 py-4 text-lg font-medium shadow-lg animate-pulse"
+                className="bg-gradient-to-r from-[#0400ff] to-purple-600 hover:from-[#0300cc] hover:to-purple-700 text-white px-8 py-4 text-lg font-medium shadow-lg animate-[pulse_1.5s_ease-in-out_infinite]"
                 onClick={() => navigate('/signup')}
               >
                 Get Started →
@@ -122,7 +122,7 @@ const Landing = () => {
           </p>
           <Button 
             size="lg" 
-            className="bg-gradient-to-r from-[#0400ff] to-purple-600 hover:from-[#0300cc] hover:to-purple-700 text-black px-12 py-4 text-lg font-medium shadow-lg animate-pulse"
+            className="bg-gradient-to-r from-[#0400ff] to-purple-600 hover:from-[#0300cc] hover:to-purple-700 text-white px-12 py-4 text-lg font-medium shadow-lg animate-[pulse_1.5s_ease-in-out_infinite]"
             onClick={() => navigate('/signup')}
           >
             Start Learning Today →
