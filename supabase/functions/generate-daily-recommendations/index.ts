@@ -198,50 +198,45 @@ const CONTENT_LIBRARY = {
   }
 };
 
-// Generate 2 random static recommendations with different types
-const generateRandomStaticRecommendations = (skillArea: string, performanceScore: number, improvementAreas: string[]) => {
-  const recommendations = [];
+// Generate 1 random static recommendation
+const generateRandomStaticRecommendation = (skillArea: string, performanceScore: number, improvementAreas: string[]) => {
+  // Randomly select 1 type for static recommendation
+  const selectedType = RECOMMENDATION_TYPES[Math.floor(Math.random() * RECOMMENDATION_TYPES.length)];
   
-  // Randomly select 2 different types for static recommendations
-  const shuffledTypes = [...RECOMMENDATION_TYPES].sort(() => Math.random() - 0.5);
-  const selectedTypes = shuffledTypes.slice(0, 2);
+  console.log('Selected static recommendation type:', selectedType);
   
-  console.log('Selected static recommendation types:', selectedTypes);
+  let selectedContent;
   
-  for (const type of selectedTypes) {
-    let selectedContent;
+  if (selectedType === 'book' || selectedType === 'ted_talk' || selectedType === 'podcast' || selectedType === 'online_course') {
+    // For these types, select based on skill area
+    const skillContent = CONTENT_LIBRARY[selectedType][skillArea as keyof typeof CONTENT_LIBRARY[typeof selectedType]] || 
+                        CONTENT_LIBRARY[selectedType]['general'] || 
+                        [];
     
-    if (type === 'book' || type === 'ted_talk' || type === 'podcast' || type === 'online_course') {
-      // For these types, select based on skill area
-      const skillContent = CONTENT_LIBRARY[type][skillArea as keyof typeof CONTENT_LIBRARY[typeof type]] || 
-                          CONTENT_LIBRARY[type]['general'] || 
-                          [];
-      
-      if (skillContent.length > 0) {
-        selectedContent = skillContent[Math.floor(Math.random() * skillContent.length)];
-      }
-    } else if (type === 'article') {
-      // For articles, select based on performance level
-      const performanceLevel = performanceScore >= 80 ? 'high' : performanceScore >= 60 ? 'medium' : 'low';
-      const performanceContent = CONTENT_LIBRARY[type][performanceLevel] || [];
-      
-      if (performanceContent.length > 0) {
-        selectedContent = performanceContent[Math.floor(Math.random() * performanceContent.length)];
-      }
+    if (skillContent.length > 0) {
+      selectedContent = skillContent[Math.floor(Math.random() * skillContent.length)];
     }
+  } else if (selectedType === 'article') {
+    // For articles, select based on performance level
+    const performanceLevel = performanceScore >= 80 ? 'high' : performanceScore >= 60 ? 'medium' : 'low';
+    const performanceContent = CONTENT_LIBRARY[selectedType][performanceLevel] || [];
     
-    if (selectedContent) {
-      recommendations.push({
-        type: type,
-        title: selectedContent.title,
-        author_speaker: selectedContent.author_speaker,
-        description: selectedContent.description,
-        source_url: selectedContent.source_url
-      });
+    if (performanceContent.length > 0) {
+      selectedContent = performanceContent[Math.floor(Math.random() * performanceContent.length)];
     }
   }
   
-  return recommendations;
+  if (selectedContent) {
+    return {
+      type: selectedType,
+      title: selectedContent.title,
+      author_speaker: selectedContent.author_speaker,
+      description: selectedContent.description,
+      source_url: selectedContent.source_url
+    };
+  }
+  
+  return null;
 };
 
 serve(async (req) => {
@@ -253,9 +248,9 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const { userId, skillArea, difficulty, performanceScore, improvementAreas, strengths }: RequestBody = await req.json();
 
-    console.log('Generating randomized static recommendations for user:', userId, 'skill:', skillArea, 'score:', performanceScore);
+    console.log('Generating 1 randomized static recommendation for user:', userId, 'skill:', skillArea, 'score:', performanceScore);
 
-    // Check if recommendations already exist for today
+    // Check if recommendation already exists for today
     const today = new Date().toISOString().split('T')[0];
     const { data: existingRecs } = await supabase
       .from('daily_recommendations')
@@ -263,26 +258,32 @@ serve(async (req) => {
       .eq('user_id', userId)
       .eq('date', today);
 
-    if (existingRecs && existingRecs.length >= 2) {
-      console.log('Found existing static recommendations:', existingRecs.length);
+    if (existingRecs && existingRecs.length >= 1) {
+      console.log('Found existing static recommendation:', existingRecs.length);
       return new Response(JSON.stringify({ recommendations: existingRecs }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Generate 2 random static recommendations with different types
-    const recommendations = generateRandomStaticRecommendations(skillArea, performanceScore, improvementAreas);
-    console.log('Generated randomized static recommendations:', recommendations.length);
+    // Generate 1 random static recommendation
+    const recommendation = generateRandomStaticRecommendation(skillArea, performanceScore, improvementAreas);
+    console.log('Generated randomized static recommendation:', recommendation ? 1 : 0);
 
-    // Insert recommendations into database
-    const dbRecords = recommendations.map((rec: any) => ({
+    if (!recommendation) {
+      return new Response(JSON.stringify({ recommendations: [] }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Insert recommendation into database
+    const dbRecord = {
       user_id: userId,
       date: today,
-      recommendation_type: rec.type,
-      title: rec.title,
-      author_speaker: rec.author_speaker,
-      description: rec.description,
-      source_url: rec.source_url,
+      recommendation_type: recommendation.type,
+      title: recommendation.title,
+      author_speaker: recommendation.author_speaker,
+      description: recommendation.description,
+      source_url: recommendation.source_url,
       skill_area: skillArea,
       difficulty_level: difficulty,
       performance_context: {
@@ -290,11 +291,11 @@ serve(async (req) => {
         improvement_areas: improvementAreas,
         strengths: strengths
       }
-    }));
+    };
 
-    const { data: insertedRecs, error } = await supabase
+    const { data: insertedRec, error } = await supabase
       .from('daily_recommendations')
-      .insert(dbRecords)
+      .insert([dbRecord])
       .select();
 
     if (error) {
@@ -302,9 +303,9 @@ serve(async (req) => {
       throw error;
     }
 
-    console.log('Successfully inserted randomized static recommendations:', insertedRecs?.length);
+    console.log('Successfully inserted randomized static recommendation:', insertedRec?.length);
 
-    return new Response(JSON.stringify({ recommendations: insertedRecs }), {
+    return new Response(JSON.stringify({ recommendations: insertedRec }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 

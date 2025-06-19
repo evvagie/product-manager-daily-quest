@@ -10,6 +10,7 @@ import { toast } from "sonner"
 import { generatePersonalizedFeedback } from "@/utils/feedbackGenerator"
 import { useDailyRecommendations } from "@/hooks/useDailyRecommendations"
 import { usePersonalizedRecommendation } from "@/hooks/usePersonalizedRecommendation"
+import { useSecondPersonalizedRecommendation } from "@/hooks/useSecondPersonalizedRecommendation"
 
 const SessionFeedback = () => {
   const location = useLocation()
@@ -167,7 +168,7 @@ const SessionFeedback = () => {
     }
   }, [totalScore]);
 
-  // Get static recommendations (2: book + article)
+  // Get static recommendation (1: random type)
   const {
     recommendations: staticRecommendations,
     loading: recommendationsLoading,
@@ -181,11 +182,11 @@ const SessionFeedback = () => {
     triggerGeneration: !!personalizedFeedback && sessionSaved
   });
 
-  // Get AI-generated personalized recommendation (1: ted_talk)
+  // Get first AI-generated personalized recommendation
   const {
-    recommendation: personalizedRecommendation,
-    loading: personalizedLoading,
-    error: personalizedError
+    recommendation: firstAIRecommendation,
+    loading: firstAILoading,
+    error: firstAIError
   } = usePersonalizedRecommendation({
     skillArea: category,
     difficulty: difficulty,
@@ -193,6 +194,21 @@ const SessionFeedback = () => {
     exerciseScores: exerciseScores,
     totalExercises: totalExercises,
     triggerGeneration: !!personalizedFeedback && sessionSaved
+  });
+
+  // Get second AI-generated personalized recommendation (avoiding duplicate type)
+  const {
+    recommendation: secondAIRecommendation,
+    loading: secondAILoading,
+    error: secondAIError
+  } = useSecondPersonalizedRecommendation({
+    skillArea: category,
+    difficulty: difficulty,
+    performanceScore: totalScore,
+    exerciseScores: exerciseScores,
+    totalExercises: totalExercises,
+    firstAIRecommendationType: firstAIRecommendation?.recommendation_type,
+    triggerGeneration: !!personalizedFeedback && sessionSaved && !!firstAIRecommendation
   });
 
   // Save session data and individual exercises with accurate scoring
@@ -493,25 +509,28 @@ const SessionFeedback = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {(recommendationsLoading || personalizedLoading) ? (
+              {(recommendationsLoading || firstAILoading || secondAILoading) ? (
                 <div className="flex items-center justify-center py-8">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mr-3"></div>
                   <span className="text-gray-400">Generating personalized recommendations...</span>
                 </div>
-              ) : (recommendationsError && personalizedError) ? (
+              ) : (recommendationsError && firstAIError && secondAIError) ? (
                 <div className="text-center py-8">
                   <p className="text-red-400 mb-4">Failed to generate recommendations</p>
-                  <p className="text-gray-500 text-sm">{recommendationsError || personalizedError}</p>
+                  <p className="text-gray-500 text-sm">{recommendationsError || firstAIError || secondAIError}</p>
                 </div>
-              ) : (staticRecommendations.length > 0 || personalizedRecommendation) ? (
+              ) : (staticRecommendations.length > 0 || firstAIRecommendation || secondAIRecommendation) ? (
                 <div className="space-y-4">
-                  {/* Static recommendations */}
+                  {/* Static recommendation */}
                   {staticRecommendations.map((resource, index) => (
                     <div key={index} className="p-4 bg-gray-800/50 rounded-lg border border-gray-700 hover:border-gray-600 transition-colors">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center space-x-2 mb-2">
                             <h4 className="text-white font-medium">{resource.title}</h4>
+                            <Badge variant="secondary" className="bg-green-600/20 text-green-400 text-xs">
+                              Static
+                            </Badge>
                             <Badge variant="secondary" className="bg-blue-600/20 text-blue-400 text-xs">
                               {resource.recommendation_type.replace('_', ' ')}
                             </Badge>
@@ -533,31 +552,62 @@ const SessionFeedback = () => {
                     </div>
                   ))}
                   
-                  {/* AI-generated personalized recommendation */}
-                  {personalizedRecommendation && (
+                  {/* First AI-generated personalized recommendation */}
+                  {firstAIRecommendation && (
                     <div className="p-4 bg-gradient-to-r from-purple-900/30 to-blue-900/30 rounded-lg border border-purple-700/50 hover:border-purple-600/50 transition-colors">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center space-x-2 mb-2">
-                            <h4 className="text-white font-medium">{personalizedRecommendation.title}</h4>
+                            <h4 className="text-white font-medium">{firstAIRecommendation.title}</h4>
                             <Badge className="bg-gradient-to-r from-purple-600/20 to-blue-600/20 text-purple-300 text-xs border-purple-500/30">
                               AI Personalized
                             </Badge>
                             <Badge variant="secondary" className="bg-orange-600/20 text-orange-400 text-xs">
-                              {personalizedRecommendation.recommendation_type.replace('_', ' ')}
+                              {firstAIRecommendation.recommendation_type.replace('_', ' ')}
                             </Badge>
                           </div>
-                          <p className="text-gray-400 text-sm mb-1">by {personalizedRecommendation.author_speaker}</p>
-                          <p className="text-gray-300 text-sm">{personalizedRecommendation.description}</p>
+                          <p className="text-gray-400 text-sm mb-1">by {firstAIRecommendation.author_speaker}</p>
+                          <p className="text-gray-300 text-sm">{firstAIRecommendation.description}</p>
                         </div>
-                        {personalizedRecommendation.source_url && (
+                        {firstAIRecommendation.source_url && (
                           <Button 
                             variant="outline" 
                             size="sm" 
                             className="border-purple-600 text-purple-300 hover:bg-purple-800/20 ml-4"
-                            onClick={() => window.open(personalizedRecommendation.source_url, '_blank')}
+                            onClick={() => window.open(firstAIRecommendation.source_url, '_blank')}
                           >
-                            Watch
+                            View
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Second AI-generated personalized recommendation */}
+                  {secondAIRecommendation && (
+                    <div className="p-4 bg-gradient-to-r from-indigo-900/30 to-purple-900/30 rounded-lg border border-indigo-700/50 hover:border-indigo-600/50 transition-colors">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <h4 className="text-white font-medium">{secondAIRecommendation.title}</h4>
+                            <Badge className="bg-gradient-to-r from-indigo-600/20 to-purple-600/20 text-indigo-300 text-xs border-indigo-500/30">
+                              AI Personalized
+                            </Badge>
+                            <Badge variant="secondary" className="bg-teal-600/20 text-teal-400 text-xs">
+                              {secondAIRecommendation.recommendation_type.replace('_', ' ')}
+                            </Badge>
+                          </div>
+                          <p className="text-gray-400 text-sm mb-1">by {secondAIRecommendation.author_speaker}</p>
+                          <p className="text-gray-300 text-sm">{secondAIRecommendation.description}</p>
+                        </div>
+                        {secondAIRecommendation.source_url && (
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="border-indigo-600 text-indigo-300 hover:bg-indigo-800/20 ml-4"
+                            onClick={() => window.open(secondAIRecommendation.source_url, '_blank')}
+                          >
+                            View
                           </Button>
                         )}
                       </div>
