@@ -57,14 +57,13 @@ const ChallengeSelection = () => {
   const getDifficultyCardStyles = (difficultyId: string, isSelected: boolean) => {
     const baseClasses = "cursor-pointer transition-all hover:scale-105";
     
-    if (isSelected) {
-      if (difficultyId === 'beginner') {
-        return `${baseClasses} bg-gradient-to-r from-sky-200 to-purple-400 border-sky-200`;
-      } else if (difficultyId === 'intermediate') {
-        return `${baseClasses} bg-gradient-to-r from-purple-200 to-pink-300 border-purple-200`;
-      } else if (difficultyId === 'advanced') {
-        return `${baseClasses} bg-gradient-to-r from-purple-500 to-blue-500 border-purple-500`;
-      }
+    // Always show gradient colors, not just when selected
+    if (difficultyId === 'beginner') {
+      return `${baseClasses} bg-gradient-to-r from-sky-200 to-purple-400 ${isSelected ? 'ring-2 ring-sky-300 ring-offset-2' : 'border-sky-200'}`;
+    } else if (difficultyId === 'intermediate') {
+      return `${baseClasses} bg-gradient-to-r from-purple-200 to-pink-300 ${isSelected ? 'ring-2 ring-purple-300 ring-offset-2' : 'border-purple-200'}`;
+    } else if (difficultyId === 'advanced') {
+      return `${baseClasses} bg-gradient-to-r from-purple-500 to-blue-500 ${isSelected ? 'ring-2 ring-purple-400 ring-offset-2' : 'border-purple-500'}`;
     }
     
     return `${baseClasses} bg-white border-gray-200 hover:border-gray-300`;
@@ -132,24 +131,16 @@ const ChallengeSelection = () => {
               >
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <CardTitle className={`text-lg ${
-                      selectedDifficulty === difficulty.id ? 'text-white' : 'text-black'
-                    }`}>
+                    <CardTitle className="text-lg text-white">
                       {difficulty.name}
                     </CardTitle>
-                    <Badge variant="secondary" className={`${
-                      selectedDifficulty === difficulty.id 
-                        ? 'bg-white/20 text-white' 
-                        : 'bg-gray-100 text-gray-700'
-                    }`}>
+                    <Badge variant="secondary" className="bg-white/20 text-white">
                       {difficulty.xp}
                     </Badge>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <CardDescription className={`${
-                    selectedDifficulty === difficulty.id ? 'text-white/80' : 'text-gray-600'
-                  }`}>
+                  <CardDescription className="text-white/80">
                     {difficulty.description}
                   </CardDescription>
                 </CardContent>
@@ -181,7 +172,10 @@ const ChallengeSelection = () => {
                 </div>
               </div>
               
-              <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white" onClick={handleStartSession}>
+              <Button 
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white animate-pulse" 
+                onClick={handleStartSession}
+              >
                 Start Challenge Session →
               </Button>
             </CardContent>
