@@ -181,7 +181,7 @@ const Pricing = () => {
           {/* Certification + Review */}
           <Card className="bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-400 shadow-xl relative flex flex-col">
             <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-              <Badge className="bg-gradient-to-r from-yellow-600 to-orange-600 text-white px-3 py-1">
+              <Badge className="bg-gradient-to-r from-yellow-600 to-orange-600 text-white px-3 py-1 whitespace-nowrap">
                 <MessageSquare className="h-3 w-3 mr-1" />
                 Premium Review
               </Badge>
