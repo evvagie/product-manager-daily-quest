@@ -41,18 +41,46 @@ const Header = () => {
           </div>
         </div>
         
-        {user && (
-          <div className="flex items-center space-x-4">
-            <span className="text-gray-600">Welcome back!</span>
-            <Button 
-              variant="outline" 
-              onClick={handleSignOut}
-              className="bg-white border-black text-black hover:bg-black hover:text-white font-normal hover:font-bold transition-all duration-200"
+        <div className="flex items-center space-x-6">
+          {!user && (
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/pricing')}
+              className="text-gray-600 hover:text-black font-medium"
             >
-              Sign Out
+              Pricing
             </Button>
-          </div>
-        )}
+          )}
+          
+          {user ? (
+            <div className="flex items-center space-x-4">
+              <span className="text-gray-600">Welcome back!</span>
+              <Button 
+                variant="outline" 
+                onClick={handleSignOut}
+                className="bg-white border-black text-black hover:bg-black hover:text-white font-normal hover:font-bold transition-all duration-200"
+              >
+                Sign Out
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center space-x-3">
+              <Button
+                variant="ghost"
+                onClick={() => navigate('/login')}
+                className="text-gray-600 hover:text-black font-medium"
+              >
+                Log In
+              </Button>
+              <Button
+                onClick={() => navigate('/signup')}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium"
+              >
+                Get Started
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
     </header>
   )

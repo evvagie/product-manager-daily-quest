@@ -13,6 +13,7 @@ import Landing from "./pages/Landing";
 import Login from "./pages/Auth/Login";
 import Signup from "./pages/Auth/Signup";
 import Dashboard from "./pages/Dashboard";
+import Pricing from "./pages/Pricing";
 import ChallengeSelection from "./pages/ChallengeSelection";
 import Challenge from "./pages/Challenge";
 import SessionFeedback from "./pages/SessionFeedback";
@@ -34,6 +35,7 @@ const App = () => (
               <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
+              <Route path="/pricing" element={<Pricing />} />
               <Route path="/dashboard" element={
                 <ProtectedRoute>
                   <Dashboard />
