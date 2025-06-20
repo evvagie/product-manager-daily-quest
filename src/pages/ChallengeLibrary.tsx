@@ -317,7 +317,10 @@ const ChallengeLibrary = () => {
                       <Button 
                         variant="outline" 
                         size="sm"
-                        className="border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
+                        className="bg-white border-2 border-transparent bg-gradient-to-r from-orange-500 to-purple-600 bg-clip-text text-transparent hover:bg-gradient-to-r hover:from-purple-600 hover:to-orange-500 hover:text-white hover:bg-clip-border transition-all duration-200"
+                        style={{
+                          borderImage: 'linear-gradient(45deg, #f97316, #9333ea) 1'
+                        }}
                         onClick={() => handleRetryChallenge(challenge)}
                       >
                         Retry Challenge
