@@ -40,7 +40,7 @@ const SessionFeedback = () => {
   const answers = exerciseAnswers || (answer ? [answer] : [])
   const totalExercises = challengeSession?.totalExercises || 1
   
-  // Updated scoring calculation with improved strategic challenge evaluation
+  // Updated scoring calculation with improved strategic challenge evaluation and varied quality indicators
   const calculateExerciseScores = () => {
     if (!challengeSession?.exercises || !exerciseAnswers) {
       console.log('No exercises or answers found for scoring');
@@ -85,17 +85,23 @@ const SessionFeedback = () => {
       console.log(`Exercise ${index + 1} - User selected ID:`, userSelectedId);
       
       if (userSelectedId) {
-        selectedOption = exercise.content.options.find((opt: any) => 
-          opt.id === userSelectedId || opt.text === userSelectedId
-        );
+        selectedOption = exercise.content.options.find((opt: any, optIndex: number) => {
+          // Find the selected option and pass its index for quality calculation
+          if (opt.id === userSelectedId || opt.text === userSelectedId) {
+            selectedOption = { ...opt, optionIndex: optIndex };
+            return true;
+          }
+          return false;
+        });
       }
       
-      // Use the new scoring logic for strategic challenges
+      // Use the new scoring logic for strategic challenges with option index
       let score = 0;
       let isCorrect = false;
       
       if (selectedOption) {
-        const quality = getQualityFromOption(selectedOption);
+        const optionIndex = selectedOption.optionIndex || 0;
+        const quality = getQualityFromOption(selectedOption, optionIndex);
         // Convert quality to score
         switch (quality) {
           case 'excellent':
@@ -122,7 +128,7 @@ const SessionFeedback = () => {
       const result = {
         score,
         isCorrect,
-        correctAnswer: correctOption?.text || 'Strategic Decision', // Better label for strategic challenges
+        correctAnswer: correctOption?.text || 'Strategic Decision',
         userAnswer: selectedOption?.text || 'No valid selection',
         questionTitle: exercise.title || `Exercise ${index + 1}`
       };

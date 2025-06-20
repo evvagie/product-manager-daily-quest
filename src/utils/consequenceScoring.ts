@@ -25,21 +25,17 @@ export const evaluateAnswerQuality = (consequences: Consequence[]): {
 
   // Strategic scoring based on consequence analysis
   if (positiveRatio >= 0.7) {
-    // Mostly positive outcomes = excellent strategic choice
     return { quality: 'excellent', score: 95 };
   } else if (positiveRatio >= 0.5 || (positiveRatio >= 0.3 && negativeRatio <= 0.3)) {
-    // Balanced or mostly positive with low negative = good strategic choice
     return { quality: 'good', score: 80 };
   } else if (negativeRatio <= 0.5) {
-    // Mixed outcomes but not predominantly negative = average
     return { quality: 'average', score: 65 };
   } else {
-    // Predominantly negative outcomes = poor strategic choice
     return { quality: 'poor', score: 40 };
   }
 };
 
-export const getQualityFromOption = (option: any): 'excellent' | 'good' | 'average' | 'poor' => {
+export const getQualityFromOption = (option: any, optionIndex: number = 0): 'excellent' | 'good' | 'average' | 'poor' => {
   // If option has explicit quality, use it
   if (option.quality) {
     return option.quality;
@@ -55,6 +51,13 @@ export const getQualityFromOption = (option: any): 'excellent' | 'good' | 'avera
     return 'excellent';
   }
 
-  // Default to average for strategic challenges
-  return 'average';
+  // For multiple choice options without explicit quality, distribute quality levels
+  // This ensures we get varied indicators instead of all being the same
+  const qualityLevels: ('excellent' | 'good' | 'average' | 'poor')[] = ['excellent', 'good', 'average', 'poor'];
+  
+  // Use option index to distribute quality levels, with some randomization based on option text
+  const textHash = option.text ? option.text.length + option.id?.length || 0 : 0;
+  const qualityIndex = (optionIndex + textHash) % qualityLevels.length;
+  
+  return qualityLevels[qualityIndex];
 };

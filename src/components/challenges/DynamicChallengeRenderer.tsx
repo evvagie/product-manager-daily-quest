@@ -37,7 +37,7 @@ export const DynamicChallengeRenderer = ({
 
     return {
       type: challenge.type,
-      isAIGenerated: false // All exercises are now handled consistently
+      isAIGenerated: false // Handle all exercises consistently
     };
   }, [challenge.type, challenge.title]);
 
@@ -65,9 +65,9 @@ export const DynamicChallengeRenderer = ({
     return <Badge className={`${config.color} text-xs`}>{config.label}</Badge>;
   }, []);
 
-  // Updated helper function to get answer quality using new scoring logic
-  const getAnswerQuality = useCallback((option: any) => {
-    return getQualityFromOption(option);
+  // Updated helper function to get answer quality using new scoring logic with option index
+  const getAnswerQuality = useCallback((option: any, index: number = 0) => {
+    return getQualityFromOption(option, index);
   }, []);
 
   const handleSliderChange = useCallback((tradeOffName: string, value: number[]) => {
@@ -111,7 +111,7 @@ export const DynamicChallengeRenderer = ({
         <div className="space-y-4">
           <p className="text-gray-700">{challenge.content?.context || 'Exercise context not available'}</p>
           <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <p className="text-yellow-800">This exercise format is not fully supported yet.</p>
+            <p className="text-yellow-800">This exercise format requires additional setup.</p>
             <Button 
               onClick={() => onAnswer('fallback-complete')}
               className="mt-2 bg-blue-600 hover:bg-blue-700 text-white"
@@ -139,7 +139,7 @@ export const DynamicChallengeRenderer = ({
       </div>
       
       <div className="space-y-3">
-        {challenge.content.options?.map((option: any) => (
+        {challenge.content.options?.map((option: any, index: number) => (
           <button
             key={option.id}
             onClick={() => onAnswer(option.id)}
@@ -163,7 +163,7 @@ export const DynamicChallengeRenderer = ({
               </div>
               {currentAnswer === option.id && (
                 <div className="ml-3 flex-shrink-0">
-                  {getQualityBadge(getAnswerQuality(option))}
+                  {getQualityBadge(getAnswerQuality(option, index))}
                 </div>
               )}
             </div>
@@ -304,7 +304,7 @@ export const DynamicChallengeRenderer = ({
 
         <div className="space-y-2">
           <p className="text-sm text-gray-600 font-medium">How do you respond?</p>
-          {conversation?.responses?.map((response: any) => (
+          {conversation?.responses?.map((response: any, index: number) => (
             <button
               key={response.id}
               onClick={() => {
@@ -329,9 +329,9 @@ export const DynamicChallengeRenderer = ({
                     </div>
                   )}
                 </div>
-                {currentAnswer?.id === response.id && response.quality && (
+                {currentAnswer?.id === response.id && (
                   <div className="ml-3">
-                    {getQualityBadge(response.quality)}
+                    {getQualityBadge(getAnswerQuality(response, index))}
                   </div>
                 )}
               </div>
@@ -374,7 +374,7 @@ export const DynamicChallengeRenderer = ({
         <div>
           <h4 className="font-medium text-black mb-3">Priority Improvements</h4>
           <div className="space-y-2">
-            {challenge.content.options?.map((option: any) => (
+            {challenge.content.options?.map((option: any, index: number) => (
               <button
                 key={option.id}
                 onClick={() => onAnswer(option.id)}
@@ -397,7 +397,7 @@ export const DynamicChallengeRenderer = ({
                     <Badge variant="secondary" className="bg-gray-100 text-gray-700">
                       Priority: {option.priority}/3
                     </Badge>
-                    {currentAnswer === option.id && getQualityBadge(getAnswerQuality(option))}
+                    {currentAnswer === option.id && getQualityBadge(getAnswerQuality(option, index))}
                   </div>
                 </div>
               </button>
