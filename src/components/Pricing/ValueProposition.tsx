@@ -1,3 +1,4 @@
+
 import React from 'react';
 const ValueProposition = () => {
   return <div className="text-center mb-16 bg-white rounded-2xl p-8 shadow-lg">
@@ -27,7 +28,8 @@ const ValueProposition = () => {
         </div>
       </div>
       <p className="text-lg text-gray-700 mt-6 max-w-3xl mx-auto">
-        This isn't a formal diploma — it's proof that you can think like a PM when it matters. 
+        <strong>This isn't a formal diploma — it's proof that you can think like a PM when it matters.</strong>
+        <br />
         Perfect for your CV, LinkedIn, or simply proving to yourself that you've got what it takes.
       </p>
     </div>;
