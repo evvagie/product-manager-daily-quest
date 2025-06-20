@@ -634,11 +634,16 @@ const SessionFeedback = () => {
               Try Another Session
             </Button>
             <Button 
-              className="flex-1 bg-transparent border border-gray-600 text-white hover:bg-black hover:text-white hover:border-gray-500 transition-all duration-200"
-              style={{ color: 'white !important' }}
+              className="flex-1 bg-transparent border border-gray-600 hover:bg-black hover:border-gray-500 transition-all duration-200 [&]:text-white [&]:hover:text-white [&_*]:text-white [&_*]:hover:text-white"
+              style={{ 
+                color: 'white !important',
+                '--tw-text-opacity': '1 !important'
+              } as React.CSSProperties}
               onClick={() => navigate('/dashboard')}
             >
-              Back to Dashboard
+              <span style={{ color: 'white !important' }} className="text-white">
+                Back to Dashboard
+              </span>
             </Button>
           </div>
         </div>
