@@ -45,7 +45,7 @@ const Header = () => {
           <Button
             variant="ghost"
             onClick={() => navigate('/pricing')}
-            className="text-gray-600 hover:text-black font-medium"
+            className="bg-gradient-to-r from-orange-500 to-purple-600 bg-clip-text text-transparent font-medium hover:from-orange-600 hover:to-purple-700"
           >
             Pricing
           </Button>
