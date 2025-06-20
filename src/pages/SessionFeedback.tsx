@@ -533,7 +533,7 @@ const SessionFeedback = () => {
                             <Badge className="bg-gradient-to-r from-purple-600/20 to-blue-600/20 text-purple-300 text-xs border-purple-500/30">
                               AI Personalized
                             </Badge>
-                            <Badge variant="secondary" className="bg-orange-600/20 text-orange-400 text-xs">
+                            <Badge variant="secondary" className="bg-teal-600/20 text-teal-400 text-xs">
                               {firstAIRecommendation.recommendation_type.replace('_', ' ')}
                             </Badge>
                           </div>
@@ -635,7 +635,8 @@ const SessionFeedback = () => {
             </Button>
             <Button 
               variant="outline" 
-              className="flex-1 border-gray-600 text-white hover:bg-gray-800"
+              className="flex-1 border-gray-600 text-white hover:bg-black hover:text-white hover:border-gray-500 !text-white"
+              style={{ color: 'white !important' }}
               onClick={() => navigate('/dashboard')}
             >
               Back to Dashboard
