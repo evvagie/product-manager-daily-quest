@@ -61,14 +61,14 @@ const ChallengeLibrarySection = ({ challengeStats }: ChallengeLibrarySectionProp
           {challengeCategories.map((category) => (
             <div 
               key={category.id}
-              className="p-4 bg-gray-800/50 rounded-lg border border-gray-700 hover:border-gray-600 transition-colors cursor-pointer"
+              className="p-4 bg-gradient-to-br from-[#0400ff]/20 to-purple-600/20 rounded-lg border border-[#0400ff]/30 hover:from-[#0400ff]/30 hover:to-purple-600/30 transition-all duration-200 cursor-pointer shadow-lg"
               onClick={() => navigate(`/challenge-library/${category.id}`)}
             >
               <div className="flex items-center justify-between mb-2">
-                <h4 className="font-medium text-white">{category.name}</h4>
-                <span className={`text-${category.color}-400`}>{category.icon}</span>
+                <h4 className="font-medium text-black">{category.name}</h4>
+                <span className="text-2xl">{category.icon}</span>
               </div>
-              <p className="text-sm text-gray-400 mb-3">
+              <p className="text-sm text-gray-600 mb-3">
                 {category.completed} completed
               </p>
               <Progress value={(category.completed / 300) * 100} className="h-1" />
