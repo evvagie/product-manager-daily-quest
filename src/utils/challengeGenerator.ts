@@ -31,14 +31,6 @@ export interface ChallengeSession {
   estimatedDuration: number;
 }
 
-// Map UI category names to database keys
-const categoryKeyMapping: Record<string, string> = {
-  'strategy': 'productStrategy',
-  'research': 'userResearch', 
-  'analytics': 'dataAnalytics',
-  'design': 'productDesign'
-};
-
 export const generateDynamicChallenge = async (
   skillArea: string, 
   difficulty: string,
@@ -51,13 +43,12 @@ export const generateDynamicChallenge = async (
   const randomId = Math.random().toString(36).substring(2, 15);
   
   try {
-    // Map the skillArea to the correct database key
-    const databaseKey = categoryKeyMapping[skillArea] || skillArea;
-    console.log('🔑 Mapped skillArea to database key:', { skillArea, databaseKey });
+    // Use skillArea directly as it matches the database keys
+    console.log('🔑 Using skillArea as database key:', skillArea);
 
     // If specific challenge ID is provided (retry scenario), try to find it first
     if (specificChallengeId) {
-      const categoryData = enhancedChallengeDatabase[databaseKey as keyof typeof enhancedChallengeDatabase];
+      const categoryData = enhancedChallengeDatabase[skillArea as keyof typeof enhancedChallengeDatabase];
       if (categoryData && Array.isArray(categoryData)) {
         const specificChallenge = categoryData.find((challenge: any) => challenge.id === specificChallengeId);
         
@@ -79,15 +70,15 @@ export const generateDynamicChallenge = async (
     // Fetch 4 different static exercises for the category/difficulty combination
     console.log('📚 Fetching 4 different static exercises...');
     
-    const categoryData = enhancedChallengeDatabase[databaseKey as keyof typeof enhancedChallengeDatabase];
+    const categoryData = enhancedChallengeDatabase[skillArea as keyof typeof enhancedChallengeDatabase];
     if (!categoryData || !Array.isArray(categoryData)) {
-      console.log('❌ No category data found for:', databaseKey);
+      console.log('❌ No category data found for:', skillArea);
       console.log('📋 Available categories:', Object.keys(enhancedChallengeDatabase));
-      throw new Error(`No challenges found for skill area: ${skillArea} (mapped to: ${databaseKey})`);
+      throw new Error(`No challenges found for skill area: ${skillArea}`);
     }
 
     console.log('✅ Found category data:', { 
-      key: databaseKey, 
+      key: skillArea, 
       totalChallenges: categoryData.length,
       sampleChallenge: categoryData[0]?.title || 'No challenges'
     });
