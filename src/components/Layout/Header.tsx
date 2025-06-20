@@ -74,7 +74,8 @@ const Header = () => {
               </Button>
               <Button
                 onClick={() => navigate('/signup')}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium"
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium !text-white"
+                style={{ color: 'white !important' }}
               >
                 Get Started
               </Button>
