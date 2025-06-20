@@ -31,20 +31,33 @@ export interface ChallengeSession {
   estimatedDuration: number;
 }
 
+// Map UI category names to database keys
+const categoryKeyMapping: Record<string, string> = {
+  'strategy': 'productStrategy',
+  'research': 'userResearch', 
+  'analytics': 'dataAnalytics',
+  'design': 'productDesign'
+};
+
 export const generateDynamicChallenge = async (
   skillArea: string, 
   difficulty: string,
   specificChallengeId?: string | null
 ): Promise<ChallengeSession> => {
   console.log('🎯 Generating static challenge session for:', { skillArea, difficulty, specificChallengeId });
+  console.log('📋 Available database keys:', Object.keys(enhancedChallengeDatabase));
   
   const timestamp = Date.now();
   const randomId = Math.random().toString(36).substring(2, 15);
   
   try {
+    // Map the skillArea to the correct database key
+    const databaseKey = categoryKeyMapping[skillArea] || skillArea;
+    console.log('🔑 Mapped skillArea to database key:', { skillArea, databaseKey });
+
     // If specific challenge ID is provided (retry scenario), try to find it first
     if (specificChallengeId) {
-      const categoryData = enhancedChallengeDatabase[skillArea as keyof typeof enhancedChallengeDatabase];
+      const categoryData = enhancedChallengeDatabase[databaseKey as keyof typeof enhancedChallengeDatabase];
       if (categoryData && Array.isArray(categoryData)) {
         const specificChallenge = categoryData.find((challenge: any) => challenge.id === specificChallengeId);
         
@@ -66,15 +79,30 @@ export const generateDynamicChallenge = async (
     // Fetch 4 different static exercises for the category/difficulty combination
     console.log('📚 Fetching 4 different static exercises...');
     
-    const categoryData = enhancedChallengeDatabase[skillArea as keyof typeof enhancedChallengeDatabase];
+    const categoryData = enhancedChallengeDatabase[databaseKey as keyof typeof enhancedChallengeDatabase];
     if (!categoryData || !Array.isArray(categoryData)) {
-      throw new Error(`No challenges found for skill area: ${skillArea}`);
+      console.log('❌ No category data found for:', databaseKey);
+      console.log('📋 Available categories:', Object.keys(enhancedChallengeDatabase));
+      throw new Error(`No challenges found for skill area: ${skillArea} (mapped to: ${databaseKey})`);
     }
+
+    console.log('✅ Found category data:', { 
+      key: databaseKey, 
+      totalChallenges: categoryData.length,
+      sampleChallenge: categoryData[0]?.title || 'No challenges'
+    });
 
     // Filter challenges by difficulty
     const filteredChallenges = categoryData.filter((challenge: any) => 
       challenge.difficulty?.toLowerCase() === difficulty.toLowerCase()
     );
+
+    console.log('🎯 Filtered challenges by difficulty:', {
+      difficulty,
+      beforeFilter: categoryData.length,
+      afterFilter: filteredChallenges.length,
+      sampleDifficulties: categoryData.slice(0, 3).map((c: any) => c.difficulty)
+    });
 
     if (filteredChallenges.length === 0) {
       throw new Error(`No challenges found for ${skillArea} at ${difficulty} difficulty`);
