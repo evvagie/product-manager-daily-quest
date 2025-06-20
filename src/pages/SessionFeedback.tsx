@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
@@ -475,7 +474,8 @@ const SessionFeedback = () => {
                   <Progress value={personalizedFeedback.score} className="h-3" />
                 </div>
                 
-                <div className="grid md:grid-cols-2 gap-4">
+                {personalizedFeedback.score === 100 ? (
+                  // Show only strengths when score is 100%
                   <div className="py-6 px-4 bg-gradient-to-br from-blue-500/25 via-teal-500/20 to-cyan-500/25 border border-blue-400/20 rounded-lg">
                     <h4 className="text-white font-medium mb-3 flex items-center">
                       <span className="text-green-400 mr-2">✓</span>
@@ -487,19 +487,34 @@ const SessionFeedback = () => {
                       ))}
                     </ul>
                   </div>
-                  
-                  <div className="py-6 px-4 bg-gradient-to-br from-red-500/25 via-pink-500/20 to-purple-500/25 border border-red-400/20 rounded-lg">
-                    <h4 className="text-white font-medium mb-3 flex items-center">
-                      <span className="text-yellow-400 mr-2">📈</span>
-                      Areas to Improve
-                    </h4>
-                    <ul className={`${textStyles.improvements} text-sm space-y-2`}>
-                      {personalizedFeedback.improvements.map((improvement: string, index: number) => (
-                        <li key={index}>• {improvement}</li>
-                      ))}
-                    </ul>
+                ) : (
+                  // Show both strengths and improvements when score is less than 100%
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="py-6 px-4 bg-gradient-to-br from-blue-500/25 via-teal-500/20 to-cyan-500/25 border border-blue-400/20 rounded-lg">
+                      <h4 className="text-white font-medium mb-3 flex items-center">
+                        <span className="text-green-400 mr-2">✓</span>
+                        What You Did Well
+                      </h4>
+                      <ul className={`${textStyles.strengths} text-sm space-y-2`}>
+                        {personalizedFeedback.strengths.map((strength: string, index: number) => (
+                          <li key={index}>• {strength}</li>
+                        ))}
+                      </ul>
+                    </div>
+                    
+                    <div className="py-6 px-4 bg-gradient-to-br from-red-500/25 via-pink-500/20 to-purple-500/25 border border-red-400/20 rounded-lg">
+                      <h4 className="text-white font-medium mb-3 flex items-center">
+                        <span className="text-yellow-400 mr-2">📈</span>
+                        Areas to Improve
+                      </h4>
+                      <ul className={`${textStyles.improvements} text-sm space-y-2`}>
+                        {personalizedFeedback.improvements.map((improvement: string, index: number) => (
+                          <li key={index}>• {improvement}</li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </CardContent>
           </Card>

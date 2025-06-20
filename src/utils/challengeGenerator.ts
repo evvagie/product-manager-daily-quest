@@ -280,35 +280,48 @@ export const generateDynamicChallenge = async (
       console.warn('Specific challenge not found or was AI-generated, will try AI generation first');
     }
 
-    // Try OpenAI generation first
+    // Try OpenAI generation first with enhanced uniqueness
     try {
+      // Add randomization elements to ensure unique questions
+      const randomSeed = Math.random().toString(36).substring(7);
+      const timestamp = Date.now();
+      const sessionContext = `${skillArea}-${difficulty}-${randomSeed}-${timestamp}`;
+      
       const response = await fetch(`https://xtnlfdcqaqtqxyzywaoh.supabase.co/functions/v1/generate-ai-challenge`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0bmxmZGNxYXF0cXh5enl3YW9oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAwOTkzMjEsImV4cCI6MjA2NTY3NTMyMX0.p05Zf-qKmWpmyI1Lc_t5lFZYG82ZXImCvZ1DxXi5uLA`
         },
-        body: JSON.stringify({ skillArea, difficulty })
+        body: JSON.stringify({ 
+          skillArea, 
+          difficulty,
+          sessionContext, // Add context for uniqueness
+          requestTimestamp: timestamp, // Add timestamp for uniqueness
+          generateUnique: true // Flag to request unique content
+        })
       });
 
       if (response.ok) {
         const aiData = await response.json();
         console.log('AI Challenge generated successfully');
         
-        // Ensure exactly 4 exercises with 60 second time limits
+        // Ensure exactly 4 exercises with 60 second time limits and unique IDs
         let exercises = aiData.exercises || [];
         
-        // Set all exercises to 60 second time limit
+        // Set all exercises to 60 second time limit with unique IDs
         exercises = exercises.map((exercise: any, index: number) => ({
           ...exercise,
           timeLimit: 60,
-          id: exercise.id || `ai-exercise-${index + 1}-${Date.now()}`
+          id: exercise.id || `ai-exercise-${sessionContext}-${index + 1}-${Date.now()}`
         }));
         
         // Ensure we have exactly 4 exercises
         while (exercises.length < 4) {
           const exerciseNumber = exercises.length + 1;
           const fallbackExercise = createFallbackChallenge(skillArea, difficulty, exerciseNumber);
+          // Add unique ID to fallback as well
+          fallbackExercise.id = `fallback-${sessionContext}-${exerciseNumber}-${Date.now()}`;
           exercises.push(fallbackExercise);
         }
         
@@ -316,7 +329,7 @@ export const generateDynamicChallenge = async (
         exercises = exercises.slice(0, 4);
         
         return {
-          sessionId: `ai-${Date.now()}`,
+          sessionId: `ai-${sessionContext}-${Date.now()}`,
           skillArea,
           difficulty,
           totalExercises: 4,
