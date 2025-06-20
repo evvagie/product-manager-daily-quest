@@ -62,9 +62,8 @@ const Challenge = () => {
         console.log('Challenge session loaded:', newChallengeSession);
         
         setChallengeSession(newChallengeSession);
-        // Set timer to 1:00 (60 seconds) for retry challenges, otherwise use exercise time limit
-        const initialTime = isRetryChallenge ? 60 : (newChallengeSession.exercises[0]?.timeLimit || 180);
-        setTimeLeft(initialTime);
+        // Always set timer to 1:00 (60 seconds) for all challenges
+        setTimeLeft(60);
         setExerciseAnswers(new Array(newChallengeSession.totalExercises).fill(null));
         
         // Show success message based on source and retry context
@@ -138,8 +137,8 @@ const Challenge = () => {
       setCurrentExerciseIndex(nextIndex);
       setCurrentAnswer(null);
       setShowConsequences(false);
-      const nextTime = isRetryChallenge ? 60 : (challengeSession?.exercises[nextIndex]?.timeLimit || 180);
-      setTimeLeft(nextTime);
+      // Always reset timer to 60 seconds for each exercise
+      setTimeLeft(60);
     }
   };
 
@@ -271,7 +270,7 @@ const Challenge = () => {
             <CardContent className="p-4">
               <TimePressureIndicator
                 timeLeft={timeLeft}
-                totalTime={isRetryChallenge ? 60 : currentExercise.timeLimit}
+                totalTime={60}
                 onTimeUp={handleTimeUp}
               />
             </CardContent>
