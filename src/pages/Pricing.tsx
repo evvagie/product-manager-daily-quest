@@ -255,7 +255,7 @@ const Pricing = () => {
               <div className="text-center">
                 <Button 
                   onClick={handleUpgrade}
-                  className="bg-gradient-to-r from-gray-600 to-blue-600 hover:from-gray-700 hover:to-blue-700 text-white px-8 py-3 text-lg font-medium"
+                  className="bg-gradient-to-r from-blue-400 to-red-400 hover:from-blue-500 hover:to-red-500 text-white px-8 py-3 text-lg font-medium whitespace-nowrap"
                 >
                   Contact for Team Pricing
                 </Button>
@@ -369,7 +369,7 @@ const Pricing = () => {
           </p>
           <Button 
             onClick={handleGetStarted}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 text-lg font-medium animate-pulse"
+            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 text-lg font-medium animate-pulse whitespace-nowrap"
           >
             Start Building Your Skills Today
           </Button>
