@@ -444,24 +444,24 @@ const SessionFeedback = () => {
                 </div>
                 
                 <div className="grid md:grid-cols-2 gap-4">
-                  <div className="p-4 bg-gradient-to-br from-blue-500/15 via-teal-500/10 to-cyan-500/15 border border-blue-400/20 rounded-lg">
+                  <div className="py-6 px-4 bg-gradient-to-br from-blue-500/25 via-teal-500/20 to-cyan-500/25 border border-blue-400/20 rounded-lg">
                     <h4 className="text-white font-medium mb-3 flex items-center">
                       <span className="text-green-400 mr-2">✓</span>
                       What You Did Well
                     </h4>
-                    <ul className="text-green-400 text-sm space-y-2">
+                    <ul className="text-black text-sm space-y-2">
                       {personalizedFeedback.strengths.map((strength: string, index: number) => (
                         <li key={index}>• {strength}</li>
                       ))}
                     </ul>
                   </div>
                   
-                  <div className="p-4 bg-gradient-to-br from-red-500/15 via-pink-500/10 to-purple-500/15 border border-red-400/20 rounded-lg">
+                  <div className="py-6 px-4 bg-gradient-to-br from-red-500/25 via-pink-500/20 to-purple-500/25 border border-red-400/20 rounded-lg">
                     <h4 className="text-white font-medium mb-3 flex items-center">
                       <span className="text-yellow-400 mr-2">📈</span>
                       Areas to Improve
                     </h4>
-                    <ul className="text-yellow-400 text-sm space-y-2">
+                    <ul className="text-black text-sm space-y-2">
                       {personalizedFeedback.improvements.map((improvement: string, index: number) => (
                         <li key={index}>• {improvement}</li>
                       ))}
