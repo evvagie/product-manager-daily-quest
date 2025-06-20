@@ -360,6 +360,33 @@ const SessionFeedback = () => {
     saveSessionData()
   }, [personalizedFeedback]) // Only run when feedback is ready
 
+  // Add dynamic text styling based on score
+  const getDynamicTextStyles = (score: number) => {
+    if (score >= 85) {
+      return {
+        strengths: "text-black font-semibold",
+        improvements: "text-black font-medium"
+      }
+    } else if (score >= 70) {
+      return {
+        strengths: "text-black font-medium",
+        improvements: "text-black font-medium"
+      }
+    } else if (score >= 60) {
+      return {
+        strengths: "text-black",
+        improvements: "text-black font-medium"
+      }
+    } else {
+      return {
+        strengths: "text-black",
+        improvements: "text-black font-semibold"
+      }
+    }
+  }
+
+  const textStyles = getDynamicTextStyles(personalizedFeedback.score)
+
   const getPerformanceMessage = () => {
     if (!personalizedFeedback) return "Analyzing your performance..."
     
@@ -449,7 +476,7 @@ const SessionFeedback = () => {
                       <span className="text-green-400 mr-2">✓</span>
                       What You Did Well
                     </h4>
-                    <ul className="text-black text-sm space-y-2">
+                    <ul className={`${textStyles.strengths} text-sm space-y-2`}>
                       {personalizedFeedback.strengths.map((strength: string, index: number) => (
                         <li key={index}>• {strength}</li>
                       ))}
@@ -461,7 +488,7 @@ const SessionFeedback = () => {
                       <span className="text-yellow-400 mr-2">📈</span>
                       Areas to Improve
                     </h4>
-                    <ul className="text-black text-sm space-y-2">
+                    <ul className={`${textStyles.improvements} text-sm space-y-2`}>
                       {personalizedFeedback.improvements.map((improvement: string, index: number) => (
                         <li key={index}>• {improvement}</li>
                       ))}
