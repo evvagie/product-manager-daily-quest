@@ -380,7 +380,7 @@ const SessionFeedback = () => {
     } else {
       return {
         strengths: "text-black",
-        improvements: "text-black font-semibold"
+        improvements: "text-black"
       }
     }
   }
