@@ -472,26 +472,6 @@ const SessionFeedback = () => {
             </CardContent>
           </Card>
 
-          {/* New Badges */}
-          {newBadges.length > 0 && (
-            <Card className="bg-gradient-to-r from-yellow-900/30 to-orange-900/30 border-yellow-800 mb-8">
-              <CardHeader>
-                <CardTitle className="text-xl text-white flex items-center">
-                  🏅 New Achievements Unlocked!
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-2">
-                  {newBadges.map((badge, index) => (
-                    <Badge key={index} className="bg-yellow-600/20 text-yellow-400 px-3 py-1">
-                      {badge}
-                    </Badge>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
           {/* AI-Powered Recommendations Only */}
           <Card className="bg-gray-900 border-gray-800 mb-8">
             <CardHeader>
