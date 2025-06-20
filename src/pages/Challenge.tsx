@@ -48,6 +48,29 @@ const Challenge = () => {
     return 'bg-gray-700 text-gray-300';
   };
 
+  // Helper function to get answer quality indicator
+  const getAnswerQuality = (answer: any) => {
+    if (!currentExercise || !answer) return null;
+    
+    const option = currentExercise.content.options?.find((opt: any) => opt.id === answer);
+    if (!option) return null;
+    
+    if (option.isCorrect) return 'Excellent';
+    if (option.quality === 'good') return 'Good';
+    if (option.quality === 'average') return 'Average';
+    return 'Poor';
+  };
+
+  const getQualityColor = (quality: string) => {
+    switch (quality) {
+      case 'Excellent': return 'text-green-600';
+      case 'Good': return 'text-blue-600';
+      case 'Average': return 'text-yellow-600';
+      case 'Poor': return 'text-red-600';
+      default: return 'text-gray-600';
+    }
+  };
+
   useEffect(() => {
     const loadChallengeSession = async () => {
       if (!skillArea || !difficulty) {
@@ -285,6 +308,17 @@ const Challenge = () => {
           showConsequences={showConsequences}
         />
 
+        {/* Answer Quality Indicator */}
+        {showConsequences && currentAnswer && (
+          <Card className="bg-white border-gray-200">
+            <CardContent className="p-4 text-center">
+              <div className={`text-lg font-semibold ${getQualityColor(getAnswerQuality(currentAnswer) || '')}`}>
+                {getAnswerQuality(currentAnswer)}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Consequences */}
         {showConsequences && currentAnswer && (
           <ConsequenceDisplay
@@ -297,7 +331,11 @@ const Challenge = () => {
           <div className="text-center">
             <Button
               onClick={handleNextExercise}
-              className={`px-8 py-3 ${isLastExercise ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'} text-white`}
+              className={`px-8 py-3 text-white font-medium ${
+                isLastExercise 
+                  ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 animate-pulse' 
+                  : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700'
+              }`}
             >
               {isLastExercise ? 'Complete Session' : 'Next Exercise'}
             </Button>
