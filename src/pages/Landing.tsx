@@ -1,21 +1,19 @@
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { useNavigate } from "react-router-dom"
-import { useAuth } from "@/contexts/AuthContext"
-import { useEffect } from "react"
-
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useEffect } from "react";
 const Landing = () => {
-  const navigate = useNavigate()
-  const { user } = useAuth()
-
+  const navigate = useNavigate();
+  const {
+    user
+  } = useAuth();
   useEffect(() => {
     if (user) {
-      navigate('/dashboard')
+      navigate('/dashboard');
     }
-  }, [user, navigate])
-
-  return (
-    <div className="min-h-screen bg-white text-gray-900">
+  }, [user, navigate]);
+  return <div className="min-h-screen bg-white text-gray-900">
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-white">
         <div className="container mx-auto px-4 py-20">
@@ -36,40 +34,18 @@ const Landing = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
-              <Button 
-                size="lg" 
-                className="bg-gradient-to-r from-[#0400ff] to-purple-600 hover:from-[#0300cc] hover:to-purple-700 !text-white px-8 py-4 text-lg font-medium shadow-lg animate-[pulse_1.5s_ease-in-out_infinite]"
-                style={{ color: 'white !important' }}
-                onClick={() => navigate('/signup')}
-              >
+              <Button size="lg" className="bg-gradient-to-r from-[#0400ff] to-purple-600 hover:from-[#0300cc] hover:to-purple-700 !text-white px-8 py-4 text-lg font-medium shadow-lg animate-[pulse_1.5s_ease-in-out_infinite]" style={{
+              color: 'white !important'
+            }} onClick={() => navigate('/signup')}>
                 Get Started →
               </Button>
-              <Button 
-                variant="outline" 
-                size="lg"
-                className="bg-white border-gray-300 text-gray-900 hover:bg-gray-50 px-8 py-4 text-lg font-medium"
-                onClick={() => navigate('/login')}
-              >
+              <Button variant="outline" size="lg" className="bg-white border-gray-300 text-gray-900 hover:bg-gray-50 px-8 py-4 text-lg font-medium" onClick={() => navigate('/login')}>
                 Sign In
               </Button>
             </div>
 
             {/* App Preview */}
-            <div className="relative">
-              <div className="w-80 h-80 mx-auto bg-gradient-to-br from-[#0400ff] via-purple-600 to-purple-700 rounded-3xl border-8 border-gray-200 shadow-2xl relative overflow-hidden">
-                <div className="absolute top-6 left-1/2 transform -translate-x-1/2 w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                <div className="p-8 h-full flex flex-col items-center justify-center text-center">
-                  <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mb-6 backdrop-blur-sm">
-                    <span className="text-3xl font-bold !text-white" style={{ color: 'white !important' }}>Y</span>
-                  </div>
-                  <h3 className="text-xl font-bold mb-2 !text-white" style={{ color: 'white !important' }}>Yuno</h3>
-                  <p className="text-sm text-white/80">Think like a PM</p>
-                </div>
-              </div>
-              <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2">
-                <p className="text-gray-500 text-sm">Coming to your browser</p>
-              </div>
-            </div>
+            
           </div>
         </div>
       </section>
@@ -120,18 +96,13 @@ const Landing = () => {
           <p className="text-xl text-gray-600 mb-12 max-w-2xl mx-auto">
             Join thousands of aspiring PMs who are mastering product management through interactive simulations.
           </p>
-          <Button 
-            size="lg" 
-            className="bg-gradient-to-r from-[#0400ff] to-purple-600 hover:from-[#0300cc] hover:to-purple-700 !text-white px-12 py-4 text-lg font-medium shadow-lg animate-[pulse_1.5s_ease-in-out_infinite]"
-            style={{ color: 'white !important' }}
-            onClick={() => navigate('/signup')}
-          >
+          <Button size="lg" className="bg-gradient-to-r from-[#0400ff] to-purple-600 hover:from-[#0300cc] hover:to-purple-700 !text-white px-12 py-4 text-lg font-medium shadow-lg animate-[pulse_1.5s_ease-in-out_infinite]" style={{
+          color: 'white !important'
+        }} onClick={() => navigate('/signup')}>
             Start Learning Today →
           </Button>
         </div>
       </section>
-    </div>
-  )
-}
-
-export default Landing
+    </div>;
+};
+export default Landing;
