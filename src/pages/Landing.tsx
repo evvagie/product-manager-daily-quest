@@ -3,19 +3,21 @@ import { Card } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect } from "react";
+
 const Landing = () => {
   const navigate = useNavigate();
-  const {
-    user
-  } = useAuth();
+  const { user } = useAuth();
+
   useEffect(() => {
     if (user) {
       navigate('/dashboard');
     }
   }, [user, navigate]);
-  return <div className="min-h-screen bg-white text-gray-900">
+
+  return (
+    <div className="min-h-screen bg-white text-gray-900">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-white">
+      <section className="relative overflow-hidden bg-white min-h-screen flex items-center">
         <div className="container mx-auto px-4 py-20">
           <div className="max-w-4xl mx-auto text-center">
             <div className="mb-8">
@@ -33,10 +35,10 @@ const Landing = () => {
               product manager through immersive scenarios and branching choices.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
               <Button size="lg" className="bg-gradient-to-r from-[#0400ff] to-purple-600 hover:from-[#0300cc] hover:to-purple-700 !text-white px-8 py-4 text-lg font-medium shadow-lg animate-[pulse_1.5s_ease-in-out_infinite]" style={{
-              color: 'white !important'
-            }} onClick={() => navigate('/signup')}>
+                color: 'white !important'
+              }} onClick={() => navigate('/signup')}>
                 Get Started →
               </Button>
               <Button variant="outline" size="lg" className="bg-white border-gray-300 text-gray-900 hover:bg-gray-50 px-8 py-4 text-lg font-medium" onClick={() => navigate('/login')}>
@@ -44,8 +46,19 @@ const Landing = () => {
               </Button>
             </div>
 
-            {/* App Preview */}
-            
+            {/* Pricing Invitation */}
+            <div className="text-center">
+              <p className="text-gray-600 mb-4">
+                Want to see all features and pricing options?
+              </p>
+              <Button 
+                variant="outline" 
+                onClick={() => navigate('/pricing')}
+                className="border-[#0400ff]/30 text-[#0400ff] hover:bg-[#0400ff]/5 px-6 py-2"
+              >
+                View Pricing Plans
+              </Button>
+            </div>
           </div>
         </div>
       </section>
@@ -103,6 +116,8 @@ const Landing = () => {
           </Button>
         </div>
       </section>
-    </div>;
+    </div>
+  );
 };
+
 export default Landing;
