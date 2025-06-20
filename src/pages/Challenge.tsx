@@ -35,6 +35,19 @@ const Challenge = () => {
   const progressPercentage = challengeSession ? ((currentExerciseIndex + 1) / challengeSession.totalExercises) * 100 : 0;
   const isRetryChallenge = challengeId !== null;
 
+  // Helper function to get difficulty badge styles
+  const getDifficultyBadgeStyles = (difficulty: string) => {
+    const difficultyLower = difficulty.toLowerCase();
+    if (difficultyLower === 'beginner') {
+      return 'bg-gradient-to-r from-sky-300 to-purple-400 text-white border-0';
+    } else if (difficultyLower === 'intermediate') {
+      return 'bg-gradient-to-r from-purple-300 to-pink-400 text-white border-0';
+    } else if (difficultyLower === 'expert' || difficultyLower === 'advanced') {
+      return 'bg-gradient-to-r from-purple-600 to-blue-600 text-white border-0';
+    }
+    return 'bg-gray-700 text-gray-300';
+  };
+
   useEffect(() => {
     const loadChallengeSession = async () => {
       if (!skillArea || !difficulty) {
@@ -199,7 +212,7 @@ const Challenge = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
-        <Card className="bg-white border-gray-200">
+        <Card className="bg-gradient-to-br from-blue-100 to-purple-100 border-blue-200">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
@@ -207,10 +220,10 @@ const Challenge = () => {
                   {currentExercise.title}
                 </CardTitle>
                 <div className="flex items-center space-x-2 mt-2">
-                  <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                  <Badge variant="secondary" className="bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700 border-blue-200">
                     {skillArea}
                   </Badge>
-                  <Badge variant="secondary" className="bg-green-100 text-green-700">
+                  <Badge variant="secondary" className={getDifficultyBadgeStyles(difficulty || '')}>
                     {difficulty}
                   </Badge>
                   <Badge variant="secondary" className="bg-purple-100 text-purple-700">
@@ -231,16 +244,16 @@ const Challenge = () => {
               <Button
                 variant="outline"
                 onClick={() => navigate(isRetryChallenge ? '/dashboard' : '/challenge-selection')}
-                className="border-gray-400"
+                className="bg-gradient-to-r from-orange-500 to-purple-600 hover:from-orange-600 hover:to-purple-700 text-white border-0 font-medium"
               >
-                Exit Session
+                {isRetryChallenge ? 'Back to Dashboard' : 'Exit Session'}
               </Button>
             </div>
           </CardHeader>
         </Card>
 
         {/* Progress Bar */}
-        <Card className="bg-white border-gray-200">
+        <Card className="bg-gradient-to-br from-blue-100 to-purple-100 border-blue-200">
           <CardContent className="p-4">
             <div className="space-y-2">
               <div className="flex justify-between text-sm text-gray-600">
@@ -254,7 +267,7 @@ const Challenge = () => {
 
         {/* Timer */}
         {!isComplete && (
-          <Card className="bg-white border-gray-200">
+          <Card className="bg-gradient-to-br from-blue-100 to-purple-100 border-blue-200">
             <CardContent className="p-4">
               <TimePressureIndicator
                 timeLeft={timeLeft}
