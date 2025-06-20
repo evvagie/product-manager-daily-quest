@@ -59,11 +59,11 @@ const ChallengeSelection = () => {
     
     if (isSelected) {
       if (difficultyId === 'beginner') {
-        return `${baseClasses} bg-gradient-to-r from-sky-300 to-purple-400 border-sky-300`;
+        return `${baseClasses} bg-gradient-to-r from-sky-200 to-purple-400 border-sky-200`;
       } else if (difficultyId === 'intermediate') {
-        return `${baseClasses} bg-gradient-to-r from-purple-300 to-pink-400 border-purple-300`;
+        return `${baseClasses} bg-gradient-to-r from-purple-200 to-pink-300 border-purple-200`;
       } else if (difficultyId === 'advanced') {
-        return `${baseClasses} bg-gradient-to-r from-purple-600 to-blue-600 border-purple-600`;
+        return `${baseClasses} bg-gradient-to-r from-purple-500 to-blue-500 border-purple-500`;
       }
     }
     
