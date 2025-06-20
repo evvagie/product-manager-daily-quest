@@ -270,7 +270,7 @@ const ChallengeLibrary = () => {
             ) : (
               <div className="space-y-4">
                 {challengeHistory.map((challenge) => (
-                  <div key={challenge.id} className="p-4 bg-gradient-to-br from-purple-600/20 to-pink-600/20 rounded-lg border border-purple-600/30 hover:from-purple-600/30 hover:to-pink-600/30 transition-all duration-200 shadow-lg">
+                  <div key={challenge.id} className="p-4 bg-gradient-to-br from-pink-600/20 to-blue-600/20 rounded-lg border border-pink-600/30 hover:from-pink-600/30 hover:to-blue-600/30 transition-all duration-200 shadow-lg">
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="font-medium text-black">{challenge.challenge_title}</h4>
                       <div className="flex items-center space-x-2">
