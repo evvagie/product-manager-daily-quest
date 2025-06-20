@@ -43,9 +43,6 @@ export const generateDynamicChallenge = async (
   const randomId = Math.random().toString(36).substring(2, 15);
   
   try {
-    // Access the nested structure correctly: category -> difficulty -> challenges array
-    console.log('🔑 Accessing nested data structure for:', { skillArea, difficulty });
-
     // If specific challenge ID is provided (retry scenario), try to find it first
     if (specificChallengeId) {
       const categoryData = enhancedChallengeDatabase[skillArea as keyof typeof enhancedChallengeDatabase];
@@ -62,7 +59,14 @@ export const generateDynamicChallenge = async (
                 skillArea,
                 difficulty,
                 totalExercises: 1,
-                exercises: [{ ...specificChallenge, timeLimit: 180 }],
+                exercises: [{ 
+                  ...specificChallenge, 
+                  timeLimit: 180,
+                  content: {
+                    ...specificChallenge.content,
+                    instructions: specificChallenge.content.instructions || 'Complete this challenge to the best of your ability.'
+                  }
+                }],
                 source: 'static',
                 estimatedDuration: 180
               };
@@ -72,7 +76,7 @@ export const generateDynamicChallenge = async (
       }
     }
 
-    // Get the category data
+    // Get the category data - direct access since the keys match exactly
     const categoryData = enhancedChallengeDatabase[skillArea as keyof typeof enhancedChallengeDatabase];
     if (!categoryData || typeof categoryData !== 'object') {
       console.log('❌ No category data found for:', skillArea);
@@ -99,7 +103,11 @@ export const generateDynamicChallenge = async (
               const exercises = selectedChallenges.map((challenge: any, index: number) => ({
                 ...challenge,
                 timeLimit: 180,
-                id: `${challenge.id}-${timestamp}-${index}`
+                id: `${challenge.id}-${timestamp}-${index}`,
+                content: {
+                  ...challenge.content,
+                  instructions: challenge.content.instructions || 'Complete this challenge to the best of your ability.'
+                }
               }));
 
               return {
@@ -187,10 +195,15 @@ export const generateDynamicChallenge = async (
     }
 
     // Add timeLimit and ensure unique IDs for each exercise in this session
+    // Also ensure all exercises have the required instructions property
     const exercises = selectedChallenges.map((challenge: any, index: number) => ({
       ...challenge,
       timeLimit: 180,
-      id: `${challenge.id}-${timestamp}-${index}`
+      id: `${challenge.id}-${timestamp}-${index}`,
+      content: {
+        ...challenge.content,
+        instructions: challenge.content.instructions || 'Complete this challenge to the best of your ability.'
+      }
     }));
 
     console.log('✅ Successfully selected static challenges:', {
