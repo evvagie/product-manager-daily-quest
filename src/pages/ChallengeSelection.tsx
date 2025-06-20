@@ -100,7 +100,7 @@ const ChallengeSelection = () => {
                 key={category.id} 
                 className={`cursor-pointer transition-all hover:scale-105 ${
                   selectedCategory === category.id 
-                    ? 'bg-gradient-to-br from-blue-100 to-purple-100 border-blue-300' 
+                    ? 'bg-gradient-to-br from-blue-100 to-purple-100 border-blue-300 ring-2 ring-blue-300 ring-offset-2' 
                     : 'bg-gradient-to-br from-blue-50 to-purple-50 border-gray-200 hover:border-gray-300'
                 }`} 
                 onClick={() => setSelectedCategory(category.id)}
