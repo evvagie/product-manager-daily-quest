@@ -1,9 +1,6 @@
-
 import React from 'react';
-
 const PricingHeader = () => {
-  return (
-    <div className="text-center mb-16">
+  return <div className="text-center mb-16">
       <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
         Your safest space to grow as a PM
       </h1>
@@ -15,12 +12,8 @@ const PricingHeader = () => {
         <p className="text-lg font-semibold text-gray-800 mb-2">
           For 10x less than a traditional PM certification, prove what actually matters: your product judgment.
         </p>
-        <p className="text-gray-700">
-          You don't need €1500 and 8 weeks. You need 20 minutes a day and a sharp mind.
-        </p>
+        <p className="text-gray-700">You don't need €1500 and 8 weeks. You need 10 minutes a day and a sharp mind.</p>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default PricingHeader;
