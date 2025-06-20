@@ -42,15 +42,13 @@ const Header = () => {
         </div>
         
         <div className="flex items-center space-x-6">
-          {!user && (
-            <Button
-              variant="ghost"
-              onClick={() => navigate('/pricing')}
-              className="text-gray-600 hover:text-black font-medium"
-            >
-              Pricing
-            </Button>
-          )}
+          <Button
+            variant="ghost"
+            onClick={() => navigate('/pricing')}
+            className="text-gray-600 hover:text-black font-medium"
+          >
+            Pricing
+          </Button>
           
           {user ? (
             <div className="flex items-center space-x-4">
