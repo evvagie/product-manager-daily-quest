@@ -64,7 +64,7 @@ export const generateDynamicChallenge = async (
                   timeLimit: 180,
                   content: {
                     ...specificChallenge.content,
-                    instructions: specificChallenge.content.instructions || 'Complete this challenge to the best of your ability.'
+                    instructions: 'Complete this challenge to the best of your ability.'
                   }
                 }],
                 source: 'static',
@@ -106,7 +106,7 @@ export const generateDynamicChallenge = async (
                 id: `${challenge.id}-${timestamp}-${index}`,
                 content: {
                   ...challenge.content,
-                  instructions: challenge.content.instructions || 'Complete this challenge to the best of your ability.'
+                  instructions: 'Complete this challenge to the best of your ability.'
                 }
               }));
 
@@ -202,7 +202,7 @@ export const generateDynamicChallenge = async (
       id: `${challenge.id}-${timestamp}-${index}`,
       content: {
         ...challenge.content,
-        instructions: challenge.content.instructions || 'Complete this challenge to the best of your ability.'
+        instructions: 'Complete this challenge to the best of your ability.'
       }
     }));
 
