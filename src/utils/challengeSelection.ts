@@ -134,10 +134,10 @@ const shuffleArray = (array: any[]): any[] => {
   return shuffled;
 };
 
-export const selectUniqueChallenges = (availableChallenges: any[], count: number = 3): Exercise[] => {
+export const selectUniqueChallenges = (availableChallenges: any[], count: number = 4): Exercise[] => {
   const timestamp = Date.now();
   
-  logDebug('Starting challenge selection for 3 unique challenges', {
+  logDebug('Starting challenge selection for 4 unique challenges', {
     availableCount: availableChallenges.length,
     requestedCount: count,
     timestamp
@@ -161,47 +161,57 @@ export const selectUniqueChallenges = (availableChallenges: any[], count: number
   const selectedChallenges: any[] = [];
   const usedIds = new Set<string>();
   const usedTitles = new Set<string>();
+  const usedTypes = new Set<string>();
 
-  // Select exactly 3 different challenges
-  for (let i = 0; i < shuffledChallenges.length && selectedChallenges.length < 3; i++) {
+  // Select exactly 4 different challenges
+  for (let i = 0; i < shuffledChallenges.length && selectedChallenges.length < 4; i++) {
     const candidate = shuffledChallenges[i];
     const candidateTitle = candidate.title?.toLowerCase().trim() || '';
+    const candidateType = candidate.type?.toLowerCase() || '';
     
-    // Ensure it's completely different (different ID and title)
+    // Ensure it's completely different (different ID, title, and preferably type)
     if (!usedIds.has(candidate.id) && 
         !usedTitles.has(candidateTitle) && 
         candidateTitle !== '') {
       
-      const uniqueId = `${candidate.id}-${timestamp}-${selectedChallenges.length}-${Math.floor(Math.random() * 100000)}`;
+      // Prefer different types when possible, but don't block if we can't find enough
+      const shouldInclude = !usedTypes.has(candidateType) || selectedChallenges.length >= 3;
       
-      selectedChallenges.push({
-        ...candidate,
-        id: uniqueId,
-        originalId: candidate.id,
-        instanceIndex: selectedChallenges.length,
-        title: `${candidate.title} (Challenge ${selectedChallenges.length + 1})`
-      });
-      
-      usedIds.add(candidate.id);
-      usedTitles.add(candidateTitle);
+      if (shouldInclude) {
+        const uniqueId = `${candidate.id}-${timestamp}-${selectedChallenges.length}-${Math.floor(Math.random() * 100000)}`;
+        
+        selectedChallenges.push({
+          ...candidate,
+          id: uniqueId,
+          originalId: candidate.id,
+          instanceIndex: selectedChallenges.length,
+          title: `${candidate.title} (Challenge ${selectedChallenges.length + 1})`
+        });
+        
+        usedIds.add(candidate.id);
+        usedTitles.add(candidateTitle);
+        usedTypes.add(candidateType);
+      }
     }
   }
 
   // Validation
   const finalIds = selectedChallenges.map(c => c.originalId || c.id);
   const finalTitles = selectedChallenges.map(c => c.title);
+  const finalTypes = selectedChallenges.map(c => c.type);
   
-  logChallengeSelection('Successfully selected 3 unique challenges', {
+  logChallengeSelection('Successfully selected 4 unique challenges', {
     selectedCount: selectedChallenges.length,
     originalIds: finalIds,
     titles: finalTitles,
-    types: selectedChallenges.map(c => c.type),
+    types: finalTypes,
     uniqueOriginalIds: new Set(finalIds).size,
-    uniqueTitles: new Set(finalTitles.map(t => t?.toLowerCase().trim())).size
+    uniqueTitles: new Set(finalTitles.map(t => t?.toLowerCase().trim())).size,
+    uniqueTypes: new Set(finalTypes).size
   });
 
-  if (selectedChallenges.length < 3) {
-    logDebug('Warning: Could not find 3 unique challenges', { 
+  if (selectedChallenges.length < 4) {
+    logDebug('Warning: Could not find 4 unique challenges', { 
       selectedCount: selectedChallenges.length
     });
   }

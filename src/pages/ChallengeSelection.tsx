@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -164,7 +163,7 @@ const ChallengeSelection = () => {
                   <p className="font-medium text-black">
                     {categories.find(c => c.id === selectedCategory)?.name} • {difficulties.find(d => d.id === selectedDifficulty)?.name}
                   </p>
-                  <p className="text-sm text-gray-600">4 interactive challenges • ~15 minutes</p>
+                  <p className="text-sm text-gray-600">4 interactive challenges • ~20 minutes</p>
                 </div>
                 <div className="text-right">
                   <p className="text-blue-600 font-medium">{difficulties.find(d => d.id === selectedDifficulty)?.xp}</p>
