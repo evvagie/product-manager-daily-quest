@@ -2,18 +2,20 @@
 export const generateSessionId = (type: string, skillArea: string, difficulty: string): string => {
   const timestamp = Date.now();
   const randomId = Math.random().toString(36).substring(2, 15);
-  return `${type}-session-${skillArea}-${difficulty}-${timestamp}-${randomId}`;
+  const microTime = performance.now().toString().replace('.', '');
+  return `${type}-session-${skillArea}-${difficulty}-${timestamp}-${microTime}-${randomId}`;
 };
 
 export const generateRetrySessionId = (challengeId: string): string => {
   const timestamp = Date.now();
-  return `retry-${challengeId}-${timestamp}`;
+  const microTime = performance.now().toString().replace('.', '');
+  return `retry-${challengeId}-${timestamp}-${microTime}`;
 };
 
 export const addExerciseMetadata = (challenge: any, timestamp: number, index: number) => ({
   ...challenge,
   timeLimit: 180,
-  id: `${challenge.id}-${timestamp}-${index}`,
+  id: `${challenge.id}-${timestamp}-${index}-${Math.random().toString(36).substring(2, 8)}`,
   content: {
     ...challenge.content,
     instructions: 'Complete this challenge to the best of your ability.'

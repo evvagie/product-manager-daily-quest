@@ -88,29 +88,73 @@ export const selectUniqueChallenges = (availableChallenges: any[], count: number
     throw new Error('No challenges available for selection');
   }
 
-  const shuffledChallenges = [...availableChallenges].sort(() => Math.random() - 0.5);
-  const selectedChallenges: any[] = [];
-  let challengeIndex = 0;
+  // Create a more sophisticated randomization based on timestamp and category
   const timestamp = Date.now();
+  const sessionSeed = timestamp % 1000; // Use timestamp modulo for variety
+  
+  // Create multiple shuffled versions to ensure different selections
+  const shuffleWithSeed = (array: any[], seed: number) => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(((seed + i) * 9301 + 49297) % 233280) % (i + 1);
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  };
 
-  while (selectedChallenges.length < count && challengeIndex < 20) {
-    const challenge = shuffledChallenges[challengeIndex % shuffledChallenges.length];
-    const isDuplicate = selectedChallenges.some(selected => selected.id === challenge.id);
+  // Apply different shuffling strategies based on session timing
+  const shuffleStrategy = sessionSeed % 3;
+  let shuffledChallenges: any[];
+
+  switch (shuffleStrategy) {
+    case 0:
+      // Reverse order shuffle
+      shuffledChallenges = shuffleWithSeed([...availableChallenges].reverse(), sessionSeed);
+      break;
+    case 1:
+      // Skip pattern shuffle
+      shuffledChallenges = shuffleWithSeed(availableChallenges, sessionSeed + 1000);
+      break;
+    default:
+      // Standard shuffle with time-based seed
+      shuffledChallenges = shuffleWithSeed(availableChallenges, sessionSeed + 2000);
+  }
+
+  const selectedChallenges: any[] = [];
+  const usedIds = new Set<string>();
+  let challengeIndex = 0;
+
+  // Select unique challenges with better distribution logic
+  while (selectedChallenges.length < count && challengeIndex < shuffledChallenges.length * 2) {
+    const currentChallenge = shuffledChallenges[challengeIndex % shuffledChallenges.length];
     
-    if (!isDuplicate || selectedChallenges.length === 0) {
-      selectedChallenges.push({ ...challenge });
+    if (!usedIds.has(currentChallenge.id)) {
+      selectedChallenges.push({ ...currentChallenge });
+      usedIds.add(currentChallenge.id);
     }
     
     challengeIndex++;
-    
-    if (challengeIndex >= shuffledChallenges.length && selectedChallenges.length < count) {
-      const repeatedChallenge = { 
-        ...shuffledChallenges[challengeIndex % shuffledChallenges.length],
-        id: `${shuffledChallenges[challengeIndex % shuffledChallenges.length].id}-repeat-${challengeIndex}`
-      };
-      selectedChallenges.push(repeatedChallenge);
+
+    // Safety mechanism: if we've tried all challenges twice and still need more
+    if (challengeIndex >= shuffledChallenges.length * 2 && selectedChallenges.length < count) {
+      const remainingNeeded = count - selectedChallenges.length;
+      for (let i = 0; i < remainingNeeded && i < shuffledChallenges.length; i++) {
+        const repeatedChallenge = { 
+          ...shuffledChallenges[i],
+          id: `${shuffledChallenges[i].id}-session-${timestamp}-${i}`
+        };
+        selectedChallenges.push(repeatedChallenge);
+      }
+      break;
     }
   }
+
+  logChallengeSelection('Selected unique challenges with improved algorithm', {
+    selected: selectedChallenges.length,
+    strategy: shuffleStrategy,
+    sessionSeed: sessionSeed,
+    uniqueIds: selectedChallenges.map(c => c.id)
+  });
 
   return selectedChallenges.map((challenge: any, index: number) => 
     addExerciseMetadata(challenge, timestamp, index)
