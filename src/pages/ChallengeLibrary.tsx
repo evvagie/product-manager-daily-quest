@@ -193,7 +193,11 @@ const ChallengeLibrary = () => {
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
-          <Button variant="ghost" onClick={() => navigate('/dashboard')} className="mb-4 text-gray-400 hover:text-white">
+          <Button 
+            variant="ghost" 
+            onClick={() => navigate('/dashboard')} 
+            className="mb-4 bg-gradient-to-r from-orange-500 to-purple-600 hover:from-orange-600 hover:to-purple-700 text-white font-medium"
+          >
             ← Back to Dashboard
           </Button>
           <div className="flex items-center space-x-4 mb-4">
