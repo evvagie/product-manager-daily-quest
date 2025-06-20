@@ -98,7 +98,7 @@ export const RetryFeedbackModal = ({
             <h4 className="font-medium text-black">Challenge Details</h4>
             <div className="space-y-1 text-sm text-gray-600">
               <p><span className="font-medium">Title:</span> {challengeSession.exercises[0]?.title}</p>
-              <p><span className="font-medium">Category:</span> {challengeSession.category}</p>
+              <p><span className="font-medium">Category:</span> {challengeSession.skillArea}</p>
               <p><span className="font-medium">Difficulty:</span> {challengeSession.difficulty}</p>
             </div>
           </div>
