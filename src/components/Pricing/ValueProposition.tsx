@@ -1,9 +1,6 @@
-
 import React from 'react';
-
 const ValueProposition = () => {
-  return (
-    <div className="text-center mb-16 bg-white rounded-2xl p-8 shadow-lg">
+  return <div className="text-center mb-16 bg-white rounded-2xl p-8 shadow-lg">
       <h2 className="text-3xl font-bold text-gray-900 mb-6">
         A certification designed for real-world PM instincts — not just memory
       </h2>
@@ -22,7 +19,7 @@ const ValueProposition = () => {
           <h3 className="text-xl font-semibold text-gray-800 mb-3">Yuno Certification:</h3>
           <ul className="space-y-2 text-gray-600">
             <li>• €89-149 investment</li>
-            <li>• 20 minutes daily practice</li>
+            <li>• 10 minutes daily practice</li>
             <li>• Real scenario simulations</li>
             <li>• Hands-on decision making</li>
             <li>• Personalized learning path</li>
@@ -33,8 +30,6 @@ const ValueProposition = () => {
         This isn't a formal diploma — it's proof that you can think like a PM when it matters. 
         Perfect for your CV, LinkedIn, or simply proving to yourself that you've got what it takes.
       </p>
-    </div>
-  );
+    </div>;
 };
-
 export default ValueProposition;
