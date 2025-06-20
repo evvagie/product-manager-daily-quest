@@ -468,14 +468,6 @@ const SessionFeedback = () => {
                     </ul>
                   </div>
                 </div>
-
-                <div className="p-4 bg-blue-900/20 rounded-lg border border-blue-800/30">
-                  <h4 className="text-blue-400 font-medium mb-2 flex items-center">
-                    <span className="mr-2">💡</span>
-                    Recommendation for You
-                  </h4>
-                  <p className="text-gray-300 text-sm">{personalizedFeedback.recommendation}</p>
-                </div>
               </div>
             </CardContent>
           </Card>
