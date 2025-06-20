@@ -627,7 +627,8 @@ const SessionFeedback = () => {
           {/* Actions */}
           <div className="flex flex-col sm:flex-row gap-4">
             <Button 
-              className="flex-1 bg-blue-600 hover:bg-blue-700"
+              className="flex-1 bg-gradient-to-r from-[#0400ff] to-purple-600 hover:from-[#0300cc] hover:to-purple-700 !text-white shadow-lg"
+              style={{ color: 'white !important' }}
               onClick={() => navigate('/challenge-selection')}
             >
               Try Another Session
