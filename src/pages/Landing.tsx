@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
@@ -28,9 +27,9 @@ const Landing = () => {
             </div>
             
             <h1 className="text-3xl sm:text-5xl md:text-7xl font-bold mb-6 leading-tight text-gray-900">
-              <span className="block sm:inline">Yuno </span>
-              <span className="bg-gradient-to-r from-[#0400ff] to-purple-600 bg-clip-text text-transparent whitespace-nowrap sm:whitespace-normal">how to think</span>
-              <span className="block sm:inline"> like a PM.</span>
+              <span className="block sm:inline whitespace-nowrap">Yuno </span>
+              <span className="bg-gradient-to-r from-[#0400ff] to-purple-600 bg-clip-text text-transparent block sm:inline whitespace-nowrap">how to think</span>
+              <span className="block sm:inline whitespace-nowrap"> like a PM.</span>
             </h1>
             
             <p className="text-lg sm:text-xl md:text-2xl text-gray-600 mb-12 max-w-2xl mx-auto leading-relaxed px-4">
