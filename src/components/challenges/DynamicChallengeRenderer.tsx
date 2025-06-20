@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +7,7 @@ import { KPIDisplay } from './KPIDisplay';
 import { TeamChat } from './TeamChat';
 import { ConsequenceDisplay } from './ConsequenceDisplay';
 import { AIGeneratedChallenge } from './AIGeneratedChallenge';
+import { getQualityFromOption } from '@/utils/consequenceScoring';
 import { type Exercise } from '@/utils/challengeGenerator';
 
 interface DynamicChallengeRendererProps {
@@ -65,12 +65,9 @@ export const DynamicChallengeRenderer = ({
     return <Badge className={`${config.color} text-xs`}>{config.label}</Badge>;
   }, []);
 
-  // Helper function to get answer quality indicator
+  // Updated helper function to get answer quality using new scoring logic
   const getAnswerQuality = useCallback((option: any) => {
-    if (option.isCorrect) return 'excellent';
-    if (option.quality === 'good') return 'good';
-    if (option.quality === 'average') return 'average';
-    return 'poor';
+    return getQualityFromOption(option);
   }, []);
 
   const handleSliderChange = useCallback((tradeOffName: string, value: number[]) => {
@@ -400,7 +397,7 @@ export const DynamicChallengeRenderer = ({
                     <Badge variant="secondary" className="bg-gray-100 text-gray-700">
                       Priority: {option.priority}/3
                     </Badge>
-                    {currentAnswer === option.id && option.quality && getQualityBadge(option.quality)}
+                    {currentAnswer === option.id && getQualityBadge(getAnswerQuality(option))}
                   </div>
                 </div>
               </button>

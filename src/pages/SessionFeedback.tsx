@@ -11,6 +11,7 @@ import { generatePersonalizedFeedback } from "@/utils/feedbackGenerator"
 import { usePersonalizedRecommendation } from "@/hooks/usePersonalizedRecommendation"
 import { useSecondPersonalizedRecommendation } from "@/hooks/useSecondPersonalizedRecommendation"
 import { useThirdPersonalizedRecommendation } from "@/hooks/useThirdPersonalizedRecommendation"
+import { getQualityFromOption } from '@/utils/consequenceScoring'
 
 const SessionFeedback = () => {
   const location = useLocation()
@@ -39,7 +40,7 @@ const SessionFeedback = () => {
   const answers = exerciseAnswers || (answer ? [answer] : [])
   const totalExercises = challengeSession?.totalExercises || 1
   
-  // Fixed scoring calculation to properly extract and evaluate user answers
+  // Updated scoring calculation with improved strategic challenge evaluation
   const calculateExerciseScores = () => {
     if (!challengeSession?.exercises || !exerciseAnswers) {
       console.log('No exercises or answers found for scoring');
@@ -63,8 +64,6 @@ const SessionFeedback = () => {
           questionTitle: exercise.title || `Exercise ${index + 1}`
         };
       }
-      
-      const correctOption = exercise.content.options.find((opt: any) => opt.isCorrect);
       
       // Try multiple property names to find the selected option
       let selectedOption = null;
@@ -91,13 +90,39 @@ const SessionFeedback = () => {
         );
       }
       
-      const isCorrect = selectedOption?.isCorrect || false;
-      const score = isCorrect ? 100 : 0;
+      // Use the new scoring logic for strategic challenges
+      let score = 0;
+      let isCorrect = false;
+      
+      if (selectedOption) {
+        const quality = getQualityFromOption(selectedOption);
+        // Convert quality to score
+        switch (quality) {
+          case 'excellent':
+            score = 95;
+            isCorrect = true;
+            break;
+          case 'good':
+            score = 80;
+            isCorrect = true;
+            break;
+          case 'average':
+            score = 65;
+            isCorrect = false;
+            break;
+          case 'poor':
+            score = 40;
+            isCorrect = false;
+            break;
+        }
+      }
+      
+      const correctOption = exercise.content.options.find((opt: any) => opt.isCorrect);
       
       const result = {
         score,
         isCorrect,
-        correctAnswer: correctOption?.text || 'N/A',
+        correctAnswer: correctOption?.text || 'Strategic Decision', // Better label for strategic challenges
         userAnswer: selectedOption?.text || 'No valid selection',
         questionTitle: exercise.title || `Exercise ${index + 1}`
       };
