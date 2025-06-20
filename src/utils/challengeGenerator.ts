@@ -43,125 +43,150 @@ export const generateDynamicChallenge = async (
   const randomId = Math.random().toString(36).substring(2, 15);
   
   try {
-    // Use skillArea directly - it should match database keys exactly
-    console.log('🔑 Using skillArea directly:', skillArea);
+    // Access the nested structure correctly: category -> difficulty -> challenges array
+    console.log('🔑 Accessing nested data structure for:', { skillArea, difficulty });
 
     // If specific challenge ID is provided (retry scenario), try to find it first
     if (specificChallengeId) {
       const categoryData = enhancedChallengeDatabase[skillArea as keyof typeof enhancedChallengeDatabase];
-      if (categoryData && Array.isArray(categoryData)) {
-        const specificChallenge = categoryData.find((challenge: any) => challenge.id === specificChallengeId);
-        
-        if (specificChallenge) {
-          console.log('📋 Found specific static challenge for retry:', specificChallenge.title);
-          return {
-            sessionId: `retry-${specificChallengeId}-${timestamp}`,
-            skillArea,
-            difficulty,
-            totalExercises: 1,
-            exercises: [{ ...specificChallenge, timeLimit: 180 }],
-            source: 'static',
-            estimatedDuration: 180
-          };
+      if (categoryData && typeof categoryData === 'object') {
+        // Look through all difficulties in this category
+        for (const difficultyKey of Object.keys(categoryData)) {
+          const difficultyData = categoryData[difficultyKey as keyof typeof categoryData];
+          if (Array.isArray(difficultyData)) {
+            const specificChallenge = difficultyData.find((challenge: any) => challenge.id === specificChallengeId);
+            if (specificChallenge) {
+              console.log('📋 Found specific static challenge for retry:', specificChallenge.title);
+              return {
+                sessionId: `retry-${specificChallengeId}-${timestamp}`,
+                skillArea,
+                difficulty,
+                totalExercises: 1,
+                exercises: [{ ...specificChallenge, timeLimit: 180 }],
+                source: 'static',
+                estimatedDuration: 180
+              };
+            }
+          }
         }
       }
     }
 
-    // Fetch 4 different static exercises for the category/difficulty combination
-    console.log('📚 Fetching 4 different static exercises...');
-    
+    // Get the category data
     const categoryData = enhancedChallengeDatabase[skillArea as keyof typeof enhancedChallengeDatabase];
-    if (!categoryData || !Array.isArray(categoryData)) {
+    if (!categoryData || typeof categoryData !== 'object') {
       console.log('❌ No category data found for:', skillArea);
       console.log('📋 Available categories:', Object.keys(enhancedChallengeDatabase));
       
-      // Emergency fallback - try to find ANY data and use it
-      const allKeys = Object.keys(enhancedChallengeDatabase);
-      if (allKeys.length > 0) {
-        const fallbackKey = allKeys[0];
-        const fallbackData = enhancedChallengeDatabase[fallbackKey as keyof typeof enhancedChallengeDatabase];
-        console.log('🚨 Using fallback category:', fallbackKey);
+      // Emergency fallback - use any available category
+      const allCategories = Object.keys(enhancedChallengeDatabase);
+      if (allCategories.length > 0) {
+        const fallbackCategory = allCategories[0];
+        const fallbackCategoryData = enhancedChallengeDatabase[fallbackCategory as keyof typeof enhancedChallengeDatabase];
+        console.log('🚨 Using fallback category:', fallbackCategory);
         
-        if (fallbackData && Array.isArray(fallbackData) && fallbackData.length > 0) {
-          const shuffledChallenges = [...fallbackData].sort(() => Math.random() - 0.5);
-          const selectedChallenges = shuffledChallenges.slice(0, Math.min(4, shuffledChallenges.length));
-          
-          const exercises = selectedChallenges.map((challenge: any, index: number) => ({
-            ...challenge,
-            timeLimit: 180,
-            id: `${challenge.id}-${timestamp}-${index}`
-          }));
+        if (fallbackCategoryData && typeof fallbackCategoryData === 'object') {
+          // Get any difficulty from fallback category
+          const fallbackDifficulties = Object.keys(fallbackCategoryData);
+          if (fallbackDifficulties.length > 0) {
+            const fallbackDifficulty = fallbackDifficulties[0];
+            const fallbackChallenges = fallbackCategoryData[fallbackDifficulty as keyof typeof fallbackCategoryData];
+            
+            if (Array.isArray(fallbackChallenges) && fallbackChallenges.length > 0) {
+              const shuffledChallenges = [...fallbackChallenges].sort(() => Math.random() - 0.5);
+              const selectedChallenges = shuffledChallenges.slice(0, Math.min(4, shuffledChallenges.length));
+              
+              const exercises = selectedChallenges.map((challenge: any, index: number) => ({
+                ...challenge,
+                timeLimit: 180,
+                id: `${challenge.id}-${timestamp}-${index}`
+              }));
 
-          return {
-            sessionId: `fallback-session-${skillArea}-${difficulty}-${timestamp}-${randomId}`,
-            skillArea,
-            difficulty,
-            totalExercises: exercises.length,
-            exercises,
-            source: 'static',
-            estimatedDuration: exercises.length * 180
-          };
+              return {
+                sessionId: `fallback-session-${skillArea}-${difficulty}-${timestamp}-${randomId}`,
+                skillArea,
+                difficulty,
+                totalExercises: exercises.length,
+                exercises,
+                source: 'static',
+                estimatedDuration: exercises.length * 180
+              };
+            }
+          }
         }
       }
       
       throw new Error(`No challenges found for skill area: ${skillArea}`);
     }
 
+    // Now access the specific difficulty within the category
+    const difficultyData = categoryData[difficulty as keyof typeof categoryData];
+    
     console.log('✅ Found category data:', { 
       key: skillArea, 
-      totalChallenges: categoryData.length,
-      sampleChallenge: categoryData[0]?.title || 'No challenges'
+      availableDifficulties: Object.keys(categoryData),
+      targetDifficulty: difficulty,
+      difficultyDataFound: Array.isArray(difficultyData),
+      challengeCount: Array.isArray(difficultyData) ? difficultyData.length : 0
     });
 
-    // Filter challenges by difficulty
-    const filteredChallenges = categoryData.filter((challenge: any) => 
-      challenge.difficulty?.toLowerCase() === difficulty.toLowerCase()
-    );
+    let availableChallenges: any[] = [];
 
-    console.log('🎯 Filtered challenges by difficulty:', {
-      difficulty,
-      beforeFilter: categoryData.length,
-      afterFilter: filteredChallenges.length,
-      sampleDifficulties: categoryData.slice(0, 3).map((c: any) => c.difficulty)
-    });
-
-    if (filteredChallenges.length === 0) {
-      // If no challenges match the difficulty, use all challenges as fallback
-      console.log('🚨 No challenges found for difficulty, using all challenges as fallback');
-      const allChallenges = [...categoryData];
-      const shuffledChallenges = allChallenges.sort(() => Math.random() - 0.5);
-      const selectedChallenges = shuffledChallenges.slice(0, Math.min(4, shuffledChallenges.length));
+    if (Array.isArray(difficultyData) && difficultyData.length > 0) {
+      // Found challenges for exact difficulty
+      availableChallenges = [...difficultyData];
+      console.log('🎯 Using exact difficulty match:', { difficulty, count: availableChallenges.length });
+    } else {
+      // No challenges for this difficulty, mix from all difficulties in this category
+      console.log('🚨 No challenges for exact difficulty, mixing from all difficulties');
+      const allDifficulties = Object.keys(categoryData);
       
-      const exercises = selectedChallenges.map((challenge: any, index: number) => ({
-        ...challenge,
-        timeLimit: 180,
-        id: `${challenge.id}-${timestamp}-${index}`
-      }));
-
-      return {
-        sessionId: `fallback-difficulty-session-${skillArea}-${difficulty}-${timestamp}-${randomId}`,
-        skillArea,
-        difficulty,
-        totalExercises: exercises.length,
-        exercises,
-        source: 'static',
-        estimatedDuration: exercises.length * 180
-      };
+      for (const diff of allDifficulties) {
+        const challenges = categoryData[diff as keyof typeof categoryData];
+        if (Array.isArray(challenges)) {
+          availableChallenges.push(...challenges);
+        }
+      }
+      
+      console.log('📚 Mixed challenges from all difficulties:', { 
+        difficulties: allDifficulties, 
+        totalChallenges: availableChallenges.length 
+      });
     }
 
-    // Shuffle the array to get random selection
-    const shuffledChallenges = [...filteredChallenges].sort(() => Math.random() - 0.5);
-    
-    // Take up to 4 different challenges
-    const selectedChallenges = shuffledChallenges.slice(0, Math.min(4, shuffledChallenges.length));
-    
-    // If we have fewer than 4 challenges, repeat some but ensure we have 4 total
-    while (selectedChallenges.length < 4 && filteredChallenges.length > 0) {
-      const additionalChallenge = filteredChallenges[Math.floor(Math.random() * filteredChallenges.length)];
-      selectedChallenges.push(additionalChallenge);
+    if (availableChallenges.length === 0) {
+      throw new Error(`No challenges found for category: ${skillArea}`);
     }
 
-    // Add timeLimit and unique IDs to each exercise
+    // Shuffle and select 4 unique challenges
+    const shuffledChallenges = [...availableChallenges].sort(() => Math.random() - 0.5);
+    
+    // Ensure we get exactly 4 challenges by repeating if necessary
+    const selectedChallenges: any[] = [];
+    let challengeIndex = 0;
+    
+    while (selectedChallenges.length < 4 && challengeIndex < 20) { // Safety limit
+      const challenge = shuffledChallenges[challengeIndex % shuffledChallenges.length];
+      // Avoid exact duplicates by checking if we already selected this challenge
+      const isDuplicate = selectedChallenges.some(selected => selected.id === challenge.id);
+      
+      if (!isDuplicate || selectedChallenges.length === 0) {
+        selectedChallenges.push({ ...challenge });
+      }
+      
+      challengeIndex++;
+      
+      // If we've gone through all unique challenges and still need more, start allowing repeats with modified IDs
+      if (challengeIndex >= shuffledChallenges.length && selectedChallenges.length < 4) {
+        const repeatedChallenge = { 
+          ...shuffledChallenges[challengeIndex % shuffledChallenges.length],
+          id: `${shuffledChallenges[challengeIndex % shuffledChallenges.length].id}-repeat-${challengeIndex}`
+        };
+        selectedChallenges.push(repeatedChallenge);
+      }
+    }
+
+    // Add timeLimit and ensure unique IDs for each exercise in this session
     const exercises = selectedChallenges.map((challenge: any, index: number) => ({
       ...challenge,
       timeLimit: 180,
@@ -170,7 +195,8 @@ export const generateDynamicChallenge = async (
 
     console.log('✅ Successfully selected static challenges:', {
       count: exercises.length,
-      titles: exercises.map(e => e.title)
+      titles: exercises.map(e => e.title),
+      uniqueIds: exercises.map(e => e.id)
     });
 
     return {
