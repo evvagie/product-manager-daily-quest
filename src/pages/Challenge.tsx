@@ -7,6 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { TimePressureIndicator } from '@/components/challenges/TimePressureIndicator';
 import { DynamicChallengeRenderer } from '@/components/challenges/DynamicChallengeRenderer';
 import { ConsequenceDisplay } from '@/components/challenges/ConsequenceDisplay';
+import { RetryFeedbackModal } from '@/components/challenges/RetryFeedbackModal';
 import { generateDynamicChallenge, type ChallengeSession, type Exercise } from '@/utils/challengeGenerator';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -27,10 +28,12 @@ const Challenge = () => {
   const [currentAnswer, setCurrentAnswer] = useState<any>(null);
   const [showConsequences, setShowConsequences] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
+  const [showRetryModal, setShowRetryModal] = useState(false);
 
   const currentExercise: Exercise | null = challengeSession?.exercises[currentExerciseIndex] || null;
   const isLastExercise = currentExerciseIndex === (challengeSession?.totalExercises || 0) - 1;
   const progressPercentage = challengeSession ? ((currentExerciseIndex + 1) / challengeSession.totalExercises) * 100 : 0;
+  const isRetryChallenge = challengeId !== null;
 
   useEffect(() => {
     const loadChallengeSession = async () => {
@@ -46,7 +49,9 @@ const Challenge = () => {
         console.log('Challenge session loaded:', newChallengeSession);
         
         setChallengeSession(newChallengeSession);
-        setTimeLeft(newChallengeSession.exercises[0]?.timeLimit || 180);
+        // Set timer to 1:00 (60 seconds) for retry challenges, otherwise use exercise time limit
+        const initialTime = isRetryChallenge ? 60 : (newChallengeSession.exercises[0]?.timeLimit || 180);
+        setTimeLeft(initialTime);
         setExerciseAnswers(new Array(newChallengeSession.totalExercises).fill(null));
         
         // Show success message based on source and retry context
@@ -104,7 +109,7 @@ const Challenge = () => {
     if (!isComplete && !showConsequences) {
       toast({
         title: "Time's Up!",
-        description: "Moving to next exercise.",
+        description: isRetryChallenge ? "Challenge completed!" : "Moving to next exercise.",
         variant: "destructive",
       });
       handleNextExercise();
@@ -120,19 +125,32 @@ const Challenge = () => {
       setCurrentExerciseIndex(nextIndex);
       setCurrentAnswer(null);
       setShowConsequences(false);
-      setTimeLeft(challengeSession?.exercises[nextIndex]?.timeLimit || 180);
+      const nextTime = isRetryChallenge ? 60 : (challengeSession?.exercises[nextIndex]?.timeLimit || 180);
+      setTimeLeft(nextTime);
     }
   };
 
   const handleCompleteSession = () => {
     setIsComplete(true);
-    navigate('/session-feedback', {
-      state: {
-        challengeSession,
-        exerciseAnswers,
-        timeUsed: challengeSession?.exercises.reduce((total, ex) => total + ex.timeLimit, 0) - timeLeft
-      }
-    });
+    
+    if (isRetryChallenge) {
+      // For retry challenges, show modal instead of navigating to session feedback
+      setShowRetryModal(true);
+    } else {
+      // For regular challenges, navigate to session feedback
+      navigate('/session-feedback', {
+        state: {
+          challengeSession,
+          exerciseAnswers,
+          timeUsed: challengeSession?.exercises.reduce((total, ex) => total + ex.timeLimit, 0) - timeLeft
+        }
+      });
+    }
+  };
+
+  const handleRetryModalClose = () => {
+    setShowRetryModal(false);
+    navigate('/dashboard');
   };
 
   if (loading) {
@@ -212,7 +230,7 @@ const Challenge = () => {
               </div>
               <Button
                 variant="outline"
-                onClick={() => navigate('/challenge-selection')}
+                onClick={() => navigate(isRetryChallenge ? '/dashboard' : '/challenge-selection')}
                 className="border-gray-400"
               >
                 Exit Session
@@ -240,7 +258,7 @@ const Challenge = () => {
             <CardContent className="p-4">
               <TimePressureIndicator
                 timeLeft={timeLeft}
-                totalTime={currentExercise.timeLimit}
+                totalTime={isRetryChallenge ? 60 : currentExercise.timeLimit}
                 onTimeUp={handleTimeUp}
               />
             </CardContent>
@@ -272,6 +290,16 @@ const Challenge = () => {
               {isLastExercise ? 'Complete Session' : 'Next Exercise'}
             </Button>
           </div>
+        )}
+
+        {/* Retry Feedback Modal */}
+        {showRetryModal && challengeSession && (
+          <RetryFeedbackModal
+            challengeSession={challengeSession}
+            exerciseAnswers={exerciseAnswers}
+            isOpen={showRetryModal}
+            onClose={handleRetryModalClose}
+          />
         )}
       </div>
     </div>
