@@ -268,19 +268,12 @@ const ChallengeLibrary = () => {
                         <span>Time: {formatTime(challenge.time_taken)}</span>
                         <span>Completed: {formatDate(challenge.completion_date)}</span>
                       </div>
-                      <div className="relative">
-                        <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-purple-600 rounded-md p-0.5">
-                          <div className="bg-white rounded-md h-full w-full flex items-center justify-center">
-                            <span className="bg-gradient-to-r from-orange-500 to-purple-600 bg-clip-text text-transparent font-medium text-sm px-3 py-1.5">
-                              Retry Challenge
-                            </span>
-                          </div>
-                        </div>
+                      <div className="p-0.5 bg-gradient-to-r from-orange-500 to-purple-600 rounded-md">
                         <Button 
                           variant="ghost" 
                           size="sm" 
                           onClick={() => handleRetryChallenge(challenge)} 
-                          className="relative bg-transparent hover:bg-transparent text-transparent rounded-md"
+                          className="bg-white hover:bg-gray-50 text-transparent bg-gradient-to-r from-orange-500 to-purple-600 bg-clip-text font-medium rounded-sm whitespace-nowrap"
                         >
                           Retry Challenge
                         </Button>
