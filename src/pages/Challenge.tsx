@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -8,7 +7,6 @@ import { Progress } from '@/components/ui/progress';
 import { TimePressureIndicator } from '@/components/challenges/TimePressureIndicator';
 import { DynamicChallengeRenderer } from '@/components/challenges/DynamicChallengeRenderer';
 import { ConsequenceDisplay } from '@/components/challenges/ConsequenceDisplay';
-import { KPIDisplay } from '@/components/challenges/KPIDisplay';
 import { generateDynamicChallenge, type ChallengeSession, type Exercise } from '@/utils/challengeGenerator';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -248,13 +246,6 @@ const Challenge = () => {
         {showConsequences && currentAnswer && (
           <ConsequenceDisplay
             consequences={currentExercise.content.options?.find((opt: any) => opt.id === currentAnswer)?.consequences || []}
-          />
-        )}
-
-        {/* KPI Display */}
-        {showConsequences && currentAnswer && (
-          <KPIDisplay
-            metrics={currentExercise.content.options?.find((opt: any) => opt.id === currentAnswer)?.kpiImpact || {}}
           />
         )}
 
