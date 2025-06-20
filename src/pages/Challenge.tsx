@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -58,12 +57,12 @@ const Challenge = () => {
 
       setLoading(true);
       try {
-        console.log('🚀 Loading static challenge session for:', { skillArea, difficulty, challengeId });
+        console.log('🚀 Loading challenge session for:', { skillArea, difficulty, challengeId });
         
         const challengeIdToUse = isRetryChallenge ? challengeId : null;
         
         const newChallengeSession = await generateDynamicChallenge(skillArea, difficulty, challengeIdToUse);
-        console.log('✅ Static Challenge session loaded:', {
+        console.log('✅ Challenge session loaded:', {
           sessionId: newChallengeSession.sessionId,
           source: newChallengeSession.source,
           exerciseCount: newChallengeSession.totalExercises
@@ -82,7 +81,7 @@ const Challenge = () => {
           });
         } else {
           toast({
-            title: "📚 Static Challenges Loaded!",
+            title: "🎯 Challenges Loaded!",
             description: `${newChallengeSession.totalExercises} different challenges selected for you`,
             duration: 3000,
           });
@@ -175,10 +174,10 @@ const Challenge = () => {
             <CardContent className="p-8 text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
               <h2 className="text-xl font-semibold text-gray-800 mb-2">
-                {challengeId ? "🔄 Loading Retry Challenge..." : "📚 Loading Static Challenges..."}
+                {challengeId ? "🔄 Loading Retry Challenge..." : "🎯 Loading Challenges..."}
               </h2>
               <p className="text-gray-600">
-                {challengeId ? "Preparing your retry challenge..." : "Selecting 4 different challenges from our library..."}
+                {challengeId ? "Preparing your retry challenge..." : "Selecting challenges for your session..."}
               </p>
             </CardContent>
           </Card>
@@ -229,9 +228,6 @@ const Challenge = () => {
                   </Badge>
                   <Badge variant="secondary" className="bg-purple-100 text-purple-700">
                     Exercise {currentExerciseIndex + 1} of {challengeSession.totalExercises}
-                  </Badge>
-                  <Badge className="bg-green-100 text-green-700">
-                    📚 Static
                   </Badge>
                   {challengeId && (
                     <Badge className="bg-orange-100 text-orange-700">
