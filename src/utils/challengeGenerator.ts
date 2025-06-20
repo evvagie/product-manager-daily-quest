@@ -67,74 +67,79 @@ export const generateDynamicChallenge = async (
       }
     }
 
-    // FORCE AI generation - no fallback to static content for regular sessions
+    // FORCE AI generation with maximum retries
     console.log('🤖 FORCING AI generation with maximum uniqueness parameters...');
     
-    const aiPayload = {
-      skillArea,
-      difficulty,
-      sessionContext,
-      timestamp,
-      microTimestamp,
-      uniquenessSeed: randomId,
-      uniqueHash,
-      exerciseCount: 4,
-      forceUnique: true,
-      sessionType: 'new-generation'
-    };
-
-    console.log('📤 Sending ENHANCED AI request with payload:', aiPayload);
-
-    const response = await fetch(`https://xtnlfdcqaqtqxyzywaoh.supabase.co/functions/v1/generate-ai-challenge`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0bmxmZGNxYXF0cXh5enl3YW9oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAwOTkzMjEsImV4cCI6MjA2NTY3NTMyMX0.p05Zf-qKmWpmyI1Lc_t5lFZYG82ZXImCvZ1DxXi5uLA`
-      },
-      body: JSON.stringify(aiPayload)
-    });
-
-    console.log('📥 AI Response status:', response.status);
-
-    if (response.ok) {
-      const aiData = await response.json();
-      console.log('✅ AI Challenge generated successfully!', {
-        exerciseCount: aiData.exercises?.length,
-        sessionId: aiData.sessionId
-      });
-      
-      // Ensure proper structure and ultra-unique IDs
-      let exercises = aiData.exercises || [];
-      exercises = exercises.map((exercise: any, index: number) => ({
-        ...exercise,
-        timeLimit: 180,
-        id: `ai-${sessionContext}-ex${index + 1}-${timestamp}-${microTimestamp}`
-      }));
-
-      // Validate we have exactly 4 unique exercises
-      if (exercises.length >= 4) {
-        return {
-          sessionId: `ai-session-${sessionContext}`,
+    const maxRetries = 3;
+    let lastError = null;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`🔄 AI Generation attempt ${attempt}/${maxRetries}`);
+        
+        const aiPayload = {
           skillArea,
           difficulty,
-          totalExercises: 4,
-          exercises: exercises.slice(0, 4),
-          source: 'openai',
-          estimatedDuration: 720
+          sessionContext: `${sessionContext}-attempt${attempt}`,
+          timestamp: timestamp + attempt,
+          microTimestamp: microTimestamp + attempt,
+          uniquenessSeed: `${randomId}-attempt${attempt}`,
+          uniqueHash: `${uniqueHash}-${attempt}`,
+          exerciseCount: 4,
+          forceUnique: true,
+          sessionType: 'new-generation'
         };
-      } else {
-        console.error('❌ AI generated insufficient exercises:', exercises.length);
-        throw new Error(`AI generated only ${exercises.length} exercises, need 4`);
+
+        const response = await fetch(`https://xtnlfdcqaqtqxyzywaoh.supabase.co/functions/v1/generate-ai-challenge`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0bmxmZGNxYXF0cXh5enl3YW9oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAwOTkzMjEsImV4cCI6MjA2NTY3NTMyMX0.p05Zf-qKmWpmyI1Lc_t5lFZYG82ZXImCvZ1DxXi5uLA`
+          },
+          body: JSON.stringify(aiPayload)
+        });
+
+        if (response.ok) {
+          const aiData = await response.json();
+          
+          if (aiData.exercises && aiData.exercises.length === 4) {
+            console.log(`✅ AI Challenge generated successfully on attempt ${attempt}!`);
+            
+            return {
+              sessionId: `ai-session-${sessionContext}-attempt${attempt}`,
+              skillArea,
+              difficulty,
+              totalExercises: 4,
+              exercises: aiData.exercises.map((exercise: any, index: number) => ({
+                ...exercise,
+                timeLimit: 180,
+                id: `ai-${sessionContext}-attempt${attempt}-ex${index + 1}`
+              })),
+              source: 'openai',
+              estimatedDuration: 720
+            };
+          } else {
+            throw new Error(`AI generated ${aiData.exercises?.length || 0} exercises, need 4`);
+          }
+        } else {
+          const errorData = await response.json();
+          throw new Error(`AI API error: ${response.status} - ${errorData.error || 'Unknown error'}`);
+        }
+      } catch (error) {
+        console.error(`❌ AI generation attempt ${attempt} failed:`, error);
+        lastError = error;
+        
+        if (attempt < maxRetries) {
+          // Wait before retry with exponential backoff
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        }
       }
-    } else {
-      const errorText = await response.text();
-      console.error('❌ AI generation failed:', response.status, errorText);
-      throw new Error(`AI generation failed: ${response.status} - ${errorText}`);
     }
+    
+    throw new Error(`All ${maxRetries} AI generation attempts failed. Last error: ${lastError?.message}`);
+    
   } catch (error) {
     console.error('💥 CRITICAL: AI generation failed completely:', error);
-    
-    // For regular sessions, we MUST have AI generation - throw error instead of fallback
     throw new Error(`Failed to generate unique AI challenges: ${error.message}`);
   }
 };
