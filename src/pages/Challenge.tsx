@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -80,16 +81,23 @@ const Challenge = () => {
 
       setLoading(true);
       try {
-        console.log('Loading challenge session for:', { skillArea, difficulty, challengeId });
-        const newChallengeSession = await generateDynamicChallenge(skillArea, difficulty, challengeId);
-        console.log('Challenge session loaded:', newChallengeSession);
+        console.log('🚀 Loading NEW challenge session - forcing AI generation for:', { skillArea, difficulty, challengeId });
+        
+        // Force new AI generation by not passing challengeId for regular sessions
+        const challengeIdToUse = isRetryChallenge ? challengeId : null;
+        
+        const newChallengeSession = await generateDynamicChallenge(skillArea, difficulty, challengeIdToUse);
+        console.log('✅ Challenge session loaded:', {
+          sessionId: newChallengeSession.sessionId,
+          source: newChallengeSession.source,
+          exerciseCount: newChallengeSession.totalExercises
+        });
         
         setChallengeSession(newChallengeSession);
-        // Always set timer to 1:00 (60 seconds) for all challenges
         setTimeLeft(60);
         setExerciseAnswers(new Array(newChallengeSession.totalExercises).fill(null));
         
-        // Show success message based on source and retry context
+        // Show appropriate success message
         const isRetry = location.state?.retryChallenge;
         if (isRetry) {
           toast({
@@ -98,17 +106,18 @@ const Challenge = () => {
           });
         } else if (newChallengeSession.source === 'openai') {
           toast({
-            title: "🤖 AI Challenge Session Generated!",
-            description: `${newChallengeSession.totalExercises} unique exercises created just for you`,
+            title: "🤖 NEW AI Challenge Generated!",
+            description: `4 completely unique exercises created just for you`,
           });
         } else {
           toast({
-            title: "Challenge Session Ready",
-            description: `${newChallengeSession.totalExercises} exercises using enhanced static content`,
+            title: "⚠️ Using Static Content",
+            description: "AI generation unavailable, using enhanced static challenges",
+            variant: "destructive"
           });
         }
       } catch (error) {
-        console.error('Error loading challenge session:', error);
+        console.error('💥 Error loading challenge session:', error);
         toast({
           title: "Error",
           description: "Failed to load challenge session. Please try again.",
@@ -196,10 +205,10 @@ const Challenge = () => {
             <CardContent className="p-8 text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
               <h2 className="text-xl font-semibold text-gray-800 mb-2">
-                {challengeId ? "🔄 Loading Specific Challenge..." : "🤖 Generating Your Challenge Session..."}
+                {challengeId ? "🔄 Loading Retry Challenge..." : "🤖 Generating UNIQUE AI Challenges..."}
               </h2>
               <p className="text-gray-600">
-                {challengeId ? "Preparing your retry challenge..." : "Creating 4 unique exercises tailored to your skill level. This may take a few moments."}
+                {challengeId ? "Preparing your retry challenge..." : "Creating 4 completely new, unique exercises tailored to your skill level. This may take a few moments."}
               </p>
             </CardContent>
           </Card>
