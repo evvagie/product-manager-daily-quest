@@ -54,7 +54,7 @@ const Pricing = () => {
         {/* Pricing Cards */}
         <div className="grid lg:grid-cols-4 md:grid-cols-2 gap-6 mb-16">
           {/* Free Plan */}
-          <Card className="bg-white border-gray-200 shadow-lg">
+          <Card className="bg-white border-gray-200 shadow-lg flex flex-col">
             <CardHeader className="text-center pb-6">
               <CardTitle className="text-xl font-bold text-gray-900">Free</CardTitle>
               <div className="text-2xl font-bold text-gray-900 mt-2">
@@ -62,8 +62,8 @@ const Pricing = () => {
               </div>
               <p className="text-gray-600 mt-2">Perfect to get started</p>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-3">
+            <CardContent className="flex flex-col flex-grow">
+              <div className="space-y-3 flex-grow">
                 <div className="flex items-center">
                   <Check className="h-4 w-4 text-green-600 mr-3" />
                   <span className="text-sm text-gray-700">4 daily micro-challenges</span>
@@ -91,7 +91,7 @@ const Pricing = () => {
           </Card>
 
           {/* Premium Plan */}
-          <Card className="bg-gradient-to-br from-blue-100 to-purple-100 border-2 border-blue-300 shadow-xl relative">
+          <Card className="bg-gradient-to-br from-blue-100 to-purple-100 border-2 border-blue-300 shadow-xl relative flex flex-col">
             <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
               <Badge className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-3 py-1">
                 <Star className="h-3 w-3 mr-1" />
@@ -105,8 +105,8 @@ const Pricing = () => {
               </div>
               <p className="text-gray-600 mt-2">For ambitious PMs</p>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-3">
+            <CardContent className="flex flex-col flex-grow">
+              <div className="space-y-3 flex-grow">
                 <div className="flex items-center">
                   <Check className="h-4 w-4 text-green-600 mr-3" />
                   <span className="text-sm text-gray-700">Everything in Free</span>
@@ -138,7 +138,7 @@ const Pricing = () => {
           </Card>
 
           {/* Certification Basic */}
-          <Card className="bg-white border-yellow-300 border-2 shadow-lg">
+          <Card className="bg-white border-yellow-300 border-2 shadow-lg flex flex-col">
             <CardHeader className="text-center pb-6">
               <CardTitle className="text-xl font-bold text-gray-900">Certification</CardTitle>
               <div className="text-2xl font-bold text-gray-900 mt-2">
@@ -146,8 +146,8 @@ const Pricing = () => {
               </div>
               <p className="text-gray-600 mt-2">Proof-of-sense for your CV</p>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-3">
+            <CardContent className="flex flex-col flex-grow">
+              <div className="space-y-3 flex-grow">
                 <div className="flex items-center">
                   <Award className="h-4 w-4 text-yellow-600 mr-3" />
                   <span className="text-sm text-gray-700">Full Premium access</span>
@@ -179,7 +179,7 @@ const Pricing = () => {
           </Card>
 
           {/* Certification + Review */}
-          <Card className="bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-400 shadow-xl relative">
+          <Card className="bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-400 shadow-xl relative flex flex-col">
             <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
               <Badge className="bg-gradient-to-r from-yellow-600 to-orange-600 text-white px-3 py-1">
                 <MessageSquare className="h-3 w-3 mr-1" />
@@ -193,8 +193,8 @@ const Pricing = () => {
               </div>
               <p className="text-gray-600 mt-2">With expert feedback</p>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-3">
+            <CardContent className="flex flex-col flex-grow">
+              <div className="space-y-3 flex-grow">
                 <div className="flex items-center">
                   <Check className="h-4 w-4 text-green-600 mr-3" />
                   <span className="text-sm text-gray-700">Everything in Basic Cert</span>
@@ -359,7 +359,7 @@ const Pricing = () => {
         </div>
 
         {/* Final CTA */}
-        <div className="text-center bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl p-12 border border-blue-200">
+        <div className="text-center bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 rounded-2xl p-12 border border-blue-200">
           <h2 className="text-3xl font-bold text-gray-900 mb-4">
             Ready to prove your PM instincts?
           </h2>
@@ -369,7 +369,7 @@ const Pricing = () => {
           </p>
           <Button 
             onClick={handleGetStarted}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 text-lg font-medium"
+            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 text-lg font-medium animate-pulse"
           >
             Start Building Your Skills Today
           </Button>
