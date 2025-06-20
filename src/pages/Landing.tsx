@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
@@ -26,28 +27,28 @@ const Landing = () => {
               </span>
             </div>
             
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight text-gray-900 whitespace-nowrap">
+            <h1 className="text-3xl sm:text-5xl md:text-7xl font-bold mb-6 leading-tight text-gray-900">
               Yuno <span className="bg-gradient-to-r from-[#0400ff] to-purple-600 bg-clip-text text-transparent">how to think</span> like a PM.
             </h1>
             
-            <p className="text-xl md:text-2xl text-gray-600 mb-12 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-lg sm:text-xl md:text-2xl text-gray-600 mb-12 max-w-2xl mx-auto leading-relaxed px-4">
               An interactive online simulation designed to teach decision-making as a 
               product manager through immersive scenarios and branching choices.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
-              <Button size="lg" className="bg-gradient-to-r from-[#0400ff] to-purple-600 hover:from-[#0300cc] hover:to-purple-700 !text-white px-8 py-4 text-lg font-medium shadow-lg animate-[pulse_1.5s_ease-in-out_infinite]" style={{
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8 px-4">
+              <Button size="lg" className="bg-gradient-to-r from-[#0400ff] to-purple-600 hover:from-[#0300cc] hover:to-purple-700 !text-white px-8 py-4 text-lg font-medium shadow-lg animate-[pulse_1.5s_ease-in-out_infinite] w-full sm:w-auto" style={{
                 color: 'white !important'
               }} onClick={() => navigate('/signup')}>
                 Get Started →
               </Button>
-              <Button variant="outline" size="lg" className="bg-white border-gray-300 text-gray-900 hover:bg-gray-50 px-8 py-4 text-lg font-medium" onClick={() => navigate('/login')}>
+              <Button variant="outline" size="lg" className="bg-white border-gray-300 text-gray-900 hover:bg-gray-50 px-8 py-4 text-lg font-medium w-full sm:w-auto" onClick={() => navigate('/login')}>
                 Sign In
               </Button>
             </div>
 
             {/* Pricing Invitation */}
-            <div className="text-center">
+            <div className="text-center px-4">
               <p className="text-gray-600 mb-4">
                 Want to see all features and pricing options?
               </p>
@@ -67,11 +68,11 @@ const Landing = () => {
       <section className="py-20 bg-gradient-to-br from-blue-50 to-purple-50">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-bold text-center mb-16 text-gray-900">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-16 text-gray-900 px-4">
               Master PM Skills Through <span className="bg-gradient-to-r from-[#0400ff] to-purple-600 bg-clip-text text-transparent">Interactive Challenges</span>
             </h2>
             
-            <div className="grid md:grid-cols-3 gap-8">
+            <div className="grid md:grid-cols-3 gap-8 px-4">
               <Card className="bg-white/80 backdrop-blur-sm border-gray-200 p-8 text-center hover:bg-white transition-all duration-300 shadow-lg hover:shadow-xl">
                 <div className="w-16 h-16 bg-gradient-to-br from-[#0400ff]/20 to-purple-600/20 rounded-xl flex items-center justify-center mx-auto mb-6">
                   <span className="text-2xl">🎯</span>
@@ -103,13 +104,13 @@ const Landing = () => {
       {/* CTA Section */}
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-8 text-gray-900">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-8 text-gray-900 px-4">
             Ready to Think Like a Product Manager?
           </h2>
-          <p className="text-xl text-gray-600 mb-12 max-w-2xl mx-auto">
+          <p className="text-lg sm:text-xl text-gray-600 mb-12 max-w-2xl mx-auto px-4">
             Join thousands of aspiring PMs who are mastering product management through interactive simulations.
           </p>
-          <Button size="lg" className="bg-gradient-to-r from-[#0400ff] to-purple-600 hover:from-[#0300cc] hover:to-purple-700 !text-white px-12 py-4 text-lg font-medium shadow-lg animate-[pulse_1.5s_ease-in-out_infinite]" style={{
+          <Button size="lg" className="bg-gradient-to-r from-[#0400ff] to-purple-600 hover:from-[#0300cc] hover:to-purple-700 !text-white px-12 py-4 text-lg font-medium shadow-lg animate-[pulse_1.5s_ease-in-out_infinite] mx-4" style={{
           color: 'white !important'
         }} onClick={() => navigate('/signup')}>
             Start Learning Today →
