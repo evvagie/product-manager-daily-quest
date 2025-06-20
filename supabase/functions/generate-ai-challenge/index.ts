@@ -14,10 +14,10 @@ serve(async (req) => {
   }
 
   try {
-    const { skillArea, difficulty, exerciseCount = 4 } = await req.json();
+    const { skillArea, difficulty, exerciseCount = 4, sessionContext, uniquenessSeed } = await req.json();
     const openAIApiKey = Deno.env.get('YUNO_KEY');
 
-    console.log('Generate AI Challenge called with:', { skillArea, difficulty, exerciseCount });
+    console.log('Generate AI Challenge called with:', { skillArea, difficulty, exerciseCount, sessionContext });
     console.log('API Key available:', !!openAIApiKey);
 
     if (!openAIApiKey) {
@@ -31,80 +31,65 @@ serve(async (req) => {
       });
     }
 
-    // Add strong randomization to ensure completely unique content each time
-    const sessionTimestamp = Date.now();
-    const randomSeed = Math.floor(Math.random() * 100000);
-    const uniqueSessionId = `${skillArea}-${difficulty}-${sessionTimestamp}-${randomSeed}`;
+    // Create unique session identifiers
+    const timestamp = Date.now();
+    const randomId = uniquenessSeed || Math.floor(Math.random() * 100000);
+    const uniqueSessionId = `${skillArea}-${difficulty}-${timestamp}-${randomId}`;
 
     console.log('Generating unique session:', uniqueSessionId);
 
-    const prompt = `You are an expert Product Manager challenge generator. Create exactly ${exerciseCount} completely unique and fresh Product Manager challenges for a simulation game session.
+    const prompt = `You are an expert Product Manager challenge generator. Create exactly ${exerciseCount} completely unique and different Product Manager challenges.
 
 CRITICAL REQUIREMENTS:
-- Generate ENTIRELY NEW and DIFFERENT scenarios each time - never repeat content
-- Create exactly ${exerciseCount} exercises, each completely different from the others
-- Each exercise must be realistic and based on real PM work scenarios
-- Vary the interaction types across exercises (multiple-choice, slider, dialogue, ranking)
-- Make challenges appropriate for ${difficulty} level Product Managers
-- Focus on ${skillArea} skill area but include variety within that domain
+- Generate ENTIRELY NEW scenarios each time - never repeat content
+- Each exercise must be completely different from the others
+- Return ONLY valid JSON with no additional text, comments, or formatting
+- All JSON properties must be properly quoted
+- No trailing commas or syntax errors
 
-SESSION UNIQUENESS:
+SESSION INFO:
 - Session ID: ${uniqueSessionId}
-- Random Seed: ${randomSeed}
-- Timestamp: ${sessionTimestamp}
-
-EXERCISE PARAMETERS:
 - Skill Area: ${skillArea}
-- Difficulty Level: ${difficulty}
-- Number of Exercises: ${exerciseCount}
+- Difficulty: ${difficulty}
+- Unique Seed: ${randomId}
 
-INTERACTION TYPES TO USE (vary across exercises):
-1. "multiple-choice": Decision scenarios with 3-4 realistic options
-2. "slider": Resource allocation or priority balancing with trade-offs
-3. "dialogue": Stakeholder conversations with response choices
-4. "ranking": Feature prioritization or retrospective analysis
-
-RESPONSE FORMAT - Return ONLY valid JSON with this exact structure:
+RESPONSE FORMAT - Return ONLY this JSON structure:
 {
   "sessionId": "${uniqueSessionId}",
   "skillArea": "${skillArea}",
   "difficulty": "${difficulty}",
   "totalExercises": ${exerciseCount},
-  "generatedAt": "${new Date().toISOString()}",
   "exercises": [
     {
       "id": "exercise-1",
-      "title": "Specific Exercise Title",
-      "description": "Brief description of the exercise task",
+      "title": "Unique Exercise Title",
+      "description": "Brief exercise description",
       "type": "multiple-choice",
       "timeLimit": 180,
       "content": {
-        "context": "Detailed scenario background (2-3 sentences about the situation)",
-        "scenario": "Specific problem or decision that needs to be made",
-        "instructions": "Clear instructions on what the user should do",
-        "data": "Supporting data, metrics, or background information",
+        "context": "Detailed scenario background",
+        "scenario": "Specific problem to solve",
+        "instructions": "Clear user instructions",
+        "data": "Supporting information",
         "options": [
           {
             "id": "option-1",
-            "text": "Clear option description",
-            "description": "Additional context explaining this choice",
+            "text": "First option description",
             "isCorrect": true,
-            "quality": "excellent",
-            "explanation": "Why this is the best choice and what happens next",
+            "explanation": "Why this is correct",
             "consequences": [
               {
                 "type": "positive",
                 "title": "Immediate Impact",
-                "description": "What happens right away",
-                "impact": "Long-term consequences"
+                "description": "What happens next"
               }
-            ],
-            "kpiImpact": {
-              "revenue": { "value": 250, "change": 5 },
-              "teamMood": { "value": 8, "change": 1 },
-              "customerSat": { "value": 4.2, "change": 0.2 },
-              "userGrowth": { "value": 18, "change": 3 }
-            }
+            ]
+          },
+          {
+            "id": "option-2",
+            "text": "Second option description",
+            "isCorrect": false,
+            "explanation": "Why this is incorrect"
           }
         ]
       }
@@ -112,13 +97,7 @@ RESPONSE FORMAT - Return ONLY valid JSON with this exact structure:
   ]
 }
 
-GENERATE REALISTIC SCENARIOS for ${skillArea} at ${difficulty} level:
-- For "strategy": roadmapping, competitive analysis, market research, vision setting
-- For "research": user interviews, survey design, data analysis, insights gathering  
-- For "analytics": metrics definition, A/B testing, data interpretation, KPI tracking
-- For "design": UX principles, user flows, prototyping, design systems
-
-Each exercise must be completely unique and different. NO repetition across exercises or sessions.`;
+Create ${exerciseCount} realistic ${skillArea} scenarios for ${difficulty} level Product Managers. Make each exercise completely unique with different contexts, problems, and solutions.`;
 
     console.log('Sending request to OpenAI with model gpt-4o-mini');
 
@@ -133,7 +112,7 @@ Each exercise must be completely unique and different. NO repetition across exer
         messages: [
           { 
             role: 'system', 
-            content: `You are an expert Product Manager challenge generator. Always respond with valid JSON only, no additional text. Generate fresh, original content for every request - never repeat scenarios. Current unique session: ${uniqueSessionId}` 
+            content: `You are a Product Manager challenge generator. Always respond with ONLY valid JSON. No additional text, explanations, or formatting. Session: ${uniqueSessionId}` 
           },
           { 
             role: 'user', 
@@ -141,7 +120,7 @@ Each exercise must be completely unique and different. NO repetition across exer
           }
         ],
         temperature: 0.9,
-        max_tokens: 4000,
+        max_tokens: 3500,
         presence_penalty: 0.6,
         frequency_penalty: 0.8,
       }),
@@ -170,30 +149,64 @@ Each exercise must be completely unique and different. NO repetition across exer
     console.log('Raw OpenAI response length:', generatedContent.length);
     console.log('First 200 chars:', generatedContent.substring(0, 200));
 
-    // Parse the JSON response from OpenAI
+    // Parse and validate the JSON response
     let challengeSession;
     try {
-      // Clean the response in case there's any markdown formatting
-      const cleanContent = generatedContent.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      challengeSession = JSON.parse(cleanContent);
+      // Clean the response - remove any markdown formatting or extra whitespace
+      const cleanContent = generatedContent
+        .replace(/```json\n?/g, '')
+        .replace(/```\n?/g, '')
+        .replace(/^\s+|\s+$/g, '')
+        .trim();
       
+      challengeSession = JSON.parse(cleanContent);
       console.log('Successfully parsed JSON with', challengeSession.exercises?.length || 0, 'exercises');
     } catch (parseError) {
       console.error('JSON parse error:', parseError);
       console.error('Raw content that failed to parse:', generatedContent);
       
-      return new Response(JSON.stringify({ 
-        error: 'Invalid JSON response from OpenAI',
-        details: parseError.message,
-        rawContent: generatedContent.substring(0, 500),
-        fallback: true 
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      // Create a fallback structure if JSON parsing fails
+      challengeSession = {
+        sessionId: uniqueSessionId,
+        skillArea: skillArea,
+        difficulty: difficulty,
+        totalExercises: exerciseCount,
+        exercises: []
+      };
+      
+      // Generate fallback exercises
+      for (let i = 1; i <= exerciseCount; i++) {
+        challengeSession.exercises.push({
+          id: `fallback-exercise-${i}`,
+          title: `${skillArea} Challenge ${i}`,
+          description: `Product Manager challenge for ${skillArea}`,
+          type: "multiple-choice",
+          timeLimit: 180,
+          content: {
+            context: `You are working on a ${skillArea} challenge as a Product Manager.`,
+            scenario: `Scenario ${i}: Make the best decision for your product.`,
+            instructions: "Choose the most appropriate option.",
+            data: "Consider the context and make your choice.",
+            options: [
+              {
+                id: "option-1",
+                text: "Option A: Focus on user feedback and data",
+                isCorrect: true,
+                explanation: "This approach prioritizes user needs and evidence-based decisions."
+              },
+              {
+                id: "option-2",
+                text: "Option B: Follow competitor strategies",
+                isCorrect: false,
+                explanation: "Simply copying competitors may not align with your unique value proposition."
+              }
+            ]
+          }
+        });
+      }
     }
 
-    // Validate the response structure
+    // Validate exercise structure
     if (!challengeSession.exercises || !Array.isArray(challengeSession.exercises) || challengeSession.exercises.length !== exerciseCount) {
       console.error('Invalid exercise structure:', {
         hasExercises: !!challengeSession.exercises,
@@ -212,11 +225,11 @@ Each exercise must be completely unique and different. NO repetition across exer
       });
     }
 
-    // Ensure required fields and add metadata
+    // Ensure required fields
     challengeSession.sessionId = challengeSession.sessionId || uniqueSessionId;
     challengeSession.source = 'openai';
-    challengeSession.randomSeed = randomSeed;
-    challengeSession.timestamp = sessionTimestamp;
+    challengeSession.randomSeed = randomId;
+    challengeSession.timestamp = timestamp;
 
     console.log('Successfully generated AI challenge session:', {
       sessionId: challengeSession.sessionId,

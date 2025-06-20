@@ -31,119 +31,6 @@ export interface ChallengeSession {
   estimatedDuration: number;
 }
 
-// Create a fallback challenge for when AI generation fails completely
-const createFallbackChallenge = (skillArea: string, difficulty: string, exerciseNumber: number): Exercise => {
-  const fallbackChallenges = {
-    strategy: [
-      {
-        id: `fallback-strategy-${exerciseNumber}`,
-        title: `Product Vision Challenge ${exerciseNumber}`,
-        type: 'multiple-choice',
-        timeLimit: 60,
-        content: {
-          context: 'You are leading product strategy for a growing SaaS company.',
-          instructions: 'Choose the best approach for defining your product vision.',
-          options: [
-            {
-              id: 'option-1',
-              text: 'Focus on customer feedback and market research',
-              isCorrect: true,
-              explanation: 'Customer-driven vision ensures market fit.'
-            },
-            {
-              id: 'option-2',
-              text: 'Follow competitor strategies',
-              isCorrect: false,
-              explanation: 'Following competitors limits innovation.'
-            }
-          ]
-        }
-      }
-    ],
-    research: [
-      {
-        id: `fallback-research-${exerciseNumber}`,
-        title: `User Research Challenge ${exerciseNumber}`,
-        type: 'multiple-choice',
-        timeLimit: 60,
-        content: {
-          context: 'You need to understand user needs for a new feature.',
-          instructions: 'Select the most effective research method.',
-          options: [
-            {
-              id: 'option-1',
-              text: 'Conduct user interviews with open-ended questions',
-              isCorrect: true,
-              explanation: 'User interviews provide deep qualitative insights.'
-            },
-            {
-              id: 'option-2',
-              text: 'Send out a survey with yes/no questions',
-              isCorrect: false,
-              explanation: 'Yes/no questions limit insight depth.'
-            }
-          ]
-        }
-      }
-    ],
-    analytics: [
-      {
-        id: `fallback-analytics-${exerciseNumber}`,
-        title: `Data Analysis Challenge ${exerciseNumber}`,
-        type: 'multiple-choice',
-        timeLimit: 60,
-        content: {
-          context: 'You need to analyze user engagement metrics.',
-          instructions: 'Choose the most important metric to track.',
-          options: [
-            {
-              id: 'option-1',
-              text: 'Daily Active Users (DAU)',
-              isCorrect: true,
-              explanation: 'DAU indicates consistent user value.'
-            },
-            {
-              id: 'option-2',
-              text: 'Total registered users',
-              isCorrect: false,
-              explanation: 'Registration doesn\'t indicate engagement.'
-            }
-          ]
-        }
-      }
-    ],
-    design: [
-      {
-        id: `fallback-design-${exerciseNumber}`,
-        title: `UX Design Challenge ${exerciseNumber}`,
-        type: 'multiple-choice',
-        timeLimit: 60,
-        content: {
-          context: 'You are designing a new user onboarding flow.',
-          instructions: 'Select the best UX principle to follow.',
-          options: [
-            {
-              id: 'option-1',
-              text: 'Progressive disclosure of information',
-              isCorrect: true,
-              explanation: 'Progressive disclosure reduces cognitive load.'
-            },
-            {
-              id: 'option-2',
-              text: 'Show all features immediately',
-              isCorrect: false,
-              explanation: 'Too much information overwhelms users.'
-            }
-          ]
-        }
-      }
-    ]
-  };
-
-  const categoryFallbacks = fallbackChallenges[skillArea as keyof typeof fallbackChallenges] || fallbackChallenges.strategy;
-  return categoryFallbacks[0];
-};
-
 export const generateDynamicChallenge = async (
   skillArea: string, 
   difficulty: string,
@@ -178,7 +65,7 @@ export const generateDynamicChallenge = async (
       }
     }
 
-    // PRIORITY: Generate unique AI challenges
+    // ALWAYS try AI generation first
     console.log('🤖 Attempting AI generation with enhanced uniqueness...');
     
     const aiPayload = {
@@ -187,10 +74,7 @@ export const generateDynamicChallenge = async (
       sessionContext,
       timestamp,
       uniquenessSeed: randomId,
-      exerciseCount: 4,
-      generateCompletely: true,
-      avoidRepetition: true,
-      requestId: `${sessionContext}-${Date.now()}`
+      exerciseCount: 4
     };
 
     console.log('📤 Sending AI request with payload:', aiPayload);
@@ -213,108 +97,115 @@ export const generateDynamicChallenge = async (
         sessionId: aiData.sessionId
       });
       
-      // Ensure unique IDs and proper structure
+      // Ensure proper structure and unique IDs
       let exercises = aiData.exercises || [];
       exercises = exercises.map((exercise: any, index: number) => ({
         ...exercise,
-        timeLimit: 60,
+        timeLimit: 180,
         id: `ai-${sessionContext}-ex${index + 1}-${timestamp}`
       }));
 
       // Validate we have 4 exercises
-      if (exercises.length < 4) {
-        console.warn('⚠️ AI generated fewer than 4 exercises, padding with unique variations');
-        while (exercises.length < 4) {
-          const baseExercise = exercises[exercises.length % exercises.length] || createFallbackChallenge(skillArea, difficulty, exercises.length + 1);
-          const newExercise = {
-            ...baseExercise,
-            id: `ai-variation-${sessionContext}-ex${exercises.length + 1}-${timestamp}`,
-            title: `${baseExercise.title} - Variation ${exercises.length + 1}`
+      if (exercises.length >= 4) {
+        return {
+          sessionId: `ai-session-${sessionContext}`,
+          skillArea,
+          difficulty,
+          totalExercises: 4,
+          exercises: exercises.slice(0, 4),
+          source: 'openai',
+          estimatedDuration: 720
+        };
+      } else {
+        console.warn('⚠️ AI generated fewer than 4 exercises, trying again...');
+        throw new Error('Insufficient exercises generated');
+      }
+    } else {
+      const errorText = await response.text();
+      console.error('❌ AI generation failed:', response.status, errorText);
+      throw new Error(`AI generation failed: ${response.status}`);
+    }
+  } catch (error) {
+    console.error('💥 AI generation error:', error);
+    
+    // Only fall back to static content if AI generation completely fails
+    console.warn('🔄 Falling back to static content - AI generation unavailable');
+    
+    const categoryData = enhancedChallengeDatabase[skillArea as keyof typeof enhancedChallengeDatabase];
+    
+    if (categoryData && Array.isArray(categoryData) && categoryData.length > 0) {
+      const filteredChallenges = categoryData.filter((challenge: any) => 
+        challenge.difficulty?.toLowerCase() === difficulty.toLowerCase()
+      );
+
+      const challengesToUse = filteredChallenges.length > 0 ? filteredChallenges : categoryData;
+      const selectedChallenges = [];
+      const usedIndices = new Set();
+
+      // Select up to 4 unique challenges
+      while (selectedChallenges.length < Math.min(4, challengesToUse.length)) {
+        const randomIndex = Math.floor(Math.random() * challengesToUse.length);
+        if (!usedIndices.has(randomIndex)) {
+          usedIndices.add(randomIndex);
+          const challenge = { 
+            ...challengesToUse[randomIndex], 
+            timeLimit: 180,
+            id: `static-${sessionContext}-${selectedChallenges.length}-${timestamp}`
           };
-          exercises.push(newExercise);
+          selectedChallenges.push(challenge);
         }
       }
 
       return {
-        sessionId: `ai-session-${sessionContext}`,
+        sessionId: `static-${sessionContext}`,
         skillArea,
         difficulty,
-        totalExercises: 4,
-        exercises: exercises.slice(0, 4),
-        source: 'openai',
-        estimatedDuration: 240
+        totalExercises: selectedChallenges.length,
+        exercises: selectedChallenges,
+        source: 'static',
+        estimatedDuration: selectedChallenges.length * 180
       };
-    } else {
-      const errorText = await response.text();
-      console.error('❌ AI generation failed:', response.status, errorText);
-    }
-  } catch (error) {
-    console.error('💥 AI generation error:', error);
-  }
-
-  // Only use static content as absolute last resort
-  console.warn('🔄 Falling back to static content - AI generation unavailable');
-  
-  const categoryData = enhancedChallengeDatabase[skillArea as keyof typeof enhancedChallengeDatabase];
-  
-  if (categoryData && Array.isArray(categoryData) && categoryData.length > 0) {
-    const filteredChallenges = categoryData.filter((challenge: any) => 
-      challenge.difficulty?.toLowerCase() === difficulty.toLowerCase()
-    );
-
-    const challengesToUse = filteredChallenges.length > 0 ? filteredChallenges : categoryData;
-    const selectedChallenges = [];
-    const usedIndices = new Set();
-
-    // Select up to 4 unique challenges
-    while (selectedChallenges.length < Math.min(4, challengesToUse.length)) {
-      const randomIndex = Math.floor(Math.random() * challengesToUse.length);
-      if (!usedIndices.has(randomIndex)) {
-        usedIndices.add(randomIndex);
-        const challenge = { 
-          ...challengesToUse[randomIndex], 
-          timeLimit: 60,
-          id: `static-${sessionContext}-${selectedChallenges.length}-${timestamp}`
-        };
-        selectedChallenges.push(challenge);
-      }
     }
 
-    // Fill to 4 exercises with fallbacks if needed
-    while (selectedChallenges.length < 4) {
-      const fallbackExercise = createFallbackChallenge(skillArea, difficulty, selectedChallenges.length + 1);
-      fallbackExercise.id = `fallback-${sessionContext}-${selectedChallenges.length}-${timestamp}`;
-      selectedChallenges.push(fallbackExercise);
+    // Emergency fallback
+    console.error('🚨 Emergency fallback - creating basic exercises');
+    const fallbackExercises = [];
+    
+    for (let i = 1; i <= 4; i++) {
+      fallbackExercises.push({
+        id: `emergency-${sessionContext}-${i}-${timestamp}`,
+        title: `${skillArea} Challenge ${i}`,
+        type: 'multiple-choice',
+        timeLimit: 180,
+        content: {
+          context: `You are working on a ${skillArea} challenge as a Product Manager.`,
+          instructions: 'Choose the best approach for this situation.',
+          options: [
+            {
+              id: 'option-1',
+              text: 'Focus on customer feedback and market research',
+              isCorrect: true,
+              explanation: 'Customer-driven approach ensures market fit.'
+            },
+            {
+              id: 'option-2',
+              text: 'Follow competitor strategies',
+              isCorrect: false,
+              explanation: 'Following competitors limits innovation.'
+            }
+          ]
+        }
+      });
     }
-
+    
     return {
-      sessionId: `static-${sessionContext}`,
+      sessionId: `emergency-${sessionContext}`,
       skillArea,
       difficulty,
       totalExercises: 4,
-      exercises: selectedChallenges,
+      exercises: fallbackExercises,
       source: 'static',
-      estimatedDuration: 240
+      estimatedDuration: 720
     };
   }
-
-  // Emergency fallback
-  console.error('🚨 Emergency fallback - no static data available');
-  const fallbackExercises = [];
-  
-  for (let i = 1; i <= 4; i++) {
-    const fallbackChallenge = createFallbackChallenge(skillArea, difficulty, i);
-    fallbackChallenge.id = `emergency-${sessionContext}-${i}-${timestamp}`;
-    fallbackExercises.push(fallbackChallenge);
-  }
-  
-  return {
-    sessionId: `emergency-${sessionContext}`,
-    skillArea,
-    difficulty,
-    totalExercises: 4,
-    exercises: fallbackExercises,
-    source: 'static',
-    estimatedDuration: 240
-  };
 };
