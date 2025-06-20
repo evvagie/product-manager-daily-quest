@@ -444,7 +444,7 @@ const SessionFeedback = () => {
                 </div>
                 
                 <div className="grid md:grid-cols-2 gap-4">
-                  <div className="p-4 bg-gray-800/50 rounded-lg">
+                  <div className="p-4 bg-gradient-to-br from-blue-500/15 via-teal-500/10 to-cyan-500/15 border border-blue-400/20 rounded-lg">
                     <h4 className="text-white font-medium mb-3 flex items-center">
                       <span className="text-green-400 mr-2">✓</span>
                       What You Did Well
@@ -456,7 +456,7 @@ const SessionFeedback = () => {
                     </ul>
                   </div>
                   
-                  <div className="p-4 bg-gray-800/50 rounded-lg">
+                  <div className="p-4 bg-gradient-to-br from-red-500/15 via-pink-500/10 to-purple-500/15 border border-red-400/20 rounded-lg">
                     <h4 className="text-white font-medium mb-3 flex items-center">
                       <span className="text-yellow-400 mr-2">📈</span>
                       Areas to Improve
