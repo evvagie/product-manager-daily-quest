@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -48,29 +49,6 @@ const Challenge = () => {
     return 'bg-gray-700 text-gray-300';
   };
 
-  // Helper function to get answer quality indicator
-  const getAnswerQuality = (answer: any) => {
-    if (!currentExercise || !answer) return null;
-    
-    const option = currentExercise.content.options?.find((opt: any) => opt.id === answer);
-    if (!option) return null;
-    
-    if (option.isCorrect) return 'Excellent';
-    if (option.quality === 'good') return 'Good';
-    if (option.quality === 'average') return 'Average';
-    return 'Poor';
-  };
-
-  const getQualityColor = (quality: string) => {
-    switch (quality) {
-      case 'Excellent': return 'text-green-600';
-      case 'Good': return 'text-blue-600';
-      case 'Average': return 'text-yellow-600';
-      case 'Poor': return 'text-red-600';
-      default: return 'text-gray-600';
-    }
-  };
-
   useEffect(() => {
     const loadChallengeSession = async () => {
       if (!skillArea || !difficulty) {
@@ -80,23 +58,16 @@ const Challenge = () => {
 
       setLoading(true);
       try {
-        console.log('🚀 Loading COMPLETELY NEW AI challenge session - FORCING unique generation for:', { skillArea, difficulty, challengeId });
+        console.log('🚀 Loading static challenge session for:', { skillArea, difficulty, challengeId });
         
-        // NEVER use cached or static content for regular sessions - always force new AI generation
         const challengeIdToUse = isRetryChallenge ? challengeId : null;
         
         const newChallengeSession = await generateDynamicChallenge(skillArea, difficulty, challengeIdToUse);
-        console.log('✅ UNIQUE Challenge session loaded:', {
+        console.log('✅ Static Challenge session loaded:', {
           sessionId: newChallengeSession.sessionId,
           source: newChallengeSession.source,
-          exerciseCount: newChallengeSession.totalExercises,
-          isUnique: newChallengeSession.source === 'openai'
+          exerciseCount: newChallengeSession.totalExercises
         });
-        
-        // Verify this is truly AI generated content
-        if (!isRetryChallenge && newChallengeSession.source !== 'openai') {
-          throw new Error('Failed to generate unique AI content - only static fallback available');
-        }
         
         setChallengeSession(newChallengeSession);
         setTimeLeft(180); // 3 minutes per exercise
@@ -109,27 +80,18 @@ const Challenge = () => {
             title: "🔄 Challenge Reloaded!",
             description: `Retrying "${location.state?.originalChallengeTitle || 'challenge'}"`,
           });
-        } else if (newChallengeSession.source === 'openai') {
-          toast({
-            title: "🤖 BRAND NEW AI Challenges Generated!",
-            description: `4 completely unique, never-before-seen exercises created just for you`,
-            duration: 4000,
-          });
         } else {
           toast({
-            title: "❌ AI Generation Failed",
-            description: "Unable to generate unique challenges. Please try again.",
-            variant: "destructive"
+            title: "📚 Static Challenges Loaded!",
+            description: `${newChallengeSession.totalExercises} different challenges selected for you`,
+            duration: 3000,
           });
-          // Go back to selection if AI generation failed
-          navigate('/challenge-selection');
-          return;
         }
       } catch (error) {
-        console.error('💥 CRITICAL Error loading challenge session:', error);
+        console.error('💥 Error loading challenge session:', error);
         toast({
-          title: "❌ Challenge Generation Failed",
-          description: "Unable to generate unique AI challenges. Please try again.",
+          title: "❌ Challenge Loading Failed",
+          description: "Unable to load challenges. Please try again.",
           variant: "destructive",
         });
         navigate('/challenge-selection');
@@ -178,8 +140,7 @@ const Challenge = () => {
       setCurrentExerciseIndex(nextIndex);
       setCurrentAnswer(null);
       setShowConsequences(false);
-      // Always reset timer to 60 seconds for each exercise
-      setTimeLeft(60);
+      setTimeLeft(180);
     }
   };
 
@@ -214,10 +175,10 @@ const Challenge = () => {
             <CardContent className="p-8 text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
               <h2 className="text-xl font-semibold text-gray-800 mb-2">
-                {challengeId ? "🔄 Loading Retry Challenge..." : "🤖 Generating COMPLETELY UNIQUE AI Challenges..."}
+                {challengeId ? "🔄 Loading Retry Challenge..." : "📚 Loading Static Challenges..."}
               </h2>
               <p className="text-gray-600">
-                {challengeId ? "Preparing your retry challenge..." : "Creating 4 brand new, never-before-seen exercises tailored specifically for you. Each challenge is completely unique and original."}
+                {challengeId ? "Preparing your retry challenge..." : "Selecting 4 different challenges from our library..."}
               </p>
             </CardContent>
           </Card>
@@ -269,11 +230,9 @@ const Challenge = () => {
                   <Badge variant="secondary" className="bg-purple-100 text-purple-700">
                     Exercise {currentExerciseIndex + 1} of {challengeSession.totalExercises}
                   </Badge>
-                  {challengeSession.source === 'openai' && (
-                    <Badge className="bg-purple-100 text-purple-700">
-                      🤖 AI Generated
-                    </Badge>
-                  )}
+                  <Badge className="bg-green-100 text-green-700">
+                    📚 Static
+                  </Badge>
                   {challengeId && (
                     <Badge className="bg-orange-100 text-orange-700">
                       🔄 Retry

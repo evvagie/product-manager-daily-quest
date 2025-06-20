@@ -36,18 +36,14 @@ export const generateDynamicChallenge = async (
   difficulty: string,
   specificChallengeId?: string | null
 ): Promise<ChallengeSession> => {
-  console.log('🎯 Generating COMPLETELY UNIQUE challenge session for:', { skillArea, difficulty, specificChallengeId });
+  console.log('🎯 Generating static challenge session for:', { skillArea, difficulty, specificChallengeId });
   
-  // Create ultra-unique session identifiers to prevent any repetition
   const timestamp = Date.now();
   const randomId = Math.random().toString(36).substring(2, 15);
-  const microTimestamp = performance.now();
-  const uniqueHash = btoa(`${skillArea}-${difficulty}-${timestamp}-${randomId}-${microTimestamp}`).substring(0, 10);
-  const sessionContext = `${skillArea}-${difficulty}-${timestamp}-${randomId}-${uniqueHash}`;
   
   try {
     // If specific challenge ID is provided (retry scenario), try to find it first
-    if (specificChallengeId && !specificChallengeId.includes('ai-session')) {
+    if (specificChallengeId) {
       const categoryData = enhancedChallengeDatabase[skillArea as keyof typeof enhancedChallengeDatabase];
       if (categoryData && Array.isArray(categoryData)) {
         const specificChallenge = categoryData.find((challenge: any) => challenge.id === specificChallengeId);
@@ -67,79 +63,59 @@ export const generateDynamicChallenge = async (
       }
     }
 
-    // FORCE AI generation with maximum retries
-    console.log('🤖 FORCING AI generation with maximum uniqueness parameters...');
+    // Fetch 4 different static exercises for the category/difficulty combination
+    console.log('📚 Fetching 4 different static exercises...');
     
-    const maxRetries = 3;
-    let lastError = null;
-    
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        console.log(`🔄 AI Generation attempt ${attempt}/${maxRetries}`);
-        
-        const aiPayload = {
-          skillArea,
-          difficulty,
-          sessionContext: `${sessionContext}-attempt${attempt}`,
-          timestamp: timestamp + attempt,
-          microTimestamp: microTimestamp + attempt,
-          uniquenessSeed: `${randomId}-attempt${attempt}`,
-          uniqueHash: `${uniqueHash}-${attempt}`,
-          exerciseCount: 4,
-          forceUnique: true,
-          sessionType: 'new-generation'
-        };
-
-        const response = await fetch(`https://xtnlfdcqaqtqxyzywaoh.supabase.co/functions/v1/generate-ai-challenge`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0bmxmZGNxYXF0cXh5enl3YW9oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAwOTkzMjEsImV4cCI6MjA2NTY3NTMyMX0.p05Zf-qKmWpmyI1Lc_t5lFZYG82ZXImCvZ1DxXi5uLA`
-          },
-          body: JSON.stringify(aiPayload)
-        });
-
-        if (response.ok) {
-          const aiData = await response.json();
-          
-          if (aiData.exercises && aiData.exercises.length === 4) {
-            console.log(`✅ AI Challenge generated successfully on attempt ${attempt}!`);
-            
-            return {
-              sessionId: `ai-session-${sessionContext}-attempt${attempt}`,
-              skillArea,
-              difficulty,
-              totalExercises: 4,
-              exercises: aiData.exercises.map((exercise: any, index: number) => ({
-                ...exercise,
-                timeLimit: 180,
-                id: `ai-${sessionContext}-attempt${attempt}-ex${index + 1}`
-              })),
-              source: 'openai',
-              estimatedDuration: 720
-            };
-          } else {
-            throw new Error(`AI generated ${aiData.exercises?.length || 0} exercises, need 4`);
-          }
-        } else {
-          const errorData = await response.json();
-          throw new Error(`AI API error: ${response.status} - ${errorData.error || 'Unknown error'}`);
-        }
-      } catch (error) {
-        console.error(`❌ AI generation attempt ${attempt} failed:`, error);
-        lastError = error;
-        
-        if (attempt < maxRetries) {
-          // Wait before retry with exponential backoff
-          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
-        }
-      }
+    const categoryData = enhancedChallengeDatabase[skillArea as keyof typeof enhancedChallengeDatabase];
+    if (!categoryData || !Array.isArray(categoryData)) {
+      throw new Error(`No challenges found for skill area: ${skillArea}`);
     }
+
+    // Filter challenges by difficulty
+    const filteredChallenges = categoryData.filter((challenge: any) => 
+      challenge.difficulty?.toLowerCase() === difficulty.toLowerCase()
+    );
+
+    if (filteredChallenges.length === 0) {
+      throw new Error(`No challenges found for ${skillArea} at ${difficulty} difficulty`);
+    }
+
+    // Shuffle the array to get random selection
+    const shuffledChallenges = [...filteredChallenges].sort(() => Math.random() - 0.5);
     
-    throw new Error(`All ${maxRetries} AI generation attempts failed. Last error: ${lastError?.message}`);
+    // Take up to 4 different challenges
+    const selectedChallenges = shuffledChallenges.slice(0, Math.min(4, shuffledChallenges.length));
+    
+    // If we have fewer than 4 challenges, repeat some but ensure we have 4 total
+    while (selectedChallenges.length < 4 && filteredChallenges.length > 0) {
+      const additionalChallenge = filteredChallenges[Math.floor(Math.random() * filteredChallenges.length)];
+      selectedChallenges.push(additionalChallenge);
+    }
+
+    // Add timeLimit and unique IDs to each exercise
+    const exercises = selectedChallenges.map((challenge: any, index: number) => ({
+      ...challenge,
+      timeLimit: 180,
+      id: `${challenge.id}-${timestamp}-${index}`
+    }));
+
+    console.log('✅ Successfully selected static challenges:', {
+      count: exercises.length,
+      titles: exercises.map(e => e.title)
+    });
+
+    return {
+      sessionId: `static-session-${skillArea}-${difficulty}-${timestamp}-${randomId}`,
+      skillArea,
+      difficulty,
+      totalExercises: exercises.length,
+      exercises,
+      source: 'static',
+      estimatedDuration: exercises.length * 180
+    };
     
   } catch (error) {
-    console.error('💥 CRITICAL: AI generation failed completely:', error);
-    throw new Error(`Failed to generate unique AI challenges: ${error.message}`);
+    console.error('💥 Error generating static challenge session:', error);
+    throw new Error(`Failed to generate static challenges: ${error.message}`);
   }
 };
