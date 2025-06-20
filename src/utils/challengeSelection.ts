@@ -83,18 +83,13 @@ export const getFallbackChallenges = (): any[] => {
   return [];
 };
 
-// Enhanced Fisher-Yates shuffle with multiple randomization sources
-const advancedShuffle = (array: any[], sessionSeed: number): any[] => {
+// Improved shuffle algorithm with time-based seeding
+const improvedShuffle = (array: any[]): any[] => {
   const shuffled = [...array];
-  
-  // Use multiple randomization sources for better entropy
-  const microTime = performance.now();
-  const randomMultiplier = Math.sin(sessionSeed) * 10000;
-  const timeBasedSeed = (sessionSeed + microTime + randomMultiplier) % 1000000;
+  const seed = Date.now() + Math.random() * 1000000;
   
   for (let i = shuffled.length - 1; i > 0; i--) {
-    // Create a pseudo-random number using multiple sources
-    const randomValue = Math.abs(Math.sin(timeBasedSeed + i * 137.508) * 43758.5453);
+    const randomValue = Math.abs(Math.sin(seed + i * 73.847) * 43758.5453);
     const j = Math.floor(randomValue % (i + 1));
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
@@ -107,106 +102,129 @@ export const selectUniqueChallenges = (availableChallenges: any[], count: number
     throw new Error('No challenges available for selection');
   }
 
-  // Create a session-specific seed based on current time and random factors
   const timestamp = Date.now();
-  const sessionSeed = timestamp + Math.random() * 1000000;
   
-  logDebug('Starting challenge selection with enhanced uniqueness', {
+  logDebug('Starting truly unique challenge selection', {
     availableCount: availableChallenges.length,
     requestedCount: count,
-    sessionSeed: Math.floor(sessionSeed)
+    timestamp
   });
 
-  // If we have fewer challenges than requested, we'll need to be creative
-  if (availableChallenges.length < count) {
-    logDebug('Not enough unique challenges, will create variants', {
-      available: availableChallenges.length,
-      needed: count
-    });
-  }
-
-  // Step 1: Remove any potential duplicates from source array based on title and content
-  const uniqueSourceChallenges: any[] = [];
+  // Step 1: Remove duplicates based on multiple criteria
+  const uniqueChallenges: any[] = [];
+  const seenIds = new Set<string>();
   const seenTitles = new Set<string>();
-  const seenContentHashes = new Set<string>();
+  const seenTypes = new Set<string>();
+  const seenScenarios = new Set<string>();
 
   for (const challenge of availableChallenges) {
-    const titleKey = challenge.title?.toLowerCase().trim();
-    const contentKey = JSON.stringify(challenge.content || {});
-    const contentHash = btoa(contentKey).substring(0, 20); // Simple hash
+    const id = challenge.id;
+    const title = challenge.title?.toLowerCase().trim() || '';
+    const type = challenge.type || 'unknown';
+    const scenario = challenge.content?.scenario?.toLowerCase().trim() || '';
+    const context = challenge.content?.context?.toLowerCase().trim() || '';
     
-    if (!seenTitles.has(titleKey) && !seenContentHashes.has(contentHash)) {
-      uniqueSourceChallenges.push(challenge);
-      seenTitles.add(titleKey);
-      seenContentHashes.add(contentHash);
+    // Create a composite key for scenario uniqueness
+    const scenarioKey = `${scenario}-${context}`.substring(0, 100);
+    
+    // Only add if completely unique across all criteria
+    if (!seenIds.has(id) && 
+        !seenTitles.has(title) && 
+        !seenScenarios.has(scenarioKey)) {
+      
+      uniqueChallenges.push({...challenge});
+      seenIds.add(id);
+      seenTitles.add(title);
+      seenTypes.add(type);
+      seenScenarios.add(scenarioKey);
     }
   }
 
-  logDebug('Filtered to truly unique challenges', {
+  logDebug('After deduplication', {
     originalCount: availableChallenges.length,
-    uniqueCount: uniqueSourceChallenges.length
+    uniqueCount: uniqueChallenges.length,
+    uniqueIds: uniqueChallenges.map(c => c.id),
+    uniqueTitles: uniqueChallenges.map(c => c.title)
   });
 
-  // Step 2: Apply advanced shuffling
-  const shuffledChallenges = advancedShuffle(uniqueSourceChallenges, sessionSeed);
-  
-  // Step 3: Select challenges with absolute uniqueness guarantee
-  const selectedChallenges: any[] = [];
-  const usedIds = new Set<string>();
-  const usedTitles = new Set<string>();
-  const usedContentHashes = new Set<string>();
+  if (uniqueChallenges.length === 0) {
+    throw new Error('No unique challenges found after deduplication');
+  }
 
-  // First pass: select completely unique challenges
+  // Step 2: Shuffle the unique challenges
+  const shuffledChallenges = improvedShuffle(uniqueChallenges);
+
+  // Step 3: Select the required number with guaranteed uniqueness
+  const selectedChallenges: any[] = [];
+  const finalSeenIds = new Set<string>();
+  const finalSeenTitles = new Set<string>();
+
   for (let i = 0; i < shuffledChallenges.length && selectedChallenges.length < count; i++) {
     const challenge = shuffledChallenges[i];
-    const titleKey = challenge.title?.toLowerCase().trim();
-    const contentKey = JSON.stringify(challenge.content || {});
-    const contentHash = btoa(contentKey).substring(0, 20);
+    const challengeId = challenge.id;
+    const challengeTitle = challenge.title?.toLowerCase().trim() || '';
     
-    if (!usedIds.has(challenge.id) && 
-        !usedTitles.has(titleKey) && 
-        !usedContentHashes.has(contentHash)) {
+    if (!finalSeenIds.has(challengeId) && !finalSeenTitles.has(challengeTitle)) {
+      // Create a unique instance with timestamp-based ID
+      const uniqueInstanceId = `${challengeId}-${timestamp}-${selectedChallenges.length}-${Math.floor(Math.random() * 10000)}`;
       
-      selectedChallenges.push({ ...challenge });
-      usedIds.add(challenge.id);
-      usedTitles.add(titleKey);
-      usedContentHashes.add(contentHash);
+      const uniqueInstance = {
+        ...challenge,
+        id: uniqueInstanceId,
+        originalId: challengeId,
+        instanceIndex: selectedChallenges.length,
+        title: `${challenge.title} (Challenge ${selectedChallenges.length + 1})`
+      };
+      
+      selectedChallenges.push(uniqueInstance);
+      finalSeenIds.add(challengeId);
+      finalSeenTitles.add(challengeTitle);
     }
   }
 
-  // Step 4: If we still need more challenges, create variants with unique IDs
-  while (selectedChallenges.length < count && uniqueSourceChallenges.length > 0) {
-    const sourceIndex = selectedChallenges.length % uniqueSourceChallenges.length;
-    const sourceChallenge = uniqueSourceChallenges[sourceIndex];
+  // Step 4: If we still need more challenges, create variants from different categories
+  if (selectedChallenges.length < count && uniqueChallenges.length > 0) {
+    const remainingNeeded = count - selectedChallenges.length;
+    logDebug(`Need ${remainingNeeded} more challenges, creating variants`, {});
     
-    // Create a variant with a completely unique ID and slight modifications
-    const variantId = `${sourceChallenge.id}-variant-${timestamp}-${selectedChallenges.length}`;
-    const variant = {
-      ...sourceChallenge,
-      id: variantId,
-      title: `${sourceChallenge.title} (Scenario ${selectedChallenges.length + 1})`,
-      content: {
-        ...sourceChallenge.content,
-        context: sourceChallenge.content?.context ? 
-          `${sourceChallenge.content.context} (Alternative scenario)` : 
-          sourceChallenge.content?.context
-      }
-    };
-    
-    selectedChallenges.push(variant);
+    for (let i = 0; i < remainingNeeded && uniqueChallenges.length > 0; i++) {
+      const sourceIndex = i % uniqueChallenges.length;
+      const sourceChallenge = uniqueChallenges[sourceIndex];
+      
+      const variantId = `variant-${sourceChallenge.id}-${timestamp}-${selectedChallenges.length}-${Math.floor(Math.random() * 10000)}`;
+      
+      const variant = {
+        ...sourceChallenge,
+        id: variantId,
+        originalId: sourceChallenge.id,
+        instanceIndex: selectedChallenges.length,
+        title: `${sourceChallenge.title} (Variant ${selectedChallenges.length + 1})`,
+        content: {
+          ...sourceChallenge.content,
+          context: `${sourceChallenge.content?.context || ''} (Alternative scenario)`,
+          scenario: `${sourceChallenge.content?.scenario || ''} (Different context)`
+        }
+      };
+      
+      selectedChallenges.push(variant);
+    }
   }
 
-  // Final validation: ensure all selected challenges have unique IDs
-  const finalUniqueIds = new Set(selectedChallenges.map(c => c.id));
-  if (finalUniqueIds.size !== selectedChallenges.length) {
-    throw new Error('Failed to generate unique challenges - duplicate IDs detected');
+  // Final validation
+  const finalIds = selectedChallenges.map(c => c.id);
+  const uniqueIdCount = new Set(finalIds).size;
+  
+  if (uniqueIdCount !== selectedChallenges.length) {
+    logDebug('ERROR: Duplicate IDs detected!', { finalIds });
+    throw new Error('Failed to create unique challenges - duplicate IDs found');
   }
 
-  logChallengeSelection('Successfully selected unique challenges with enhanced algorithm', {
-    selected: selectedChallenges.length,
-    sessionSeed: Math.floor(sessionSeed),
-    uniqueIds: selectedChallenges.map(c => c.id),
-    titles: selectedChallenges.map(c => c.title)
+  logChallengeSelection('Successfully selected completely unique challenges', {
+    selectedCount: selectedChallenges.length,
+    requestedCount: count,
+    uniqueIds: finalIds,
+    titles: selectedChallenges.map(c => c.title),
+    types: selectedChallenges.map(c => c.type)
   });
 
   return selectedChallenges.map((challenge: any, index: number) => 

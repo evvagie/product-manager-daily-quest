@@ -15,18 +15,25 @@ export const generateRetrySessionId = (challengeId: string): string => {
 };
 
 export const addExerciseMetadata = (challenge: any, timestamp: number, index: number) => {
-  // Generate a truly unique ID for each exercise instance
-  const uniqueInstanceId = `${challenge.id}-${timestamp}-${index}-${Math.random().toString(36).substring(2, 15)}`;
+  // Generate multiple unique identifiers to ensure absolute uniqueness
+  const microTime = performance.now().toString().replace('.', '');
+  const randomSuffix = Math.random().toString(36).substring(2, 10);
+  const indexSuffix = index.toString().padStart(2, '0');
+  
+  // Create a completely unique ID that's impossible to duplicate
+  const absoluteUniqueId = `${challenge.id}-${timestamp}-${microTime}-${indexSuffix}-${randomSuffix}`;
   
   return {
     ...challenge,
     timeLimit: 180,
-    id: uniqueInstanceId,
-    originalId: challenge.id, // Keep reference to original
+    id: absoluteUniqueId,
+    originalId: challenge.originalId || challenge.id,
     instanceIndex: index,
+    uniqueTimestamp: timestamp,
     content: {
       ...challenge.content,
-      instructions: 'Complete this challenge to the best of your ability.'
+      instructions: 'Complete this challenge to the best of your ability.',
+      uniqueMarker: `exercise-${index + 1}-${timestamp}` // Additional uniqueness marker
     }
   };
 };
