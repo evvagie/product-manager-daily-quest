@@ -369,9 +369,10 @@ const Pricing = () => {
           </p>
           <Button 
             onClick={handleGetStarted}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 text-lg font-medium animate-pulse whitespace-nowrap"
+            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 text-lg font-medium animate-pulse whitespace-nowrap !text-white force-white-text"
+            style={{ color: 'white !important' }}
           >
-            Start Building Your Skills Today
+            <span className="text-white">Start Building Your Skills Today</span>
           </Button>
           <p className="text-sm text-gray-500 mt-4">
             No credit card required • Free forever plan available • 10x more affordable than traditional certifications
