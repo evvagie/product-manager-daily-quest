@@ -1,4 +1,3 @@
-
 import { enhancedChallengeDatabase } from '@/data/enhancedChallengeData';
 
 export interface Exercise {
@@ -41,22 +40,24 @@ export const generateDynamicChallenge = async (
   try {
     // If specific challenge ID is provided, try to find it first
     if (specificChallengeId) {
-      const specificChallenge = enhancedChallengeDatabase[skillArea as keyof typeof enhancedChallengeDatabase]
-        ?.find((challenge: any) => challenge.id === specificChallengeId);
-      
-      if (specificChallenge) {
-        console.log('Found specific challenge:', specificChallenge.title);
-        return {
-          sessionId: `retry-${specificChallengeId}-${Date.now()}`,
-          skillArea,
-          difficulty,
-          totalExercises: 1,
-          exercises: [specificChallenge],
-          source: 'static',
-          estimatedDuration: specificChallenge.timeLimit
-        };
-      } else {
-        console.warn('Specific challenge not found, falling back to normal generation');
+      const categoryData = enhancedChallengeDatabase[skillArea as keyof typeof enhancedChallengeDatabase];
+      if (categoryData && Array.isArray(categoryData)) {
+        const specificChallenge = categoryData.find((challenge: any) => challenge.id === specificChallengeId);
+        
+        if (specificChallenge) {
+          console.log('Found specific challenge:', specificChallenge.title);
+          return {
+            sessionId: `retry-${specificChallengeId}-${Date.now()}`,
+            skillArea,
+            difficulty,
+            totalExercises: 1,
+            exercises: [specificChallenge],
+            source: 'static',
+            estimatedDuration: specificChallenge.timeLimit
+          };
+        } else {
+          console.warn('Specific challenge not found, falling back to normal generation');
+        }
       }
     }
 
@@ -92,7 +93,7 @@ export const generateDynamicChallenge = async (
 
     // Fallback to enhanced static content
     const categoryData = enhancedChallengeDatabase[skillArea as keyof typeof enhancedChallengeDatabase];
-    if (!categoryData || categoryData.length === 0) {
+    if (!categoryData || !Array.isArray(categoryData) || categoryData.length === 0) {
       throw new Error(`No challenge data available for ${skillArea}`);
     }
 
