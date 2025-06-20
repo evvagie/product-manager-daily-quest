@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -81,20 +80,26 @@ const Challenge = () => {
 
       setLoading(true);
       try {
-        console.log('🚀 Loading NEW challenge session - forcing AI generation for:', { skillArea, difficulty, challengeId });
+        console.log('🚀 Loading COMPLETELY NEW AI challenge session - FORCING unique generation for:', { skillArea, difficulty, challengeId });
         
-        // Force new AI generation by not passing challengeId for regular sessions
+        // NEVER use cached or static content for regular sessions - always force new AI generation
         const challengeIdToUse = isRetryChallenge ? challengeId : null;
         
         const newChallengeSession = await generateDynamicChallenge(skillArea, difficulty, challengeIdToUse);
-        console.log('✅ Challenge session loaded:', {
+        console.log('✅ UNIQUE Challenge session loaded:', {
           sessionId: newChallengeSession.sessionId,
           source: newChallengeSession.source,
-          exerciseCount: newChallengeSession.totalExercises
+          exerciseCount: newChallengeSession.totalExercises,
+          isUnique: newChallengeSession.source === 'openai'
         });
         
+        // Verify this is truly AI generated content
+        if (!isRetryChallenge && newChallengeSession.source !== 'openai') {
+          throw new Error('Failed to generate unique AI content - only static fallback available');
+        }
+        
         setChallengeSession(newChallengeSession);
-        setTimeLeft(60);
+        setTimeLeft(180); // 3 minutes per exercise
         setExerciseAnswers(new Array(newChallengeSession.totalExercises).fill(null));
         
         // Show appropriate success message
@@ -106,21 +111,25 @@ const Challenge = () => {
           });
         } else if (newChallengeSession.source === 'openai') {
           toast({
-            title: "🤖 NEW AI Challenge Generated!",
-            description: `4 completely unique exercises created just for you`,
+            title: "🤖 BRAND NEW AI Challenges Generated!",
+            description: `4 completely unique, never-before-seen exercises created just for you`,
+            duration: 4000,
           });
         } else {
           toast({
-            title: "⚠️ Using Static Content",
-            description: "AI generation unavailable, using enhanced static challenges",
+            title: "❌ AI Generation Failed",
+            description: "Unable to generate unique challenges. Please try again.",
             variant: "destructive"
           });
+          // Go back to selection if AI generation failed
+          navigate('/challenge-selection');
+          return;
         }
       } catch (error) {
-        console.error('💥 Error loading challenge session:', error);
+        console.error('💥 CRITICAL Error loading challenge session:', error);
         toast({
-          title: "Error",
-          description: "Failed to load challenge session. Please try again.",
+          title: "❌ Challenge Generation Failed",
+          description: "Unable to generate unique AI challenges. Please try again.",
           variant: "destructive",
         });
         navigate('/challenge-selection');
@@ -205,10 +214,10 @@ const Challenge = () => {
             <CardContent className="p-8 text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
               <h2 className="text-xl font-semibold text-gray-800 mb-2">
-                {challengeId ? "🔄 Loading Retry Challenge..." : "🤖 Generating UNIQUE AI Challenges..."}
+                {challengeId ? "🔄 Loading Retry Challenge..." : "🤖 Generating COMPLETELY UNIQUE AI Challenges..."}
               </h2>
               <p className="text-gray-600">
-                {challengeId ? "Preparing your retry challenge..." : "Creating 4 completely new, unique exercises tailored to your skill level. This may take a few moments."}
+                {challengeId ? "Preparing your retry challenge..." : "Creating 4 brand new, never-before-seen exercises tailored specifically for you. Each challenge is completely unique and original."}
               </p>
             </CardContent>
           </Card>
@@ -302,7 +311,7 @@ const Challenge = () => {
             <CardContent className="p-4">
               <TimePressureIndicator
                 timeLeft={timeLeft}
-                totalTime={60}
+                totalTime={180}
                 onTimeUp={handleTimeUp}
               />
             </CardContent>

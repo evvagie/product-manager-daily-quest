@@ -1,6 +1,5 @@
 
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import "https://deno.land/x/xhr@0.1.0/mod.ts";import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -14,10 +13,29 @@ serve(async (req) => {
   }
 
   try {
-    const { skillArea, difficulty, exerciseCount = 4, sessionContext, uniquenessSeed } = await req.json();
+    const { 
+      skillArea, 
+      difficulty, 
+      exerciseCount = 4, 
+      sessionContext, 
+      uniquenessSeed, 
+      timestamp,
+      microTimestamp,
+      uniqueHash,
+      forceUnique = true 
+    } = await req.json();
+    
     const openAIApiKey = Deno.env.get('YUNO_KEY');
 
-    console.log('Generate AI Challenge called with:', { skillArea, difficulty, exerciseCount, sessionContext });
+    console.log('🎯 Generate UNIQUE AI Challenge called with:', { 
+      skillArea, 
+      difficulty, 
+      exerciseCount, 
+      sessionContext, 
+      forceUnique,
+      timestamp,
+      microTimestamp 
+    });
     console.log('API Key available:', !!openAIApiKey);
 
     if (!openAIApiKey) {
@@ -31,65 +49,60 @@ serve(async (req) => {
       });
     }
 
-    // Create unique session identifiers
-    const timestamp = Date.now();
-    const randomId = uniquenessSeed || Math.floor(Math.random() * 100000);
-    const uniqueSessionId = `${skillArea}-${difficulty}-${timestamp}-${randomId}`;
+    // Create ultra-unique session identifiers
+    const ultraUniqueId = `${skillArea}-${difficulty}-${timestamp}-${microTimestamp}-${uniquenessSeed}-${uniqueHash}`;
+    const randomVariation = Math.floor(Math.random() * 1000000);
 
-    console.log('Generating unique session:', uniqueSessionId);
+    console.log('🚀 Generating COMPLETELY UNIQUE session:', ultraUniqueId);
 
-    const prompt = `You are an expert Product Manager challenge generator. Create exactly ${exerciseCount} completely unique and different Product Manager challenges.
+    const prompt = `You are an expert Product Manager challenge generator. Your task is to create ${exerciseCount} COMPLETELY UNIQUE and DIFFERENT Product Manager challenges that have NEVER been generated before.
 
-CRITICAL REQUIREMENTS:
-- Generate ENTIRELY NEW scenarios each time - never repeat content
-- Each exercise must be completely different from the others
-- Return ONLY valid JSON with no additional text, comments, or formatting
-- All JSON properties must be properly quoted
-- No trailing commas or syntax errors
-
-SESSION INFO:
-- Session ID: ${uniqueSessionId}
+CRITICAL UNIQUENESS REQUIREMENTS:
+- Session ID: ${ultraUniqueId}
+- Random Variation: ${randomVariation}
+- EVERY scenario must be completely original and different
+- NO repetition of content, scenarios, or solutions
+- Each exercise must have unique context, problems, and options
+- Use current date: ${new Date().toISOString()}
 - Skill Area: ${skillArea}
 - Difficulty: ${difficulty}
-- Unique Seed: ${randomId}
 
-RESPONSE FORMAT - Return ONLY this JSON structure:
+RESPONSE FORMAT - Return ONLY this JSON structure with NO additional text:
 {
-  "sessionId": "${uniqueSessionId}",
+  "sessionId": "${ultraUniqueId}",
   "skillArea": "${skillArea}",
   "difficulty": "${difficulty}",
   "totalExercises": ${exerciseCount},
   "exercises": [
     {
-      "id": "exercise-1",
-      "title": "Unique Exercise Title",
-      "description": "Brief exercise description",
+      "id": "exercise-${randomVariation}-1",
+      "title": "Completely Unique Challenge Title",
+      "description": "Original exercise description",
       "type": "multiple-choice",
       "timeLimit": 180,
       "content": {
-        "context": "Detailed scenario background",
-        "scenario": "Specific problem to solve",
+        "context": "Original detailed scenario background - must be unique",
+        "scenario": "Specific unique problem to solve",
         "instructions": "Clear user instructions",
-        "data": "Supporting information",
+        "data": "Supporting information specific to this scenario",
         "options": [
           {
-            "id": "option-1",
-            "text": "First option description",
+            "id": "option-${randomVariation}-1",
+            "text": "First unique option description",
             "isCorrect": true,
-            "explanation": "Why this is correct",
-            "consequences": [
-              {
-                "type": "positive",
-                "title": "Immediate Impact",
-                "description": "What happens next"
-              }
-            ]
+            "explanation": "Detailed explanation why this is correct for this specific scenario"
           },
           {
-            "id": "option-2",
-            "text": "Second option description",
+            "id": "option-${randomVariation}-2",
+            "text": "Second unique option description",
             "isCorrect": false,
-            "explanation": "Why this is incorrect"
+            "explanation": "Detailed explanation why this is incorrect for this specific scenario"
+          },
+          {
+            "id": "option-${randomVariation}-3",
+            "text": "Third unique option description",
+            "isCorrect": false,
+            "explanation": "Detailed explanation why this is incorrect for this specific scenario"
           }
         ]
       }
@@ -97,9 +110,17 @@ RESPONSE FORMAT - Return ONLY this JSON structure:
   ]
 }
 
-Create ${exerciseCount} realistic ${skillArea} scenarios for ${difficulty} level Product Managers. Make each exercise completely unique with different contexts, problems, and solutions.`;
+GENERATE ${exerciseCount} COMPLETELY ORIGINAL ${skillArea} scenarios for Product Managers at ${difficulty} level. Each must be entirely different with unique:
+- Company situations
+- Product challenges
+- Market contexts
+- Team dynamics
+- Technical constraints
+- Business objectives
 
-    console.log('Sending request to OpenAI with model gpt-4o-mini');
+Make every scenario fresh, realistic, and never before seen. Use your creativity to ensure maximum uniqueness.`;
+
+    console.log('🤖 Sending request to OpenAI with ultra-unique prompt');
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -112,31 +133,33 @@ Create ${exerciseCount} realistic ${skillArea} scenarios for ${difficulty} level
         messages: [
           { 
             role: 'system', 
-            content: `You are a Product Manager challenge generator. Always respond with ONLY valid JSON. No additional text, explanations, or formatting. Session: ${uniqueSessionId}` 
+            content: `You are an expert Product Manager challenge generator. Your mission is to create COMPLETELY UNIQUE challenges that have never been generated before. Use maximum creativity and originality. Session: ${ultraUniqueId} | Variation: ${randomVariation}` 
           },
           { 
             role: 'user', 
             content: prompt 
           }
         ],
-        temperature: 0.9,
-        max_tokens: 3500,
-        presence_penalty: 0.6,
-        frequency_penalty: 0.8,
+        temperature: 1.0,
+        max_tokens: 4000,
+        presence_penalty: 1.0,
+        frequency_penalty: 1.0,
+        top_p: 0.95,
+        seed: randomVariation
       }),
     });
 
-    console.log('OpenAI Response Status:', response.status);
+    console.log('📥 OpenAI Response Status:', response.status);
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`OpenAI API error: ${response.status} ${response.statusText}`);
+      console.error(`❌ OpenAI API error: ${response.status} ${response.statusText}`);
       console.error('Error details:', errorText);
       
       return new Response(JSON.stringify({ 
         error: `OpenAI API error: ${response.status}`,
         details: errorText,
-        fallback: true 
+        sessionId: ultraUniqueId
       }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -146,79 +169,69 @@ Create ${exerciseCount} realistic ${skillArea} scenarios for ${difficulty} level
     const data = await response.json();
     const generatedContent = data.choices[0].message.content;
     
-    console.log('Raw OpenAI response length:', generatedContent.length);
-    console.log('First 200 chars:', generatedContent.substring(0, 200));
+    console.log('✅ Raw OpenAI response received, length:', generatedContent.length);
+    console.log('First 300 chars:', generatedContent.substring(0, 300));
 
     // Parse and validate the JSON response
     let challengeSession;
     try {
-      // Clean the response - remove any markdown formatting or extra whitespace
+      // Clean the response aggressively
       const cleanContent = generatedContent
         .replace(/```json\n?/g, '')
         .replace(/```\n?/g, '')
         .replace(/^\s+|\s+$/g, '')
+        .replace(/[\r\n]+/g, ' ')
+        .replace(/\s+/g, ' ')
         .trim();
       
       challengeSession = JSON.parse(cleanContent);
-      console.log('Successfully parsed JSON with', challengeSession.exercises?.length || 0, 'exercises');
-    } catch (parseError) {
-      console.error('JSON parse error:', parseError);
-      console.error('Raw content that failed to parse:', generatedContent);
+      console.log('🎉 Successfully parsed JSON with', challengeSession.exercises?.length || 0, 'exercises');
       
-      // Create a fallback structure if JSON parsing fails
-      challengeSession = {
-        sessionId: uniqueSessionId,
-        skillArea: skillArea,
-        difficulty: difficulty,
-        totalExercises: exerciseCount,
-        exercises: []
-      };
-      
-      // Generate fallback exercises
-      for (let i = 1; i <= exerciseCount; i++) {
-        challengeSession.exercises.push({
-          id: `fallback-exercise-${i}`,
-          title: `${skillArea} Challenge ${i}`,
-          description: `Product Manager challenge for ${skillArea}`,
-          type: "multiple-choice",
-          timeLimit: 180,
-          content: {
-            context: `You are working on a ${skillArea} challenge as a Product Manager.`,
-            scenario: `Scenario ${i}: Make the best decision for your product.`,
-            instructions: "Choose the most appropriate option.",
-            data: "Consider the context and make your choice.",
-            options: [
-              {
-                id: "option-1",
-                text: "Option A: Focus on user feedback and data",
-                isCorrect: true,
-                explanation: "This approach prioritizes user needs and evidence-based decisions."
-              },
-              {
-                id: "option-2",
-                text: "Option B: Follow competitor strategies",
-                isCorrect: false,
-                explanation: "Simply copying competitors may not align with your unique value proposition."
-              }
-            ]
-          }
-        });
+      // Validate exercises
+      if (!challengeSession.exercises || !Array.isArray(challengeSession.exercises)) {
+        throw new Error('Invalid exercises array');
       }
+      
+      // Ensure each exercise has proper structure
+      challengeSession.exercises = challengeSession.exercises.map((exercise: any, index: number) => ({
+        ...exercise,
+        id: `unique-${ultraUniqueId}-ex${index + 1}`,
+        timeLimit: 180,
+        content: {
+          ...exercise.content,
+          options: exercise.content?.options?.map((option: any, optIndex: number) => ({
+            ...option,
+            id: `opt-${ultraUniqueId}-${index}-${optIndex}`
+          })) || []
+        }
+      }));
+      
+    } catch (parseError) {
+      console.error('💥 JSON parse error:', parseError);
+      console.error('Content that failed to parse:', generatedContent.substring(0, 500));
+      
+      return new Response(JSON.stringify({ 
+        error: 'Failed to parse AI response as JSON',
+        details: parseError.message,
+        sessionId: ultraUniqueId,
+        rawContent: generatedContent.substring(0, 200)
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
-    // Validate exercise structure
-    if (!challengeSession.exercises || !Array.isArray(challengeSession.exercises) || challengeSession.exercises.length !== exerciseCount) {
-      console.error('Invalid exercise structure:', {
-        hasExercises: !!challengeSession.exercises,
-        isArray: Array.isArray(challengeSession.exercises),
-        length: challengeSession.exercises?.length,
-        expected: exerciseCount
+    // Final validation
+    if (!challengeSession.exercises || challengeSession.exercises.length !== exerciseCount) {
+      console.error('❌ Invalid exercise count:', {
+        expected: exerciseCount,
+        received: challengeSession.exercises?.length || 0
       });
       
       return new Response(JSON.stringify({ 
-        error: 'Invalid exercise structure from OpenAI',
-        details: `Expected ${exerciseCount} exercises, got ${challengeSession.exercises?.length || 0}`,
-        fallback: true 
+        error: `Invalid exercise structure - expected ${exerciseCount} exercises`,
+        details: `Received ${challengeSession.exercises?.length || 0} exercises`,
+        sessionId: ultraUniqueId
       }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -226,16 +239,18 @@ Create ${exerciseCount} realistic ${skillArea} scenarios for ${difficulty} level
     }
 
     // Ensure required fields
-    challengeSession.sessionId = challengeSession.sessionId || uniqueSessionId;
+    challengeSession.sessionId = ultraUniqueId;
     challengeSession.source = 'openai';
-    challengeSession.randomSeed = randomId;
+    challengeSession.randomSeed = randomVariation;
     challengeSession.timestamp = timestamp;
+    challengeSession.microTimestamp = microTimestamp;
 
-    console.log('Successfully generated AI challenge session:', {
+    console.log('🎯 Successfully generated UNIQUE AI challenge session:', {
       sessionId: challengeSession.sessionId,
       exerciseCount: challengeSession.exercises.length,
       skillArea: challengeSession.skillArea,
-      difficulty: challengeSession.difficulty
+      difficulty: challengeSession.difficulty,
+      uniqueId: ultraUniqueId
     });
 
     return new Response(JSON.stringify(challengeSession), {
@@ -243,11 +258,11 @@ Create ${exerciseCount} realistic ${skillArea} scenarios for ${difficulty} level
     });
 
   } catch (error) {
-    console.error('Error in generate-ai-challenge function:', error);
+    console.error('💥 Error in generate-ai-challenge function:', error);
     return new Response(JSON.stringify({ 
       error: error.message,
-      fallback: true,
-      details: 'Unexpected error in challenge generation'
+      details: 'Unexpected error in AI challenge generation',
+      timestamp: Date.now()
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

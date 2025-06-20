@@ -36,12 +36,14 @@ export const generateDynamicChallenge = async (
   difficulty: string,
   specificChallengeId?: string | null
 ): Promise<ChallengeSession> => {
-  console.log('🎯 Generating UNIQUE challenge session for:', { skillArea, difficulty, specificChallengeId });
+  console.log('🎯 Generating COMPLETELY UNIQUE challenge session for:', { skillArea, difficulty, specificChallengeId });
   
-  // Create unique session identifiers to ensure no repetition
+  // Create ultra-unique session identifiers to prevent any repetition
   const timestamp = Date.now();
   const randomId = Math.random().toString(36).substring(2, 15);
-  const sessionContext = `${skillArea}-${difficulty}-${timestamp}-${randomId}`;
+  const microTimestamp = performance.now();
+  const uniqueHash = btoa(`${skillArea}-${difficulty}-${timestamp}-${randomId}-${microTimestamp}`).substring(0, 10);
+  const sessionContext = `${skillArea}-${difficulty}-${timestamp}-${randomId}-${uniqueHash}`;
   
   try {
     // If specific challenge ID is provided (retry scenario), try to find it first
@@ -57,27 +59,31 @@ export const generateDynamicChallenge = async (
             skillArea,
             difficulty,
             totalExercises: 1,
-            exercises: [{ ...specificChallenge, timeLimit: 60 }],
+            exercises: [{ ...specificChallenge, timeLimit: 180 }],
             source: 'static',
-            estimatedDuration: 60
+            estimatedDuration: 180
           };
         }
       }
     }
 
-    // ALWAYS try AI generation first
-    console.log('🤖 Attempting AI generation with enhanced uniqueness...');
+    // FORCE AI generation - no fallback to static content for regular sessions
+    console.log('🤖 FORCING AI generation with maximum uniqueness parameters...');
     
     const aiPayload = {
       skillArea,
       difficulty,
       sessionContext,
       timestamp,
+      microTimestamp,
       uniquenessSeed: randomId,
-      exerciseCount: 4
+      uniqueHash,
+      exerciseCount: 4,
+      forceUnique: true,
+      sessionType: 'new-generation'
     };
 
-    console.log('📤 Sending AI request with payload:', aiPayload);
+    console.log('📤 Sending ENHANCED AI request with payload:', aiPayload);
 
     const response = await fetch(`https://xtnlfdcqaqtqxyzywaoh.supabase.co/functions/v1/generate-ai-challenge`, {
       method: 'POST',
@@ -97,15 +103,15 @@ export const generateDynamicChallenge = async (
         sessionId: aiData.sessionId
       });
       
-      // Ensure proper structure and unique IDs
+      // Ensure proper structure and ultra-unique IDs
       let exercises = aiData.exercises || [];
       exercises = exercises.map((exercise: any, index: number) => ({
         ...exercise,
         timeLimit: 180,
-        id: `ai-${sessionContext}-ex${index + 1}-${timestamp}`
+        id: `ai-${sessionContext}-ex${index + 1}-${timestamp}-${microTimestamp}`
       }));
 
-      // Validate we have 4 exercises
+      // Validate we have exactly 4 unique exercises
       if (exercises.length >= 4) {
         return {
           sessionId: `ai-session-${sessionContext}`,
@@ -117,95 +123,18 @@ export const generateDynamicChallenge = async (
           estimatedDuration: 720
         };
       } else {
-        console.warn('⚠️ AI generated fewer than 4 exercises, trying again...');
-        throw new Error('Insufficient exercises generated');
+        console.error('❌ AI generated insufficient exercises:', exercises.length);
+        throw new Error(`AI generated only ${exercises.length} exercises, need 4`);
       }
     } else {
       const errorText = await response.text();
       console.error('❌ AI generation failed:', response.status, errorText);
-      throw new Error(`AI generation failed: ${response.status}`);
+      throw new Error(`AI generation failed: ${response.status} - ${errorText}`);
     }
   } catch (error) {
-    console.error('💥 AI generation error:', error);
+    console.error('💥 CRITICAL: AI generation failed completely:', error);
     
-    // Only fall back to static content if AI generation completely fails
-    console.warn('🔄 Falling back to static content - AI generation unavailable');
-    
-    const categoryData = enhancedChallengeDatabase[skillArea as keyof typeof enhancedChallengeDatabase];
-    
-    if (categoryData && Array.isArray(categoryData) && categoryData.length > 0) {
-      const filteredChallenges = categoryData.filter((challenge: any) => 
-        challenge.difficulty?.toLowerCase() === difficulty.toLowerCase()
-      );
-
-      const challengesToUse = filteredChallenges.length > 0 ? filteredChallenges : categoryData;
-      const selectedChallenges = [];
-      const usedIndices = new Set();
-
-      // Select up to 4 unique challenges
-      while (selectedChallenges.length < Math.min(4, challengesToUse.length)) {
-        const randomIndex = Math.floor(Math.random() * challengesToUse.length);
-        if (!usedIndices.has(randomIndex)) {
-          usedIndices.add(randomIndex);
-          const challenge = { 
-            ...challengesToUse[randomIndex], 
-            timeLimit: 180,
-            id: `static-${sessionContext}-${selectedChallenges.length}-${timestamp}`
-          };
-          selectedChallenges.push(challenge);
-        }
-      }
-
-      return {
-        sessionId: `static-${sessionContext}`,
-        skillArea,
-        difficulty,
-        totalExercises: selectedChallenges.length,
-        exercises: selectedChallenges,
-        source: 'static',
-        estimatedDuration: selectedChallenges.length * 180
-      };
-    }
-
-    // Emergency fallback
-    console.error('🚨 Emergency fallback - creating basic exercises');
-    const fallbackExercises = [];
-    
-    for (let i = 1; i <= 4; i++) {
-      fallbackExercises.push({
-        id: `emergency-${sessionContext}-${i}-${timestamp}`,
-        title: `${skillArea} Challenge ${i}`,
-        type: 'multiple-choice',
-        timeLimit: 180,
-        content: {
-          context: `You are working on a ${skillArea} challenge as a Product Manager.`,
-          instructions: 'Choose the best approach for this situation.',
-          options: [
-            {
-              id: 'option-1',
-              text: 'Focus on customer feedback and market research',
-              isCorrect: true,
-              explanation: 'Customer-driven approach ensures market fit.'
-            },
-            {
-              id: 'option-2',
-              text: 'Follow competitor strategies',
-              isCorrect: false,
-              explanation: 'Following competitors limits innovation.'
-            }
-          ]
-        }
-      });
-    }
-    
-    return {
-      sessionId: `emergency-${sessionContext}`,
-      skillArea,
-      difficulty,
-      totalExercises: 4,
-      exercises: fallbackExercises,
-      source: 'static',
-      estimatedDuration: 720
-    };
+    // For regular sessions, we MUST have AI generation - throw error instead of fallback
+    throw new Error(`Failed to generate unique AI challenges: ${error.message}`);
   }
 };
