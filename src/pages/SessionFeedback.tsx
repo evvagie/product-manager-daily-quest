@@ -634,8 +634,7 @@ const SessionFeedback = () => {
               Try Another Session
             </Button>
             <Button 
-              variant="outline" 
-              className="flex-1 border-gray-600 text-white hover:bg-black hover:text-white hover:border-gray-500 !text-white"
+              className="flex-1 bg-transparent border border-gray-600 text-white hover:bg-black hover:text-white hover:border-gray-500 transition-all duration-200"
               style={{ color: 'white !important' }}
               onClick={() => navigate('/dashboard')}
             >
