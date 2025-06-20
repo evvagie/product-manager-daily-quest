@@ -83,7 +83,7 @@ const Pricing = () => {
               </div>
               <Button 
                 onClick={handleGetStarted}
-                className="w-full mt-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium"
+                className="w-full mt-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium whitespace-nowrap"
               >
                 Get Started Free
               </Button>
@@ -130,7 +130,7 @@ const Pricing = () => {
               </div>
               <Button 
                 onClick={handleUpgrade}
-                className="w-full mt-6 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-medium"
+                className="w-full mt-6 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-medium whitespace-nowrap"
               >
                 Upgrade to Premium
               </Button>
