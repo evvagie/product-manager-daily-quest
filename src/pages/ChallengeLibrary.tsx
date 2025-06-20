@@ -266,11 +266,17 @@ const ChallengeLibrary = () => {
                         <span>Time: {formatTime(challenge.time_taken)}</span>
                         <span>Completed: {formatDate(challenge.completion_date)}</span>
                       </div>
-                      <Button variant="outline" size="sm" style={{
-                  borderImage: 'linear-gradient(45deg, #f97316, #9333ea) 1'
-                }} onClick={() => handleRetryChallenge(challenge)} className="bg-white border-2 border-transparent bg-gradient-to-r from-orange-500 to-purple-600 bg-clip-text text-transparent hover:bg-gradient-to-r hover:from-purple-600 hover:to-orange-500 hover:text-white hover:bg-clip-border transition-all duration-200 rounded-full">
-                        Retry Challenge
-                      </Button>
+                      <div className="relative">
+                        <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-purple-600 rounded-md"></div>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => handleRetryChallenge(challenge)} 
+                          className="relative bg-white border-2 border-transparent bg-gradient-to-r from-orange-500 to-purple-600 bg-clip-text text-transparent hover:bg-gradient-to-r hover:from-purple-600 hover:to-orange-500 hover:text-white hover:bg-clip-border transition-all duration-200 rounded-md m-0.5"
+                        >
+                          Retry Challenge
+                        </Button>
+                      </div>
                     </div>
                   </div>)}
               </div>}
