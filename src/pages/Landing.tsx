@@ -26,7 +26,7 @@ const Landing = () => {
               </span>
             </div>
             
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight text-gray-900">
+            <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight text-gray-900 whitespace-nowrap">
               Yuno <span className="bg-gradient-to-r from-[#0400ff] to-purple-600 bg-clip-text text-transparent">how to think</span> like a PM.
             </h1>
             
