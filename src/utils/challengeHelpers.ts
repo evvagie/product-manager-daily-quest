@@ -19,9 +19,13 @@ export const addExerciseMetadata = (challenge: any, timestamp: number, index: nu
   const microTime = performance.now().toString().replace('.', '');
   const randomSuffix = Math.random().toString(36).substring(2, 10);
   const indexSuffix = index.toString().padStart(2, '0');
+  const contentHash = Math.abs(JSON.stringify(challenge).split('').reduce((a, b) => {
+    a = ((a << 5) - a) + b.charCodeAt(0);
+    return a & a;
+  }, 0)).toString(36);
   
   // Create a completely unique ID that's impossible to duplicate
-  const absoluteUniqueId = `${challenge.id}-${timestamp}-${microTime}-${indexSuffix}-${randomSuffix}`;
+  const absoluteUniqueId = `${challenge.id}-${timestamp}-${microTime}-${indexSuffix}-${randomSuffix}-${contentHash}`;
   
   return {
     ...challenge,
@@ -32,8 +36,8 @@ export const addExerciseMetadata = (challenge: any, timestamp: number, index: nu
     uniqueTimestamp: timestamp,
     content: {
       ...challenge.content,
-      instructions: 'Complete this challenge to the best of your ability.',
-      uniqueMarker: `exercise-${index + 1}-${timestamp}` // Additional uniqueness marker
+      instructions: challenge.content?.instructions || 'Complete this challenge to the best of your ability.',
+      uniqueMarker: `exercise-${index + 1}-${timestamp}-${contentHash}` // Additional uniqueness marker
     }
   };
 };
