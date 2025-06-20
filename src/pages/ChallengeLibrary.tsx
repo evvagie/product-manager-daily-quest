@@ -124,24 +124,29 @@ const ChallengeLibrary = () => {
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
   const handleRetryChallenge = (challenge: ChallengeHistory) => {
-    // Navigate to challenge selection with the specific category and difficulty
-    navigate('/challenge-selection', {
+    // Navigate directly to the challenge with the specific challenge ID
+    navigate(`/challenge?category=${challenge.skill_area || category}&difficulty=${challenge.difficulty}&challengeId=${challenge.challenge_id}`, {
       state: {
         retryChallenge: true,
-        category: challenge.skill_area || category,
-        difficulty: challenge.difficulty,
         originalChallengeTitle: challenge.challenge_title
       }
     });
   };
   const getDifficultyBadgeStyles = (difficulty: string) => {
-    if (difficulty.toLowerCase() === 'beginner') {
+    const difficultyLower = difficulty.toLowerCase();
+    if (difficultyLower === 'beginner') {
       return 'bg-sky-300 text-white border-sky-300';
+    } else if (difficultyLower === 'intermediate') {
+      return 'bg-purple-400 text-white border-purple-400';
+    } else if (difficultyLower === 'expert' || difficultyLower === 'advanced') {
+      return 'bg-blue-600 text-white border-blue-600';
     }
     return 'bg-gray-700 text-gray-300';
   };
   const getScoreBadgeStyles = (score: number) => {
-    if (score === 100) {
+    if (score === 0) {
+      return 'bg-red-500 text-white border-red-500';
+    } else if (score === 100) {
       return 'bg-green-500 text-white border-green-500';
     }
     return score >= 80 ? 'bg-green-600/20 text-green-400' : score >= 60 ? 'bg-yellow-600/20 text-yellow-400' : 'bg-red-600/20 text-red-400';

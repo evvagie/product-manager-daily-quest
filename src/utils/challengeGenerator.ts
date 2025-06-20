@@ -1,13 +1,24 @@
 
-import { supabase } from '@/integrations/supabase/client';
+import { enhancedChallengeData } from '@/data/enhancedChallengeData';
 
 export interface Exercise {
   id: string;
   title: string;
-  description: string;
   type: string;
   timeLimit: number;
-  content: any;
+  content: {
+    context: string;
+    instructions: string;
+    scenario?: string;
+    data?: string;
+    options?: any[];
+    constraints?: string;
+    tradeOffs?: any[];
+    priorities?: any[];
+    conversation?: any[];
+    retrospectiveData?: any;
+    totalResources?: number;
+  };
 }
 
 export interface ChallengeSession {
@@ -16,144 +27,109 @@ export interface ChallengeSession {
   difficulty: string;
   totalExercises: number;
   exercises: Exercise[];
-  source?: string;
-  generatedAt?: string;
-  randomSeed?: number;
-  timestamp?: number;
+  source: 'static' | 'openai';
+  estimatedDuration: number;
 }
 
-export const generateDynamicChallenge = async (skillArea: string, difficulty: string): Promise<ChallengeSession> => {
-  const timestamp = Date.now();
-  console.log('🚀 Starting OpenAI challenge generation:', { skillArea, difficulty, timestamp });
+export const generateDynamicChallenge = async (
+  skillArea: string, 
+  difficulty: string,
+  specificChallengeId?: string | null
+): Promise<ChallengeSession> => {
+  console.log('Generating challenge for:', { skillArea, difficulty, specificChallengeId });
   
   try {
-    // Get YUNO_KEY from Supabase secrets
-    const { data: secretsData, error: secretsError } = await supabase.functions.invoke('get-secrets');
-    
-    if (secretsError || !secretsData?.OPENAI_API_KEY) {
-      console.error('❌ YUNO_KEY not found:', secretsError);
-      throw new Error('YUNO_KEY not configured');
-    }
-
-    const apiKey = secretsData.OPENAI_API_KEY;
-    console.log('🔑 YUNO_KEY retrieved successfully');
-
-    // Create a simple, reliable prompt for generating 4 exercises
-    const prompt = `Generate exactly 4 product management exercises for skill area "${skillArea}" at "${difficulty}" level.
-
-Return a JSON object with this exact structure:
-{
-  "exercises": [
-    {
-      "id": "unique-id-1",
-      "title": "Exercise Title",
-      "description": "Exercise description",
-      "type": "multiple-choice",
-      "timeLimit": 60,
-      "content": {
-        "context": "Scenario description",
-        "scenario": "Specific situation",
-        "instructions": "What to do",
-        "options": [
-          {
-            "id": "option-1",
-            "text": "Option text",
-            "description": "Option description",
-            "isCorrect": true,
-            "quality": "excellent",
-            "explanation": "Why this is correct"
-          }
-        ]
+    // If specific challenge ID is provided, try to find it first
+    if (specificChallengeId) {
+      const specificChallenge = enhancedChallengeData[skillArea as keyof typeof enhancedChallengeData]
+        ?.find((challenge: any) => challenge.id === specificChallengeId);
+      
+      if (specificChallenge) {
+        console.log('Found specific challenge:', specificChallenge.title);
+        return {
+          sessionId: `retry-${specificChallengeId}-${Date.now()}`,
+          skillArea,
+          difficulty,
+          totalExercises: 1,
+          exercises: [specificChallenge],
+          source: 'static',
+          estimatedDuration: specificChallenge.timeLimit
+        };
+      } else {
+        console.warn('Specific challenge not found, falling back to normal generation');
       }
     }
-  ]
-}
 
-Make each exercise unique with different scenarios. Include 2-4 options per exercise with clear explanations.`;
-
-    console.log('📡 Making OpenAI API call...');
-    
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a product management expert who creates educational exercises. Always respond with valid JSON only.'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        temperature: 0.8,
-        max_tokens: 2000
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ OpenAI API error:', response.status, errorText);
-      throw new Error(`OpenAI API error: ${response.status}`);
-    }
-
-    const aiResponse = await response.json();
-    console.log('📋 OpenAI response received:', { 
-      hasChoices: !!aiResponse.choices,
-      choiceCount: aiResponse.choices?.length 
-    });
-
-    const content = aiResponse.choices[0]?.message?.content;
-    if (!content) {
-      throw new Error('No content in OpenAI response');
-    }
-
-    // Parse the JSON response
-    let exerciseData;
+    // Try OpenAI generation first
     try {
-      exerciseData = JSON.parse(content);
-    } catch (parseError) {
-      console.error('❌ JSON parsing error:', parseError);
-      console.error('Raw content:', content);
-      throw new Error('Failed to parse OpenAI response as JSON');
+      const response = await fetch(`https://xtnlfdcqaqtqxyzywaoh.supabase.co/functions/v1/generate-ai-challenge`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0bmxmZGNxYXF0cXh5enl3YW9oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAwOTkzMjEsImV4cCI6MjA2NTY3NTMyMX0.p05Zf-qKmWpmyI1Lc_t5lFZYG82ZXImCvZ1DxXi5uLA`
+        },
+        body: JSON.stringify({ skillArea, difficulty })
+      });
+
+      if (response.ok) {
+        const aiData = await response.json();
+        console.log('AI Challenge generated successfully');
+        return {
+          sessionId: `ai-${Date.now()}`,
+          skillArea,
+          difficulty,
+          totalExercises: aiData.exercises?.length || 4,
+          exercises: aiData.exercises || [],
+          source: 'openai',
+          estimatedDuration: (aiData.exercises?.length || 4) * 180
+        };
+      } else {
+        console.warn('AI generation failed, falling back to static content');
+      }
+    } catch (aiError) {
+      console.warn('AI generation error, falling back to static content:', aiError);
     }
 
-    // Validate the response structure
-    if (!exerciseData.exercises || !Array.isArray(exerciseData.exercises) || exerciseData.exercises.length !== 4) {
-      console.error('❌ Invalid exercise structure:', exerciseData);
-      throw new Error('OpenAI response does not contain 4 exercises');
+    // Fallback to enhanced static content
+    const categoryData = enhancedChallengeData[skillArea as keyof typeof enhancedChallengeData];
+    if (!categoryData || categoryData.length === 0) {
+      throw new Error(`No challenge data available for ${skillArea}`);
     }
 
-    // Create the challenge session
-    const sessionId = `ai-session-${skillArea}-${difficulty}-${timestamp}`;
-    const challengeSession: ChallengeSession = {
-      sessionId,
+    // Filter by difficulty and select 4 random challenges
+    const filteredChallenges = categoryData.filter((challenge: any) => 
+      challenge.difficulty?.toLowerCase() === difficulty.toLowerCase()
+    );
+
+    const challengesToUse = filteredChallenges.length > 0 ? filteredChallenges : categoryData;
+    const selectedChallenges = [];
+    const usedIndices = new Set();
+
+    // Select 4 unique challenges
+    while (selectedChallenges.length < Math.min(4, challengesToUse.length)) {
+      const randomIndex = Math.floor(Math.random() * challengesToUse.length);
+      if (!usedIndices.has(randomIndex)) {
+        usedIndices.add(randomIndex);
+        selectedChallenges.push(challengesToUse[randomIndex]);
+      }
+    }
+
+    console.log('Using enhanced static challenges:', selectedChallenges.length);
+    
+    return {
+      sessionId: `static-${Date.now()}`,
       skillArea,
       difficulty,
-      totalExercises: 4,
-      exercises: exerciseData.exercises,
-      source: 'openai-direct',
-      generatedAt: new Date().toISOString(),
-      timestamp
+      totalExercises: selectedChallenges.length,
+      exercises: selectedChallenges,
+      source: 'static',
+      estimatedDuration: selectedChallenges.reduce((total: number, challenge: any) => 
+        total + (challenge.timeLimit || 180), 0
+      )
     };
 
-    console.log('✅ AI challenge session generated successfully!', {
-      sessionId,
-      exerciseCount: challengeSession.exercises.length,
-      source: challengeSession.source
-    });
-
-    return challengeSession;
-
   } catch (error) {
-    console.error('💥 Error in OpenAI challenge generation:', error);
-    
-    // Show user-friendly error instead of fallback
-    throw new Error(`Failed to generate AI challenges: ${error.message}. Please check your YUNO_KEY configuration.`);
+    console.error('Error generating challenge:', error);
+    throw error;
   }
 };

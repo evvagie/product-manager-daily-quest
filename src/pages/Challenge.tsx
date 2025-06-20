@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -12,8 +12,10 @@ import { useToast } from '@/components/ui/use-toast';
 
 const Challenge = () => {
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const skillArea = searchParams.get('category');
   const difficulty = searchParams.get('difficulty');
+  const challengeId = searchParams.get('challengeId');
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -39,16 +41,22 @@ const Challenge = () => {
 
       setLoading(true);
       try {
-        console.log('Loading challenge session for:', { skillArea, difficulty });
-        const newChallengeSession = await generateDynamicChallenge(skillArea, difficulty);
+        console.log('Loading challenge session for:', { skillArea, difficulty, challengeId });
+        const newChallengeSession = await generateDynamicChallenge(skillArea, difficulty, challengeId);
         console.log('Challenge session loaded:', newChallengeSession);
         
         setChallengeSession(newChallengeSession);
         setTimeLeft(newChallengeSession.exercises[0]?.timeLimit || 180);
         setExerciseAnswers(new Array(newChallengeSession.totalExercises).fill(null));
         
-        // Show success message based on source
-        if (newChallengeSession.source === 'openai') {
+        // Show success message based on source and retry context
+        const isRetry = location.state?.retryChallenge;
+        if (isRetry) {
+          toast({
+            title: "🔄 Challenge Reloaded!",
+            description: `Retrying "${location.state?.originalChallengeTitle || 'challenge'}"`,
+          });
+        } else if (newChallengeSession.source === 'openai') {
           toast({
             title: "🤖 AI Challenge Session Generated!",
             description: `${newChallengeSession.totalExercises} unique exercises created just for you`,
@@ -73,7 +81,7 @@ const Challenge = () => {
     };
 
     loadChallengeSession();
-  }, [skillArea, difficulty, navigate, toast]);
+  }, [skillArea, difficulty, challengeId, navigate, toast, location.state]);
 
   useEffect(() => {
     if (timeLeft > 0 && !isComplete && !showConsequences) {
@@ -135,10 +143,10 @@ const Challenge = () => {
             <CardContent className="p-8 text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
               <h2 className="text-xl font-semibold text-gray-800 mb-2">
-                🤖 Generating Your Challenge Session...
+                {challengeId ? "🔄 Loading Specific Challenge..." : "🤖 Generating Your Challenge Session..."}
               </h2>
               <p className="text-gray-600">
-                Creating 4 unique exercises tailored to your skill level. This may take a few moments.
+                {challengeId ? "Preparing your retry challenge..." : "Creating 4 unique exercises tailored to your skill level. This may take a few moments."}
               </p>
             </CardContent>
           </Card>
@@ -193,6 +201,11 @@ const Challenge = () => {
                   {challengeSession.source === 'openai' && (
                     <Badge className="bg-purple-100 text-purple-700">
                       🤖 AI Generated
+                    </Badge>
+                  )}
+                  {challengeId && (
+                    <Badge className="bg-orange-100 text-orange-700">
+                      🔄 Retry
                     </Badge>
                   )}
                 </div>
