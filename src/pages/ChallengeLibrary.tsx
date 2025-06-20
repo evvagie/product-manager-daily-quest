@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,7 +6,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-
 interface ChallengeHistory {
   id: string;
   challenge_title: string;
@@ -19,15 +17,19 @@ interface ChallengeHistory {
   challenge_id: string;
   skill_area: string;
 }
-
 const ChallengeLibrary = () => {
   const navigate = useNavigate();
-  const { category } = useParams<{ category: string }>();
-  const { user } = useAuth();
+  const {
+    category
+  } = useParams<{
+    category: string;
+  }>();
+  const {
+    user
+  } = useAuth();
   const [challengeHistory, setChallengeHistory] = useState<ChallengeHistory[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   const categoryInfo = {
     strategy: {
       name: "Product Strategy",
@@ -54,46 +56,42 @@ const ChallengeLibrary = () => {
       color: "pink"
     }
   };
-
   const validCategories = Object.keys(categoryInfo);
-  
+
   // Check if category is valid, if not redirect to strategy as default
   useEffect(() => {
     if (category && !validCategories.includes(category)) {
       console.log('Invalid category detected:', category, 'Redirecting to strategy');
-      navigate('/challenge-library/strategy', { replace: true });
+      navigate('/challenge-library/strategy', {
+        replace: true
+      });
       return;
     }
-    
+
     // Handle case where category is missing or is the literal ":category"
     if (!category || category === ':category') {
       console.log('Missing or invalid category parameter, redirecting to strategy');
-      navigate('/challenge-library/strategy', { replace: true });
+      navigate('/challenge-library/strategy', {
+        replace: true
+      });
       return;
     }
   }, [category, navigate]);
-
-  const currentCategory = category && categoryInfo[category as keyof typeof categoryInfo] 
-    ? categoryInfo[category as keyof typeof categoryInfo]
-    : null;
-
+  const currentCategory = category && categoryInfo[category as keyof typeof categoryInfo] ? categoryInfo[category as keyof typeof categoryInfo] : null;
   useEffect(() => {
     const fetchChallengeData = async () => {
       if (!user || !category || !validCategories.includes(category)) return;
-
       console.log('Fetching challenge data for category:', category, 'user:', user.id);
-
       try {
         setError(null);
-        
-        // Fetch challenge history for this category
-        const { data: history, error: historyError } = await supabase
-          .from('challenge_history')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('skill_area', category)
-          .order('completion_date', { ascending: false });
 
+        // Fetch challenge history for this category
+        const {
+          data: history,
+          error: historyError
+        } = await supabase.from('challenge_history').select('*').eq('user_id', user.id).eq('skill_area', category).order('completion_date', {
+          ascending: false
+        });
         if (historyError) {
           console.error('Error fetching challenge history:', historyError);
           setError('Failed to load challenge history');
@@ -108,10 +106,8 @@ const ChallengeLibrary = () => {
         setLoading(false);
       }
     };
-
     fetchChallengeData();
   }, [user, category]);
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -119,18 +115,16 @@ const ChallengeLibrary = () => {
       day: 'numeric'
     });
   };
-
   const formatTime = (seconds: number | null) => {
     if (!seconds) return 'N/A';
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
-
   const handleRetryChallenge = (challenge: ChallengeHistory) => {
     // Navigate to challenge selection with the specific category and difficulty
-    navigate('/challenge-selection', { 
-      state: { 
+    navigate('/challenge-selection', {
+      state: {
         retryChallenge: true,
         category: challenge.skill_area || category,
         difficulty: challenge.difficulty,
@@ -138,37 +132,27 @@ const ChallengeLibrary = () => {
       }
     });
   };
-
   const getDifficultyBadgeStyles = (difficulty: string) => {
     if (difficulty.toLowerCase() === 'beginner') {
       return 'bg-sky-300 text-white border-sky-300';
     }
     return 'bg-gray-700 text-gray-300';
   };
-
   const getScoreBadgeStyles = (score: number) => {
     if (score === 100) {
       return 'bg-green-500 text-white border-green-500';
     }
-    return score >= 80 
-      ? 'bg-green-600/20 text-green-400' 
-      : score >= 60 
-      ? 'bg-yellow-600/20 text-yellow-400'
-      : 'bg-red-600/20 text-red-400';
+    return score >= 80 ? 'bg-green-600/20 text-green-400' : score >= 60 ? 'bg-yellow-600/20 text-yellow-400' : 'bg-red-600/20 text-red-400';
   };
 
   // Don't render anything while redirecting
   if (!category || category === ':category' || !validCategories.includes(category)) {
-    return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+    return <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div>Redirecting...</div>
-      </div>
-    );
+      </div>;
   }
-
   if (!currentCategory) {
-    return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+    return <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Category Not Found</h1>
           <p className="text-gray-400 mb-4">
@@ -178,21 +162,15 @@ const ChallengeLibrary = () => {
             Back to Dashboard
           </Button>
         </div>
-      </div>
-    );
+      </div>;
   }
-
   if (loading) {
-    return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+    return <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div>Loading challenge library...</div>
-      </div>
-    );
+      </div>;
   }
-
   if (error) {
-    return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+    return <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Error Loading Data</h1>
           <p className="text-gray-400 mb-4">{error}</p>
@@ -200,17 +178,11 @@ const ChallengeLibrary = () => {
             Try Again
           </Button>
         </div>
-      </div>
-    );
+      </div>;
   }
-
   const completedCount = challengeHistory.length;
-  const averageScore = completedCount > 0 
-    ? Math.round(challengeHistory.reduce((sum, challenge) => sum + (challenge.score || 0), 0) / completedCount)
-    : 0;
-
-  return (
-    <div className="min-h-screen bg-black text-white">
+  const averageScore = completedCount > 0 ? Math.round(challengeHistory.reduce((sum, challenge) => sum + (challenge.score || 0), 0) / completedCount) : 0;
+  return <div className="min-h-screen bg-black text-white">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -246,20 +218,15 @@ const ChallengeLibrary = () => {
                   <p className="text-sm text-gray-400">Average Score</p>
                 </div>
               </div>
-              {completedCount > 0 && (
-                <div>
+              {completedCount > 0 && <div>
                   <div className="flex justify-between mb-2">
                     <span className="text-sm text-gray-400">Performance</span>
                     <span className="text-sm text-white">{averageScore}%</span>
                   </div>
                   <Progress value={averageScore} className="h-2" />
-                </div>
-              )}
+                </div>}
               <p className="text-sm text-gray-400">
-                {completedCount === 0 
-                  ? `Start your first challenge in ${currentCategory.name}!`
-                  : `You've completed ${completedCount} challenge${completedCount === 1 ? '' : 's'}. Keep going to master ${currentCategory.name}!`
-                }
+                {completedCount === 0 ? `Start your first challenge in ${currentCategory.name}!` : `You've completed ${completedCount} challenge${completedCount === 1 ? '' : 's'}. Keep going to master ${currentCategory.name}!`}
               </p>
             </div>
           </CardContent>
@@ -274,38 +241,23 @@ const ChallengeLibrary = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {challengeHistory.length === 0 ? (
-              <div className="text-center py-8">
+            {challengeHistory.length === 0 ? <div className="text-center py-8">
                 <div className="text-4xl mb-4">📚</div>
                 <p className="text-gray-400 mb-4">No challenges completed yet in this category</p>
-                <Button 
-                  onClick={() => navigate('/challenge-selection')}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
-                >
+                <Button onClick={() => navigate('/challenge-selection')} className="bg-blue-600 hover:bg-blue-700 text-white">
                   Start Your First Challenge
                 </Button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {challengeHistory.map((challenge) => (
-                  <div key={challenge.id} className="p-4 bg-gradient-to-br from-pink-600/20 to-blue-600/20 rounded-lg border border-pink-600/30 hover:from-pink-600/30 hover:to-blue-600/30 transition-all duration-200 shadow-lg">
+              </div> : <div className="space-y-4">
+                {challengeHistory.map(challenge => <div key={challenge.id} className="p-4 bg-gradient-to-br from-pink-600/20 to-blue-600/20 rounded-lg border border-pink-600/30 hover:from-pink-600/30 hover:to-blue-600/30 transition-all duration-200 shadow-lg">
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="font-medium text-black">{challenge.challenge_title}</h4>
                       <div className="flex items-center space-x-2">
-                        <Badge 
-                          variant="secondary" 
-                          className={getDifficultyBadgeStyles(challenge.difficulty)}
-                        >
+                        <Badge variant="secondary" className={getDifficultyBadgeStyles(challenge.difficulty)}>
                           {challenge.difficulty}
                         </Badge>
-                        {challenge.score !== null && (
-                          <Badge 
-                            variant="secondary" 
-                            className={getScoreBadgeStyles(challenge.score)}
-                          >
+                        {challenge.score !== null && <Badge variant="secondary" className={getScoreBadgeStyles(challenge.score)}>
                             {challenge.score}% Score
-                          </Badge>
-                        )}
+                          </Badge>}
                       </div>
                     </div>
                     <div className="flex items-center justify-between text-sm text-gray-600">
@@ -314,27 +266,17 @@ const ChallengeLibrary = () => {
                         <span>Time: {formatTime(challenge.time_taken)}</span>
                         <span>Completed: {formatDate(challenge.completion_date)}</span>
                       </div>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        className="bg-white border-2 border-transparent bg-gradient-to-r from-orange-500 to-purple-600 bg-clip-text text-transparent hover:bg-gradient-to-r hover:from-purple-600 hover:to-orange-500 hover:text-white hover:bg-clip-border transition-all duration-200 !rounded-md"
-                        style={{
-                          borderImage: 'linear-gradient(45deg, #f97316, #9333ea) 1'
-                        }}
-                        onClick={() => handleRetryChallenge(challenge)}
-                      >
+                      <Button variant="outline" size="sm" style={{
+                  borderImage: 'linear-gradient(45deg, #f97316, #9333ea) 1'
+                }} onClick={() => handleRetryChallenge(challenge)} className="bg-white border-2 border-transparent bg-gradient-to-r from-orange-500 to-purple-600 bg-clip-text text-transparent hover:bg-gradient-to-r hover:from-purple-600 hover:to-orange-500 hover:text-white hover:bg-clip-border transition-all duration-200 rounded-full">
                         Retry Challenge
                       </Button>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
+                  </div>)}
+              </div>}
           </CardContent>
         </Card>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default ChallengeLibrary;
