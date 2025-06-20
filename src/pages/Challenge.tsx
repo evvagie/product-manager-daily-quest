@@ -308,17 +308,6 @@ const Challenge = () => {
           showConsequences={showConsequences}
         />
 
-        {/* Answer Quality Indicator */}
-        {showConsequences && currentAnswer && (
-          <Card className="bg-white border-gray-200">
-            <CardContent className="p-4 text-center">
-              <div className={`text-lg font-semibold ${getQualityColor(getAnswerQuality(currentAnswer) || '')}`}>
-                {getAnswerQuality(currentAnswer)}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
         {/* Consequences */}
         {showConsequences && currentAnswer && (
           <ConsequenceDisplay

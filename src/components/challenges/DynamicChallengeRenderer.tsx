@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -54,14 +55,22 @@ export const DynamicChallengeRenderer = ({
 
   const getQualityBadge = useCallback((quality: string) => {
     const qualityConfig = {
-      excellent: { color: 'bg-green-100 text-green-700', label: '✓ Excellent' },
-      good: { color: 'bg-blue-100 text-blue-700', label: '✓ Good' },
-      average: { color: 'bg-yellow-100 text-yellow-700', label: '~ Average' },
-      poor: { color: 'bg-red-100 text-red-700', label: '✗ Poor' }
+      excellent: { color: 'bg-green-100 text-green-700', label: '✅ Excellent' },
+      good: { color: 'bg-blue-100 text-blue-700', label: '👍 Good' },
+      average: { color: 'bg-yellow-100 text-yellow-700', label: '⚡ Average' },
+      poor: { color: 'bg-red-100 text-red-700', label: '👎 Poor' }
     };
     
     const config = qualityConfig[quality as keyof typeof qualityConfig] || qualityConfig.average;
-    return <Badge className={config.color}>{config.label}</Badge>;
+    return <Badge className={`${config.color} text-xs`}>{config.label}</Badge>;
+  }, []);
+
+  // Helper function to get answer quality indicator
+  const getAnswerQuality = useCallback((option: any) => {
+    if (option.isCorrect) return 'excellent';
+    if (option.quality === 'good') return 'good';
+    if (option.quality === 'average') return 'average';
+    return 'poor';
   }, []);
 
   const handleSliderChange = useCallback((tradeOffName: string, value: number[]) => {
@@ -155,9 +164,9 @@ export const DynamicChallengeRenderer = ({
                   </div>
                 )}
               </div>
-              {currentAnswer === option.id && option.quality && (
-                <div className="ml-3">
-                  {getQualityBadge(option.quality)}
+              {currentAnswer === option.id && (
+                <div className="ml-3 flex-shrink-0">
+                  {getQualityBadge(getAnswerQuality(option))}
                 </div>
               )}
             </div>
