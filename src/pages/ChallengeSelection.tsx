@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -76,24 +77,24 @@ const ChallengeSelection = () => {
 
   return (
     <div className="min-h-screen bg-white text-black">
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-6 sm:mb-8">
           <Button 
             variant="ghost" 
             onClick={() => navigate('/dashboard')} 
-            className="mb-4 bg-gradient-to-r from-orange-500 to-purple-600 hover:from-orange-600 hover:to-purple-700 text-white border-0 font-medium"
+            className="mb-4 bg-gradient-to-r from-orange-500 to-purple-600 hover:from-orange-600 hover:to-purple-700 text-white border-0 font-medium text-sm sm:text-base"
           >
             ← Back to Dashboard
           </Button>
-          <h1 className="text-3xl font-bold mb-2">Choose Your Challenge</h1>
-          <p className="text-gray-600">Select a category and difficulty to begin your session</p>
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2">Choose Your Challenge</h1>
+          <p className="text-gray-600 text-sm sm:text-base">Select a category and difficulty to begin your session</p>
         </div>
 
         {/* Category Selection */}
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4">1. Select Category</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="mb-6 sm:mb-8">
+          <h2 className="text-lg sm:text-xl font-semibold mb-4">1. Select Category</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             {categories.map(category => (
               <Card 
                 key={category.id} 
@@ -104,12 +105,12 @@ const ChallengeSelection = () => {
                 }`} 
                 onClick={() => setSelectedCategory(category.id)}
               >
-                <CardHeader className="text-center pb-2">
-                  <div className="text-4xl mb-2">{category.icon}</div>
-                  <CardTitle className="text-lg text-black">{category.name}</CardTitle>
+                <CardHeader className="text-center pb-2 px-3 sm:px-6">
+                  <div className="text-3xl sm:text-4xl mb-2">{category.icon}</div>
+                  <CardTitle className="text-base sm:text-lg text-black">{category.name}</CardTitle>
                 </CardHeader>
-                <CardContent className="text-center">
-                  <CardDescription className="text-gray-600 text-sm">
+                <CardContent className="text-center px-3 sm:px-6">
+                  <CardDescription className="text-gray-600 text-xs sm:text-sm">
                     {category.description}
                   </CardDescription>
                 </CardContent>
@@ -119,27 +120,27 @@ const ChallengeSelection = () => {
         </div>
 
         {/* Difficulty Selection */}
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4">2. Select Difficulty</h2>
-          <div className="grid md:grid-cols-3 gap-4">
+        <div className="mb-6 sm:mb-8">
+          <h2 className="text-lg sm:text-xl font-semibold mb-4">2. Select Difficulty</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {difficulties.map(difficulty => (
               <Card 
                 key={difficulty.id} 
                 className={getDifficultyCardStyles(difficulty.id, selectedDifficulty === difficulty.id)}
                 onClick={() => setSelectedDifficulty(difficulty.id)}
               >
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg text-white">
+                <CardHeader className="px-4 sm:px-6">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <CardTitle className="text-base sm:text-lg text-white">
                       {difficulty.name}
                     </CardTitle>
-                    <Badge variant="secondary" className="bg-white/20 text-white">
+                    <Badge variant="secondary" className="bg-white/20 text-white text-xs sm:text-sm">
                       {difficulty.xp}
                     </Badge>
                   </div>
                 </CardHeader>
-                <CardContent>
-                  <CardDescription className="text-white/80">
+                <CardContent className="px-4 sm:px-6">
+                  <CardDescription className="text-white/80 text-xs sm:text-sm">
                     {difficulty.description}
                   </CardDescription>
                 </CardContent>
@@ -150,29 +151,29 @@ const ChallengeSelection = () => {
 
         {/* Session Preview */}
         {selectedCategory && selectedDifficulty && (
-          <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200 mb-8">
-            <CardHeader>
-              <CardTitle className="text-xl text-black">Session Preview</CardTitle>
-              <CardDescription className="text-gray-600">
+          <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200 mb-6 sm:mb-8">
+            <CardHeader className="px-4 sm:px-6">
+              <CardTitle className="text-lg sm:text-xl text-black">Session Preview</CardTitle>
+              <CardDescription className="text-gray-600 text-sm">
                 Your selected challenge session
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between mb-4">
+            <CardContent className="px-4 sm:px-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3">
                 <div>
-                  <p className="font-medium text-black">
+                  <p className="font-medium text-black text-sm sm:text-base">
                     {categories.find(c => c.id === selectedCategory)?.name} • {difficulties.find(d => d.id === selectedDifficulty)?.name}
                   </p>
-                  <p className="text-sm text-gray-600">4 interactive challenges • ~20 minutes</p>
+                  <p className="text-xs sm:text-sm text-gray-600">4 interactive challenges • ~20 minutes</p>
                 </div>
-                <div className="text-right">
-                  <p className="text-blue-600 font-medium">{difficulties.find(d => d.id === selectedDifficulty)?.xp}</p>
-                  <p className="text-gray-600 text-sm">Potential XP</p>
+                <div className="text-left sm:text-right">
+                  <p className="text-blue-600 font-medium text-sm sm:text-base">{difficulties.find(d => d.id === selectedDifficulty)?.xp}</p>
+                  <p className="text-gray-600 text-xs sm:text-sm">Potential XP</p>
                 </div>
               </div>
               
               <Button 
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white animate-pulse font-medium" 
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white animate-pulse font-medium text-sm sm:text-base py-2 sm:py-3" 
                 onClick={handleStartSession}
               >
                 Start Challenge Session →

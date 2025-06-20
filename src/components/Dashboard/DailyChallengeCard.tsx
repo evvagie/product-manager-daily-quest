@@ -9,22 +9,22 @@ const DailyChallengeCard = () => {
 
   return (
     <Card className="bg-gradient-to-br from-blue-50 to-purple-50 border-gray-200 shadow-lg">
-      <CardHeader>
-        <CardTitle className="text-xl text-gray-900">Today's Challenge Session</CardTitle>
-        <CardDescription className="text-gray-600">
+      <CardHeader className="px-4 sm:px-6">
+        <CardTitle className="text-lg sm:text-xl text-gray-900">Today's Challenge Session</CardTitle>
+        <CardDescription className="text-gray-600 text-sm">
           4 interactive challenges await you. Test your PM skills!
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex space-x-2">
-            <Badge variant="secondary" className="bg-gradient-to-r from-[#0400ff]/20 to-purple-600/20 text-[#0400ff] border-[#0400ff]/30">Strategy</Badge>
-            <Badge variant="secondary" className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-700 border-green-500/30">Analytics</Badge>
+      <CardContent className="px-4 sm:px-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3">
+          <div className="flex flex-wrap gap-2">
+            <Badge variant="secondary" className="bg-gradient-to-r from-[#0400ff]/20 to-purple-600/20 text-[#0400ff] border-[#0400ff]/30 text-xs">Strategy</Badge>
+            <Badge variant="secondary" className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-700 border-green-500/30 text-xs">Analytics</Badge>
           </div>
-          <span className="text-2xl">🎯</span>
+          <span className="text-xl sm:text-2xl">🎯</span>
         </div>
         <Button 
-          className="w-full bg-gradient-to-r from-[#0400ff] to-purple-600 hover:from-[#0300cc] hover:to-purple-700 !text-white shadow-lg animate-[pulse_1.5s_ease-in-out_infinite]" 
+          className="w-full bg-gradient-to-r from-[#0400ff] to-purple-600 hover:from-[#0300cc] hover:to-purple-700 !text-white shadow-lg animate-[pulse_1.5s_ease-in-out_infinite] text-sm sm:text-base py-2 sm:py-3" 
           style={{ color: 'white !important' }}
           onClick={() => navigate('/challenge-selection')}
         >
