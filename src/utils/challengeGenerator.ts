@@ -43,8 +43,8 @@ export const generateDynamicChallenge = async (
   const randomId = Math.random().toString(36).substring(2, 15);
   
   try {
-    // Use skillArea directly as it matches the database keys
-    console.log('🔑 Using skillArea as database key:', skillArea);
+    // Use skillArea directly - it should match database keys exactly
+    console.log('🔑 Using skillArea directly:', skillArea);
 
     // If specific challenge ID is provided (retry scenario), try to find it first
     if (specificChallengeId) {
@@ -74,6 +74,36 @@ export const generateDynamicChallenge = async (
     if (!categoryData || !Array.isArray(categoryData)) {
       console.log('❌ No category data found for:', skillArea);
       console.log('📋 Available categories:', Object.keys(enhancedChallengeDatabase));
+      
+      // Emergency fallback - try to find ANY data and use it
+      const allKeys = Object.keys(enhancedChallengeDatabase);
+      if (allKeys.length > 0) {
+        const fallbackKey = allKeys[0];
+        const fallbackData = enhancedChallengeDatabase[fallbackKey as keyof typeof enhancedChallengeDatabase];
+        console.log('🚨 Using fallback category:', fallbackKey);
+        
+        if (fallbackData && Array.isArray(fallbackData) && fallbackData.length > 0) {
+          const shuffledChallenges = [...fallbackData].sort(() => Math.random() - 0.5);
+          const selectedChallenges = shuffledChallenges.slice(0, Math.min(4, shuffledChallenges.length));
+          
+          const exercises = selectedChallenges.map((challenge: any, index: number) => ({
+            ...challenge,
+            timeLimit: 180,
+            id: `${challenge.id}-${timestamp}-${index}`
+          }));
+
+          return {
+            sessionId: `fallback-session-${skillArea}-${difficulty}-${timestamp}-${randomId}`,
+            skillArea,
+            difficulty,
+            totalExercises: exercises.length,
+            exercises,
+            source: 'static',
+            estimatedDuration: exercises.length * 180
+          };
+        }
+      }
+      
       throw new Error(`No challenges found for skill area: ${skillArea}`);
     }
 
@@ -96,7 +126,27 @@ export const generateDynamicChallenge = async (
     });
 
     if (filteredChallenges.length === 0) {
-      throw new Error(`No challenges found for ${skillArea} at ${difficulty} difficulty`);
+      // If no challenges match the difficulty, use all challenges as fallback
+      console.log('🚨 No challenges found for difficulty, using all challenges as fallback');
+      const allChallenges = [...categoryData];
+      const shuffledChallenges = allChallenges.sort(() => Math.random() - 0.5);
+      const selectedChallenges = shuffledChallenges.slice(0, Math.min(4, shuffledChallenges.length));
+      
+      const exercises = selectedChallenges.map((challenge: any, index: number) => ({
+        ...challenge,
+        timeLimit: 180,
+        id: `${challenge.id}-${timestamp}-${index}`
+      }));
+
+      return {
+        sessionId: `fallback-difficulty-session-${skillArea}-${difficulty}-${timestamp}-${randomId}`,
+        skillArea,
+        difficulty,
+        totalExercises: exercises.length,
+        exercises,
+        source: 'static',
+        estimatedDuration: exercises.length * 180
+      };
     }
 
     // Shuffle the array to get random selection
