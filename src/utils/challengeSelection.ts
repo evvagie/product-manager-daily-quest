@@ -83,12 +83,11 @@ export const getFallbackChallenges = (): any[] => {
   return [];
 };
 
-// Collect ALL unique challenges from ALL categories and difficulties
-const getAllUniqueBaseChallenges = (): any[] => {
+// Get ALL unique challenges from the entire database
+const getAllUniqueChallenges = (): any[] => {
   const allChallenges: any[] = [];
   const seenIds = new Set<string>();
   
-  // Get challenges from ALL categories, not just the requested one
   const allCategories = Object.keys(enhancedChallengeDatabase);
   
   for (const category of allCategories) {
@@ -102,7 +101,6 @@ const getAllUniqueBaseChallenges = (): any[] => {
         
         if (Array.isArray(challenges)) {
           for (const challenge of challenges) {
-            // Only add truly unique challenges based on ID
             if (!seenIds.has(challenge.id)) {
               allChallenges.push({
                 ...challenge,
@@ -117,94 +115,45 @@ const getAllUniqueBaseChallenges = (): any[] => {
     }
   }
   
-  logDebug('Collected all unique base challenges', {
+  logDebug('Collected all unique challenges', {
     totalChallenges: allChallenges.length,
     categories: allCategories.length,
-    uniqueIds: Array.from(seenIds).slice(0, 10) // Show first 10 IDs
+    uniqueIds: Array.from(seenIds).slice(0, 10)
   });
   
   return allChallenges;
 };
 
-// Advanced shuffle that uses multiple randomization sources
-const deterministicShuffle = (array: any[], seed: number): any[] => {
+// Simple but effective shuffle
+const shuffleArray = (array: any[]): any[] => {
   const shuffled = [...array];
-  
   for (let i = shuffled.length - 1; i > 0; i--) {
-    // Use a more complex random function with the seed
-    const randomValue = Math.abs(Math.sin(seed + i * 9973) * 43758.5453);
-    const j = Math.floor(randomValue % (i + 1));
+    const j = Math.floor(Math.random() * (i + 1));
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
-  
   return shuffled;
 };
 
-// Create a variant of a challenge with different type and content
-const createChallengeVariant = (baseChallenge: any, variantIndex: number, timestamp: number): any => {
-  const variantTypes = ['multiple-choice', 'slider', 'drag-drop', 'dialogue', 'ranking'];
-  const originalType = baseChallenge.type || 'multiple-choice';
-  
-  // Pick a different type than the original
-  const availableTypes = variantTypes.filter(type => type !== originalType);
-  const newType = availableTypes[variantIndex % availableTypes.length] || 'slider';
-  
-  // Create significantly different content
-  const variantScenarios = [
-    'Crisis Management: Urgent stakeholder escalation requiring immediate decision',
-    'Strategic Planning: Long-term product roadmap adjustment needed',
-    'Resource Allocation: Budget constraints forcing prioritization choices',
-    'Team Dynamics: Cross-functional conflict resolution scenario',
-    'Customer Impact: User feedback demanding product pivot decision'
-  ];
-  
-  const variantContexts = [
-    'You have 30 minutes to present a solution to the board',
-    'The engineering team is waiting for your technical direction',
-    'Marketing needs your input for the upcoming campaign launch',
-    'Customer success is reporting escalating user complaints',
-    'The competitive landscape has shifted dramatically this quarter'
-  ];
-  
-  const variantId = `${baseChallenge.id}-variant-${newType}-${variantIndex}-${timestamp}`;
-  
-  return {
-    ...baseChallenge,
-    id: variantId,
-    originalId: baseChallenge.id,
-    type: newType,
-    title: `${baseChallenge.title} (${newType.charAt(0).toUpperCase() + newType.slice(1)} Variant)`,
-    content: {
-      ...baseChallenge.content,
-      scenario: variantScenarios[variantIndex % variantScenarios.length],
-      context: variantContexts[variantIndex % variantContexts.length],
-      instructions: `This is a ${newType} variant of the original challenge. ${baseChallenge.content?.instructions || 'Complete this challenge to the best of your ability.'}`
-    },
-    isVariant: true,
-    variantIndex
-  };
-};
-
-export const selectUniqueChallenges = (availableChallenges: any[], count: number = 4): Exercise[] => {
+export const selectUniqueChallenges = (availableChallenges: any[], count: number = 3): Exercise[] => {
   const timestamp = Date.now();
   
-  logDebug('Starting completely new unique challenge selection', {
+  logDebug('Starting challenge selection for 3 unique challenges', {
     availableCount: availableChallenges.length,
     requestedCount: count,
     timestamp
   });
 
-  // Get ALL unique challenges from the entire database
-  const allUniqueChallenges = getAllUniqueBaseChallenges();
+  // Get ALL unique challenges from entire database
+  const allUniqueChallenges = getAllUniqueChallenges();
   
   if (allUniqueChallenges.length === 0) {
-    throw new Error('No unique challenges found in the entire database');
+    throw new Error('No challenges found in database');
   }
 
-  // Shuffle the challenges using timestamp as seed
-  const shuffledChallenges = deterministicShuffle(allUniqueChallenges, timestamp);
+  // Shuffle to get random order
+  const shuffledChallenges = shuffleArray(allUniqueChallenges);
   
-  logDebug('Shuffled all challenges', {
+  logDebug('Available challenges after shuffle', {
     totalAvailable: shuffledChallenges.length,
     firstFewTitles: shuffledChallenges.slice(0, 5).map(c => c.title)
   });
@@ -212,105 +161,48 @@ export const selectUniqueChallenges = (availableChallenges: any[], count: number
   const selectedChallenges: any[] = [];
   const usedIds = new Set<string>();
   const usedTitles = new Set<string>();
-  const usedTypes = new Set<string>();
 
-  // Step 1: Select first challenge directly
-  if (shuffledChallenges.length > 0) {
-    const firstChallenge = shuffledChallenges[0];
-    const uniqueId = `${firstChallenge.id}-${timestamp}-0-${Math.floor(Math.random() * 100000)}`;
-    
-    selectedChallenges.push({
-      ...firstChallenge,
-      id: uniqueId,
-      originalId: firstChallenge.id,
-      instanceIndex: 0,
-      title: `${firstChallenge.title} (Challenge 1)`
-    });
-    
-    usedIds.add(firstChallenge.id);
-    usedTitles.add(firstChallenge.title?.toLowerCase().trim() || '');
-    usedTypes.add(firstChallenge.type || 'multiple-choice');
-  }
-
-  // Step 2: Select remaining challenges, ensuring they're different
-  let challengeIndex = 1;
-  for (let i = 1; i < shuffledChallenges.length && selectedChallenges.length < count; i++) {
+  // Select exactly 3 different challenges
+  for (let i = 0; i < shuffledChallenges.length && selectedChallenges.length < 3; i++) {
     const candidate = shuffledChallenges[i];
     const candidateTitle = candidate.title?.toLowerCase().trim() || '';
-    const candidateType = candidate.type || 'multiple-choice';
     
-    // Only select if it's truly different (different ID, title, and preferably type)
+    // Ensure it's completely different (different ID and title)
     if (!usedIds.has(candidate.id) && 
         !usedTitles.has(candidateTitle) && 
         candidateTitle !== '') {
       
-      const uniqueId = `${candidate.id}-${timestamp}-${challengeIndex}-${Math.floor(Math.random() * 100000)}`;
+      const uniqueId = `${candidate.id}-${timestamp}-${selectedChallenges.length}-${Math.floor(Math.random() * 100000)}`;
       
       selectedChallenges.push({
         ...candidate,
         id: uniqueId,
         originalId: candidate.id,
-        instanceIndex: challengeIndex,
-        title: `${candidate.title} (Challenge ${challengeIndex + 1})`
+        instanceIndex: selectedChallenges.length,
+        title: `${candidate.title} (Challenge ${selectedChallenges.length + 1})`
       });
       
       usedIds.add(candidate.id);
       usedTitles.add(candidateTitle);
-      usedTypes.add(candidateType);
-      challengeIndex++;
     }
   }
 
-  // Step 3: If we still need more challenges, create variants
-  while (selectedChallenges.length < count && allUniqueChallenges.length > 0) {
-    const baseIndex = selectedChallenges.length % allUniqueChallenges.length;
-    const baseChallenge = allUniqueChallenges[baseIndex];
-    
-    // Make sure we don't use a challenge we've already used
-    if (!usedIds.has(baseChallenge.id)) {
-      const variant = createChallengeVariant(baseChallenge, selectedChallenges.length, timestamp);
-      selectedChallenges.push(variant);
-      usedIds.add(baseChallenge.id);
-      usedTitles.add(baseChallenge.title?.toLowerCase().trim() || '');
-    } else {
-      // Find an unused challenge for the variant
-      const unusedChallenge = allUniqueChallenges.find(c => !usedIds.has(c.id));
-      if (unusedChallenge) {
-        const variant = createChallengeVariant(unusedChallenge, selectedChallenges.length, timestamp);
-        selectedChallenges.push(variant);
-        usedIds.add(unusedChallenge.id);
-        usedTitles.add(unusedChallenge.title?.toLowerCase().trim() || '');
-      }
-    }
-  }
-
-  // Final validation
-  const finalIds = selectedChallenges.map(c => c.id);
-  const finalOriginalIds = selectedChallenges.map(c => c.originalId || c.id);
+  // Validation
+  const finalIds = selectedChallenges.map(c => c.originalId || c.id);
   const finalTitles = selectedChallenges.map(c => c.title);
-  const finalTypes = selectedChallenges.map(c => c.type);
   
-  const uniqueOriginalIds = new Set(finalOriginalIds).size;
-  const uniqueTitles = new Set(finalTitles.map(t => t?.toLowerCase().trim())).size;
-  
-  logChallengeSelection('Successfully selected diverse challenges', {
+  logChallengeSelection('Successfully selected 3 unique challenges', {
     selectedCount: selectedChallenges.length,
-    requestedCount: count,
-    uniqueIds: finalIds,
-    uniqueOriginalIds: finalOriginalIds,
+    originalIds: finalIds,
     titles: finalTitles,
-    types: finalTypes,
-    uniqueOriginalIdCount: uniqueOriginalIds,
-    uniqueTitleCount: uniqueTitles,
-    typeDistribution: Object.fromEntries(
-      [...new Set(finalTypes)].map(type => [type, finalTypes.filter(t => t === type).length])
-    )
+    types: selectedChallenges.map(c => c.type),
+    uniqueOriginalIds: new Set(finalIds).size,
+    uniqueTitles: new Set(finalTitles.map(t => t?.toLowerCase().trim())).size
   });
 
-  if (uniqueOriginalIds !== selectedChallenges.length) {
-    logDebug('Warning: Some challenges may share base content', { 
-      selectedCount: selectedChallenges.length,
-      uniqueOriginalIds: uniqueOriginalIds
+  if (selectedChallenges.length < 3) {
+    logDebug('Warning: Could not find 3 unique challenges', { 
+      selectedCount: selectedChallenges.length
     });
   }
 
