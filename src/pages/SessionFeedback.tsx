@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
@@ -360,7 +361,7 @@ const SessionFeedback = () => {
     saveSessionData()
   }, [personalizedFeedback]) // Only run when feedback is ready
 
-  // Add dynamic text styling based on score
+  // Add dynamic text styling based on score - with null check
   const getDynamicTextStyles = (score: number) => {
     if (score >= 85) {
       return {
@@ -385,7 +386,11 @@ const SessionFeedback = () => {
     }
   }
 
-  const textStyles = getDynamicTextStyles(personalizedFeedback.score)
+  // Only calculate text styles if personalizedFeedback exists
+  const textStyles = personalizedFeedback ? getDynamicTextStyles(personalizedFeedback.score) : {
+    strengths: "text-black",
+    improvements: "text-black"
+  }
 
   const getPerformanceMessage = () => {
     if (!personalizedFeedback) return "Analyzing your performance..."
