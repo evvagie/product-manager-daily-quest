@@ -53,6 +53,23 @@ const ChallengeSelection = () => {
     xp: "200-300 XP"
   }];
 
+  // Helper function to get difficulty card styles
+  const getDifficultyCardStyles = (difficultyId: string, isSelected: boolean) => {
+    const baseClasses = "cursor-pointer transition-all hover:scale-105";
+    
+    if (isSelected) {
+      if (difficultyId === 'beginner') {
+        return `${baseClasses} bg-gradient-to-r from-sky-300 to-purple-400 border-sky-300`;
+      } else if (difficultyId === 'intermediate') {
+        return `${baseClasses} bg-gradient-to-r from-purple-300 to-pink-400 border-purple-300`;
+      } else if (difficultyId === 'advanced') {
+        return `${baseClasses} bg-gradient-to-r from-purple-600 to-blue-600 border-purple-600`;
+      }
+    }
+    
+    return `${baseClasses} bg-white border-gray-200 hover:border-gray-300`;
+  };
+
   const handleStartSession = () => {
     if (selectedCategory && selectedDifficulty) {
       navigate(`/challenge?category=${selectedCategory}&difficulty=${selectedDifficulty}`);
@@ -64,7 +81,11 @@ const ChallengeSelection = () => {
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
-          <Button variant="ghost" onClick={() => navigate('/dashboard')} className="mb-4 text-gray-600 hover:text-black">
+          <Button 
+            variant="ghost" 
+            onClick={() => navigate('/dashboard')} 
+            className="mb-4 bg-gradient-to-r from-orange-500 to-purple-600 hover:from-orange-600 hover:to-purple-700 text-white border-0 font-medium"
+          >
             ← Back to Dashboard
           </Button>
           <h1 className="text-3xl font-bold mb-2">Choose Your Challenge</h1>
@@ -80,8 +101,8 @@ const ChallengeSelection = () => {
                 key={category.id} 
                 className={`cursor-pointer transition-all hover:scale-105 ${
                   selectedCategory === category.id 
-                    ? 'bg-blue-50 border-blue-600' 
-                    : 'bg-white border-gray-200 hover:border-gray-300'
+                    ? 'bg-gradient-to-br from-blue-100 to-purple-100 border-blue-300' 
+                    : 'bg-gradient-to-br from-blue-50 to-purple-50 border-gray-200 hover:border-gray-300'
                 }`} 
                 onClick={() => setSelectedCategory(category.id)}
               >
@@ -106,23 +127,29 @@ const ChallengeSelection = () => {
             {difficulties.map(difficulty => (
               <Card 
                 key={difficulty.id} 
-                className={`cursor-pointer transition-all hover:scale-105 ${
-                  selectedDifficulty === difficulty.id 
-                    ? 'bg-green-50 border-green-600' 
-                    : 'bg-white border-gray-200 hover:border-gray-300'
-                }`} 
+                className={getDifficultyCardStyles(difficulty.id, selectedDifficulty === difficulty.id)}
                 onClick={() => setSelectedDifficulty(difficulty.id)}
               >
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg text-black">{difficulty.name}</CardTitle>
-                    <Badge variant="secondary" className="bg-gray-100 text-gray-700">
+                    <CardTitle className={`text-lg ${
+                      selectedDifficulty === difficulty.id ? 'text-white' : 'text-black'
+                    }`}>
+                      {difficulty.name}
+                    </CardTitle>
+                    <Badge variant="secondary" className={`${
+                      selectedDifficulty === difficulty.id 
+                        ? 'bg-white/20 text-white' 
+                        : 'bg-gray-100 text-gray-700'
+                    }`}>
                       {difficulty.xp}
                     </Badge>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <CardDescription className="text-gray-600">
+                  <CardDescription className={`${
+                    selectedDifficulty === difficulty.id ? 'text-white/80' : 'text-gray-600'
+                  }`}>
                     {difficulty.description}
                   </CardDescription>
                 </CardContent>
