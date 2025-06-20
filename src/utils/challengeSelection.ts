@@ -83,18 +83,36 @@ export const getFallbackChallenges = (): any[] => {
   return [];
 };
 
-// Improved shuffle algorithm with time-based seeding
-const improvedShuffle = (array: any[]): any[] => {
+// Enhanced shuffle with better randomization
+const advancedShuffle = (array: any[]): any[] => {
   const shuffled = [...array];
-  const seed = Date.now() + Math.random() * 1000000;
+  const seed = Date.now() + Math.random() * 1000000 + performance.now();
   
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const randomValue = Math.abs(Math.sin(seed + i * 73.847) * 43758.5453);
-    const j = Math.floor(randomValue % (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  // Multiple shuffle passes for better randomization
+  for (let pass = 0; pass < 3; pass++) {
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const randomValue = Math.abs(Math.sin(seed + i * 73.847 + pass * 47.123) * 43758.5453);
+      const j = Math.floor(randomValue % (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
   }
   
   return shuffled;
+};
+
+// Group challenges by type for better diversity
+const groupByType = (challenges: any[]): { [key: string]: any[] } => {
+  const grouped: { [key: string]: any[] } = {};
+  
+  challenges.forEach(challenge => {
+    const type = challenge.type || 'unknown';
+    if (!grouped[type]) {
+      grouped[type] = [];
+    }
+    grouped[type].push(challenge);
+  });
+  
+  return grouped;
 };
 
 export const selectUniqueChallenges = (availableChallenges: any[], count: number = 4): Exercise[] => {
@@ -104,105 +122,140 @@ export const selectUniqueChallenges = (availableChallenges: any[], count: number
 
   const timestamp = Date.now();
   
-  logDebug('Starting truly unique challenge selection', {
+  logDebug('Starting enhanced unique challenge selection', {
     availableCount: availableChallenges.length,
     requestedCount: count,
     timestamp
   });
 
-  // Step 1: Remove duplicates based on multiple criteria
+  // Step 1: Remove duplicates with stricter criteria
   const uniqueChallenges: any[] = [];
   const seenIds = new Set<string>();
   const seenTitles = new Set<string>();
-  const seenTypes = new Set<string>();
   const seenScenarios = new Set<string>();
+  const seenContentHashes = new Set<string>();
 
   for (const challenge of availableChallenges) {
     const id = challenge.id;
     const title = challenge.title?.toLowerCase().trim() || '';
-    const type = challenge.type || 'unknown';
     const scenario = challenge.content?.scenario?.toLowerCase().trim() || '';
     const context = challenge.content?.context?.toLowerCase().trim() || '';
     
-    // Create a composite key for scenario uniqueness
-    const scenarioKey = `${scenario}-${context}`.substring(0, 100);
+    // Create content hash for deeper uniqueness check
+    const contentHash = `${title}-${scenario}-${context}`.replace(/\s+/g, '').toLowerCase();
     
-    // Only add if completely unique across all criteria
     if (!seenIds.has(id) && 
         !seenTitles.has(title) && 
-        !seenScenarios.has(scenarioKey)) {
+        !seenScenarios.has(scenario) &&
+        !seenContentHashes.has(contentHash)) {
       
       uniqueChallenges.push({...challenge});
       seenIds.add(id);
       seenTitles.add(title);
-      seenTypes.add(type);
-      seenScenarios.add(scenarioKey);
+      seenScenarios.add(scenario);
+      seenContentHashes.add(contentHash);
     }
   }
 
-  logDebug('After deduplication', {
+  logDebug('After strict deduplication', {
     originalCount: availableChallenges.length,
-    uniqueCount: uniqueChallenges.length,
-    uniqueIds: uniqueChallenges.map(c => c.id),
-    uniqueTitles: uniqueChallenges.map(c => c.title)
+    uniqueCount: uniqueChallenges.length
   });
 
   if (uniqueChallenges.length === 0) {
     throw new Error('No unique challenges found after deduplication');
   }
 
-  // Step 2: Shuffle the unique challenges
-  const shuffledChallenges = improvedShuffle(uniqueChallenges);
+  // Step 2: Group by type for diversity
+  const groupedByType = groupByType(uniqueChallenges);
+  const availableTypes = Object.keys(groupedByType);
+  
+  logDebug('Challenge types available', {
+    types: availableTypes,
+    distribution: Object.fromEntries(
+      availableTypes.map(type => [type, groupedByType[type].length])
+    )
+  });
 
-  // Step 3: Select the required number with guaranteed uniqueness
+  // Step 3: Select challenges with type diversity
   const selectedChallenges: any[] = [];
-  const finalSeenIds = new Set<string>();
-  const finalSeenTitles = new Set<string>();
+  const usedTypes = new Set<string>();
+  const usedIds = new Set<string>();
+  const usedTitles = new Set<string>();
 
-  for (let i = 0; i < shuffledChallenges.length && selectedChallenges.length < count; i++) {
-    const challenge = shuffledChallenges[i];
-    const challengeId = challenge.id;
-    const challengeTitle = challenge.title?.toLowerCase().trim() || '';
+  // First pass: Try to get one challenge from each type
+  for (const type of availableTypes) {
+    if (selectedChallenges.length >= count) break;
     
-    if (!finalSeenIds.has(challengeId) && !finalSeenTitles.has(challengeTitle)) {
-      // Create a unique instance with timestamp-based ID
-      const uniqueInstanceId = `${challengeId}-${timestamp}-${selectedChallenges.length}-${Math.floor(Math.random() * 10000)}`;
-      
-      const uniqueInstance = {
-        ...challenge,
-        id: uniqueInstanceId,
-        originalId: challengeId,
-        instanceIndex: selectedChallenges.length,
-        title: `${challenge.title} (Challenge ${selectedChallenges.length + 1})`
-      };
-      
-      selectedChallenges.push(uniqueInstance);
-      finalSeenIds.add(challengeId);
-      finalSeenTitles.add(challengeTitle);
+    const challengesOfType = advancedShuffle(groupedByType[type]);
+    
+    for (const challenge of challengesOfType) {
+      if (!usedIds.has(challenge.id) && !usedTitles.has(challenge.title?.toLowerCase().trim() || '')) {
+        const uniqueId = `${challenge.id}-${timestamp}-${selectedChallenges.length}-${Math.floor(Math.random() * 100000)}`;
+        
+        selectedChallenges.push({
+          ...challenge,
+          id: uniqueId,
+          originalId: challenge.id,
+          instanceIndex: selectedChallenges.length,
+          title: `${challenge.title} (Challenge ${selectedChallenges.length + 1})`
+        });
+        
+        usedTypes.add(type);
+        usedIds.add(challenge.id);
+        usedTitles.add(challenge.title?.toLowerCase().trim() || '');
+        break;
+      }
     }
   }
 
-  // Step 4: If we still need more challenges, create variants from different categories
-  if (selectedChallenges.length < count && uniqueChallenges.length > 0) {
+  // Second pass: Fill remaining slots with unused challenges
+  const remainingChallenges = uniqueChallenges.filter(c => !usedIds.has(c.id));
+  const shuffledRemaining = advancedShuffle(remainingChallenges);
+
+  for (const challenge of shuffledRemaining) {
+    if (selectedChallenges.length >= count) break;
+    
+    if (!usedIds.has(challenge.id) && !usedTitles.has(challenge.title?.toLowerCase().trim() || '')) {
+      const uniqueId = `${challenge.id}-${timestamp}-${selectedChallenges.length}-${Math.floor(Math.random() * 100000)}`;
+      
+      selectedChallenges.push({
+        ...challenge,
+        id: uniqueId,
+        originalId: challenge.id,
+        instanceIndex: selectedChallenges.length,
+        title: `${challenge.title} (Challenge ${selectedChallenges.length + 1})`
+      });
+      
+      usedIds.add(challenge.id);
+      usedTitles.add(challenge.title?.toLowerCase().trim() || '');
+    }
+  }
+
+  // Step 4: If still need more, create intelligent variants
+  if (selectedChallenges.length < count) {
     const remainingNeeded = count - selectedChallenges.length;
-    logDebug(`Need ${remainingNeeded} more challenges, creating variants`, {});
+    logDebug(`Creating ${remainingNeeded} intelligent variants`, {});
     
     for (let i = 0; i < remainingNeeded && uniqueChallenges.length > 0; i++) {
-      const sourceIndex = i % uniqueChallenges.length;
+      const sourceIndex = (selectedChallenges.length + i) % uniqueChallenges.length;
       const sourceChallenge = uniqueChallenges[sourceIndex];
       
-      const variantId = `variant-${sourceChallenge.id}-${timestamp}-${selectedChallenges.length}-${Math.floor(Math.random() * 10000)}`;
+      // Create meaningful variant
+      const variantType = sourceChallenge.type === 'multiple-choice' ? 'slider' : 'multiple-choice';
+      const variantId = `variant-${sourceChallenge.id}-${timestamp}-${selectedChallenges.length}-${Math.floor(Math.random() * 100000)}`;
       
       const variant = {
         ...sourceChallenge,
         id: variantId,
         originalId: sourceChallenge.id,
         instanceIndex: selectedChallenges.length,
-        title: `${sourceChallenge.title} (Variant ${selectedChallenges.length + 1})`,
+        type: variantType,
+        title: `${sourceChallenge.title} (Alternative ${selectedChallenges.length + 1})`,
         content: {
           ...sourceChallenge.content,
-          context: `${sourceChallenge.content?.context || ''} (Alternative scenario)`,
-          scenario: `${sourceChallenge.content?.scenario || ''} (Different context)`
+          context: `Alternative scenario: ${sourceChallenge.content?.context || ''}`,
+          scenario: `Different approach: ${sourceChallenge.content?.scenario || ''}`
         }
       };
       
@@ -212,19 +265,32 @@ export const selectUniqueChallenges = (availableChallenges: any[], count: number
 
   // Final validation
   const finalIds = selectedChallenges.map(c => c.id);
-  const uniqueIdCount = new Set(finalIds).size;
+  const finalTitles = selectedChallenges.map(c => c.title?.toLowerCase().trim());
+  const finalTypes = selectedChallenges.map(c => c.type);
   
-  if (uniqueIdCount !== selectedChallenges.length) {
-    logDebug('ERROR: Duplicate IDs detected!', { finalIds });
-    throw new Error('Failed to create unique challenges - duplicate IDs found');
+  const uniqueIdCount = new Set(finalIds).size;
+  const uniqueTitleCount = new Set(finalTitles).size;
+  
+  if (uniqueIdCount !== selectedChallenges.length || uniqueTitleCount !== selectedChallenges.length) {
+    logDebug('ERROR: Duplicates detected!', { 
+      finalIds, 
+      finalTitles,
+      uniqueIdCount,
+      uniqueTitleCount,
+      totalSelected: selectedChallenges.length
+    });
+    throw new Error('Failed to create unique challenges - duplicates found');
   }
 
-  logChallengeSelection('Successfully selected completely unique challenges', {
+  logChallengeSelection('Successfully selected completely unique and diverse challenges', {
     selectedCount: selectedChallenges.length,
     requestedCount: count,
     uniqueIds: finalIds,
     titles: selectedChallenges.map(c => c.title),
-    types: selectedChallenges.map(c => c.type)
+    types: finalTypes,
+    typeDistribution: Object.fromEntries(
+      [...new Set(finalTypes)].map(type => [type, finalTypes.filter(t => t === type).length])
+    )
   });
 
   return selectedChallenges.map((challenge: any, index: number) => 
