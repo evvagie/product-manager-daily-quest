@@ -1,5 +1,5 @@
 
-import { enhancedChallengeData } from '@/data/enhancedChallengeData';
+import { enhancedChallengeDatabase } from '@/data/enhancedChallengeData';
 
 export interface Exercise {
   id: string;
@@ -41,7 +41,7 @@ export const generateDynamicChallenge = async (
   try {
     // If specific challenge ID is provided, try to find it first
     if (specificChallengeId) {
-      const specificChallenge = enhancedChallengeData[skillArea as keyof typeof enhancedChallengeData]
+      const specificChallenge = enhancedChallengeDatabase[skillArea as keyof typeof enhancedChallengeDatabase]
         ?.find((challenge: any) => challenge.id === specificChallengeId);
       
       if (specificChallenge) {
@@ -91,7 +91,7 @@ export const generateDynamicChallenge = async (
     }
 
     // Fallback to enhanced static content
-    const categoryData = enhancedChallengeData[skillArea as keyof typeof enhancedChallengeData];
+    const categoryData = enhancedChallengeDatabase[skillArea as keyof typeof enhancedChallengeDatabase];
     if (!categoryData || categoryData.length === 0) {
       throw new Error(`No challenge data available for ${skillArea}`);
     }
