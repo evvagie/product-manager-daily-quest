@@ -273,7 +273,7 @@ const ChallengeLibrary = () => {
                           variant="ghost" 
                           size="sm" 
                           onClick={() => handleRetryChallenge(challenge)} 
-                          className="bg-white hover:bg-gray-50 text-transparent bg-gradient-to-r from-orange-500 to-purple-600 bg-clip-text font-medium rounded-sm whitespace-nowrap"
+                          className="bg-white hover:bg-gradient-to-r hover:from-orange-500 hover:to-purple-600 text-black hover:text-white font-medium rounded-sm whitespace-nowrap transition-all duration-200"
                         >
                           Retry Challenge
                         </Button>
