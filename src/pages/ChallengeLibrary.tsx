@@ -139,6 +139,24 @@ const ChallengeLibrary = () => {
     });
   };
 
+  const getDifficultyBadgeStyles = (difficulty: string) => {
+    if (difficulty.toLowerCase() === 'beginner') {
+      return 'bg-sky-300 text-white border-sky-300';
+    }
+    return 'bg-gray-700 text-gray-300';
+  };
+
+  const getScoreBadgeStyles = (score: number) => {
+    if (score === 100) {
+      return 'bg-green-500 text-white border-green-500';
+    }
+    return score >= 80 
+      ? 'bg-green-600/20 text-green-400' 
+      : score >= 60 
+      ? 'bg-yellow-600/20 text-yellow-400'
+      : 'bg-red-600/20 text-red-400';
+  };
+
   // Don't render anything while redirecting
   if (!category || category === ':category' || !validCategories.includes(category)) {
     return (
@@ -274,19 +292,16 @@ const ChallengeLibrary = () => {
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="font-medium text-black">{challenge.challenge_title}</h4>
                       <div className="flex items-center space-x-2">
-                        <Badge variant="secondary" className="bg-gray-700 text-gray-300">
+                        <Badge 
+                          variant="secondary" 
+                          className={getDifficultyBadgeStyles(challenge.difficulty)}
+                        >
                           {challenge.difficulty}
                         </Badge>
                         {challenge.score !== null && (
                           <Badge 
                             variant="secondary" 
-                            className={`${
-                              challenge.score >= 80 
-                                ? 'bg-green-600/20 text-green-400' 
-                                : challenge.score >= 60 
-                                ? 'bg-yellow-600/20 text-yellow-400'
-                                : 'bg-red-600/20 text-red-400'
-                            }`}
+                            className={getScoreBadgeStyles(challenge.score)}
                           >
                             {challenge.score}% Score
                           </Badge>
