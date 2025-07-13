@@ -23,7 +23,8 @@ const Login = () => {
       toast.success("Welcome back!")
       navigate("/dashboard")
     } catch (error: any) {
-      toast.error(error.message || "Failed to sign in")
+      const errorMessage = error?.message || error?.error_description || "Failed to sign in"
+      toast.error(errorMessage)
     } finally {
       setLoading(false)
     }
